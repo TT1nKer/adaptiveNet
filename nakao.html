@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Network Turing — Nakao replica</title>
+<style>
+  body { margin:0; background:#0e1014; color:#cbd2dc; font:13px ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace; overflow:hidden; }
+  #stage { display:flex; height:100vh; }
+  canvas { background:#0e1014; flex:1; display:block; }
+  #panel { width:260px; padding:14px 16px; border-left:1px solid #1f2530; box-sizing:border-box; overflow-y:auto; }
+  h3 { margin:0 0 10px; font-size:13px; letter-spacing:0.04em; color:#e8edf4; font-weight:600; }
+  label { display:block; margin:10px 0 2px; font-size:11px; color:#8a93a3; }
+  label span { float:right; color:#cbd2dc; }
+  input[type=range] { width:100%; accent-color:#e63946; }
+  button { background:#1f2530; color:#cbd2dc; border:0; padding:6px 10px; margin:2px 4px 2px 0; cursor:pointer; font:inherit; }
+  button:hover { background:#2a3140; }
+  .note { color:#6b7280; font-size:11px; margin-top:14px; line-height:1.5; }
+  .legend { display:flex; align-items:center; gap:6px; margin-top:8px; font-size:11px; color:#8a93a3; }
+  .swatch { display:inline-block; width:36px; height:8px; border-radius:2px; background:linear-gradient(90deg,#2850b4,#e63946); }
+  hr { border:0; border-top:1px solid #1f2530; margin:14px 0; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <canvas id="cv"></canvas>
+  <div id="panel">
+    <h3>Network Turing</h3>
+    <div class="note" style="margin-top:0">
+      Activator–inhibitor reaction (Mimura–Murray) on each node, diffusion via the graph Laplacian. Turing instability requires D<sub>v</sub> ≫ D<sub>u</sub>.
+    </div>
+
+    <hr>
+
+    <label>D<sub>u</sub> (activator) <span id="duv"></span></label>
+    <input id="du" type="range" min="0" max="0.5" step="0.001" value="0.02">
+
+    <label>D<sub>v</sub> (inhibitor) <span id="dvv"></span></label>
+    <input id="dv" type="range" min="0" max="3" step="0.01" value="1.00">
+
+    <hr>
+
+    <label>nodes <span id="nv"></span></label>
+    <input id="n" type="range" min="20" max="300" step="10" value="80">
+
+    <label>avg degree <span id="kv"></span></label>
+    <input id="k" type="range" min="2" max="20" step="1" value="6">
+
+    <label>topology</label>
+    <select id="topo" style="width:100%;background:#1f2530;color:#cbd2dc;border:0;padding:6px">
+      <option value="er">Erdős–Rényi</option>
+      <option value="ba">Barabási–Albert (scale-free)</option>
+      <option value="ws">Watts–Strogatz (small-world)</option>
+    </select>
+
+    <hr>
+
+    <button id="reset">reset</button>
+    <button id="pause">pause</button>
+    <button id="kick">kick</button>
+
+    <div class="legend">
+      <span>low u</span><span class="swatch"></span><span>high u</span>
+    </div>
+
+    <div class="note">
+      <b>Try:</b> default params already sit in the Turing-unstable regime. Drag D<sub>u</sub> up past ~0.1 and the pattern dissolves. Switch topology to Barabási–Albert and watch hubs act as pattern organizers — Nakao &amp; Mikhailov (2010).
+    </div>
+  </div>
+</div>
+
+<script>
+"use strict";
+
+const cv = document.getElementById('cv');
+const ctx = cv.getContext('2d');
+function fit(){ cv.width = cv.clientWidth; cv.height = cv.clientHeight; }
+addEventListener('resize', fit); fit();
+
+// ---------- model ----------
+let N, edges, adj, deg, u, v, pos, vel;
+
+// Mimura–Murray kinetics, the canonical activator–inhibitor used in Nakao 2010.
+//   f(u,v) = ((a + b u - u^2) u) / c  -  u v
+//   g(u,v) = u v - v - d
+const A = 35, B = 16, C = 9, D = 0.4;
+const f = (u,v) => ((A + B*u - u*u) * u) / C  -  u * v;
+const g = (u,v) => u * v - v - D;
+
+// ---------- graph construction ----------
+function emptyAdj(n){ return Array.from({length:n}, () => []); }
+function addEdge(i, j){
+  if (i === j) return;
+  if (adj[i].includes(j)) return;
+  adj[i].push(j); adj[j].push(i);
+  edges.push(i < j ? [i,j] : [j,i]);
+}
+
+function buildER(n, avgK){
+  adj = emptyAdj(n); edges = [];
+  const p = avgK / (n - 1);
+  for (let i=0;i<n;i++) for (let j=i+1;j<n;j++) if (Math.random() < p) addEdge(i,j);
+}
+
+function buildBA(n, m){
+  adj = emptyAdj(n); edges = [];
+  m = Math.max(1, Math.floor(m/2));
+  for (let i=0;i<m;i++) for (let j=i+1;j<m+1;j++) addEdge(i,j);
+  const targets = [];
+  for (const [i,j] of edges) { targets.push(i); targets.push(j); }
+  for (let i = m+1; i < n; i++){
+    const picked = new Set();
+    while (picked.size < m){
+      picked.add(targets[Math.floor(Math.random()*targets.length)]);
+    }
+    for (const j of picked){ addEdge(i,j); targets.push(i); targets.push(j); }
+  }
+}
+
+function buildWS(n, k, beta=0.1){
+  adj = emptyAdj(n); edges = [];
+  const half = Math.max(1, Math.floor(k/2));
+  for (let i=0;i<n;i++) for (let d=1; d<=half; d++) addEdge(i, (i+d)%n);
+  // rewire
+  const orig = edges.slice();
+  for (const e of orig){
+    if (Math.random() < beta){
+      const [i,j] = e;
+      // remove
+      adj[i] = adj[i].filter(x=>x!==j);
+      adj[j] = adj[j].filter(x=>x!==i);
+      const idx = edges.indexOf(e); if (idx>=0) edges.splice(idx,1);
+      // add a new random edge from i
+      let tries = 0, k2;
+      do { k2 = Math.floor(Math.random()*n); tries++; }
+      while ((k2===i || adj[i].includes(k2)) && tries<50);
+      if (tries<50) addEdge(i, k2);
+    }
+  }
+}
+
+function build(){
+  N = +document.getElementById('n').value;
+  const k = +document.getElementById('k').value;
+  const topo = document.getElementById('topo').value;
+  if      (topo === 'er') buildER(N, k);
+  else if (topo === 'ba') buildBA(N, k);
+  else                    buildWS(N, k, 0.15);
+  deg = adj.map(a => a.length);
+
+  u = new Float64Array(N); v = new Float64Array(N);
+  // homogeneous fixed point of Mimura–Murray with these params is around (u*, v*) ≈ (5, 10);
+  // perturb slightly to break the symmetry — Turing growth amplifies the noise.
+  for (let i=0;i<N;i++){
+    u[i] = 5 + (Math.random() - 0.5) * 0.4;
+    v[i] = 10 + (Math.random() - 0.5) * 0.4;
+  }
+
+  pos = Array.from({length:N}, () => [
+    cv.width/2 + (Math.random()-0.5)*cv.width*0.6,
+    cv.height/2 + (Math.random()-0.5)*cv.height*0.6
+  ]);
+  vel = Array.from({length:N}, () => [0,0]);
+}
+
+function kick(){
+  for (let i=0;i<N;i++){ u[i] += (Math.random()-0.5)*1.0; }
+}
+
+// ---------- dynamics ----------
+// Forward Euler on:
+//   du_i/dt = f(u_i,v_i) + D_u Σ_{j~i} (u_j - u_i)
+//   dv_i/dt = g(u_i,v_i) + D_v Σ_{j~i} (v_j - v_i)
+// The sum over neighbors is exactly -(L u)_i for the graph Laplacian L = Diag(deg) - Adj.
+function step(dt, Du, Dv){
+  const du = new Float64Array(N), dv = new Float64Array(N);
+  for (let i=0;i<N;i++){
+    let su = 0, sv = 0;
+    const ai = adj[i];
+    for (let p=0; p<ai.length; p++){
+      const j = ai[p];
+      su += u[j] - u[i];
+      sv += v[j] - v[i];
+    }
+    du[i] = f(u[i], v[i]) + Du * su;
+    dv[i] = g(u[i], v[i]) + Dv * sv;
+  }
+  // clamp to keep numerics sane if user pushes parameters far out of bounds
+  for (let i=0;i<N;i++){
+    u[i] = Math.max(-50, Math.min(50, u[i] + dt*du[i]));
+    v[i] = Math.max(-50, Math.min(50, v[i] + dt*dv[i]));
+  }
+}
+
+// ---------- layout (force-directed) ----------
+function layoutTick(){
+  const kRep = 1400, kSpr = 0.025, L = 65, damp = 0.84;
+  const cx = cv.width/2, cy = cv.height/2;
+  for (let i=0;i<N;i++){
+    let fx = 0, fy = 0;
+    for (let j=0;j<N;j++){
+      if (j===i) continue;
+      const dx = pos[i][0]-pos[j][0], dy = pos[i][1]-pos[j][1];
+      const r2 = dx*dx + dy*dy + 0.01;
+      const r  = Math.sqrt(r2);
+      const F  = kRep / r2;
+      fx += F*dx/r; fy += F*dy/r;
+    }
+    for (const j of adj[i]){
+      const dx = pos[j][0]-pos[i][0], dy = pos[j][1]-pos[i][1];
+      const r  = Math.sqrt(dx*dx+dy*dy) + 0.01;
+      const F  = kSpr * (r - L);
+      fx += F*dx/r; fy += F*dy/r;
+    }
+    fx += (cx - pos[i][0]) * 0.0015;
+    fy += (cy - pos[i][1]) * 0.0015;
+    vel[i][0] = (vel[i][0] + fx) * damp;
+    vel[i][1] = (vel[i][1] + fy) * damp;
+    pos[i][0] += vel[i][0];
+    pos[i][1] += vel[i][1];
+  }
+}
+
+// ---------- render ----------
+function colorFor(x){
+  // u sits around 5; map roughly [2, 9] to [blue, red]
+  const t = Math.max(0, Math.min(1, (x - 2) / 7));
+  const r = Math.round(40  + (230-40)*t);
+  const g = Math.round(80  + ( 60-80)*t);
+  const b = Math.round(180 + ( 60-180)*t);
+  return `rgb(${r},${g},${b})`;
+}
+function draw(){
+  ctx.clearRect(0,0,cv.width,cv.height);
+  ctx.strokeStyle = 'rgba(140,150,170,0.16)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  for (const [i,j] of edges){
+    ctx.moveTo(pos[i][0], pos[i][1]);
+    ctx.lineTo(pos[j][0], pos[j][1]);
+  }
+  ctx.stroke();
+  for (let i=0;i<N;i++){
+    const r = 4 + Math.sqrt(deg[i] || 1);
+    ctx.fillStyle = colorFor(u[i]);
+    ctx.beginPath();
+    ctx.arc(pos[i][0], pos[i][1], r, 0, Math.PI*2);
+    ctx.fill();
+  }
+}
+
+// ---------- ui ----------
+const $ = id => document.getElementById(id);
+let running = true;
+function refreshLabels(){
+  $('duv').textContent = (+$('du').value).toFixed(3);
+  $('dvv').textContent = (+$('dv').value).toFixed(2);
+  $('nv').textContent  = $('n').value;
+  $('kv').textContent  = $('k').value;
+}
+['du','dv'].forEach(id => $(id).addEventListener('input', refreshLabels));
+['n','k','topo'].forEach(id => $(id).addEventListener('input', () => { refreshLabels(); rebuild(); }));
+$('reset').addEventListener('click', rebuild);
+$('pause').addEventListener('click', () => {
+  running = !running;
+  $('pause').textContent = running ? 'pause' : 'play';
+});
+$('kick').addEventListener('click', kick);
+
+function rebuild(){ build(); }
+rebuild(); refreshLabels();
+
+function loop(){
+  if (running){
+    const Du = +$('du').value, Dv = +$('dv').value;
+    for (let s=0; s<5; s++) step(0.05, Du, Dv);
+    layoutTick();
+  }
+  draw();
+  requestAnimationFrame(loop);
+}
+loop();
+</script>
+</body>
+</html>
