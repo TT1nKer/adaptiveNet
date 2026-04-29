@@ -2,111 +2,162 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Network Turing — Brusselator on a graph</title>
+<title>Network Turing — Nakao &amp; Mikhailov (2010)</title>
 <style>
   *, *::before, *::after { box-sizing: border-box; }
   html, body { margin:0; padding:0; height:100%; width:100%; overflow:hidden; }
   body {
-    background:#0e1014; color:#cbd2dc;
-    font:13px/1.4 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    background:#0b0d11; color:#cbd2dc;
+    font:12px/1.45 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   }
-  #stage { display:flex; height:100%; width:100%; }
-  #cv {
-    flex: 1 1 auto;
-    min-width: 0; min-height: 0;
-    background:#0e1014;
-    display:block;
+  #app {
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    grid-template-rows: 36px 1fr 200px;
+    grid-template-areas:
+      "header header"
+      "net    panel"
+      "diag   panel";
+    height: 100vh; gap: 1px; background:#1f2530;
   }
-  #panel {
-    flex: 0 0 300px;
-    width: 300px;
-    height: 100%;
-    padding: 16px 18px;
-    border-left: 1px solid #1f2530;
-    overflow-y: auto;
-    background:#0b0d11;
+  header { grid-area: header; background:#0e1014; padding: 0 14px; display:flex; align-items:center; gap:14px; }
+  header .title { font-weight:600; color:#e8edf4; letter-spacing:0.05em; }
+  header .ref { color:#6b7280; font-size:11px; }
+  header .preset { margin-left:auto; display:flex; align-items:center; gap:6px; }
+  header select { background:#1a1f2a; color:#cbd2dc; border:1px solid #232a36; padding:4px 8px; font:inherit; border-radius:3px; }
+
+  #netbox  { grid-area: net;   background:#0e1014; position:relative; }
+  #netcv   { width:100%; height:100%; display:block; }
+  #netbox .overlay {
+    position:absolute; left:8px; top:8px; color:#6b7280; font-size:11px;
+    background: rgba(11,13,17,0.8); padding: 4px 8px; border-radius:3px; pointer-events:none;
   }
-  h3 { margin:0 0 4px; font-size:13px; color:#e8edf4; font-weight:600; letter-spacing:.04em; }
-  .sub { color:#6b7280; font-size:11px; margin-bottom:14px; line-height:1.55; }
-  .row { margin: 12px 0 4px; }
-  label { display:flex; justify-content:space-between; font-size:11px; color:#8a93a3; margin-bottom:4px; }
-  label .v { color:#cbd2dc; }
+
+  #diag    { grid-area: diag; background:#0e1014; display:grid; grid-template-columns: 1fr 1fr 1.4fr; gap:1px; background:#1f2530; }
+  .diag-cell { background:#0e1014; padding:8px 10px; display:flex; flex-direction:column; min-width:0; }
+  .diag-cell .ttl { font-size:11px; color:#8a93a3; margin-bottom:4px; letter-spacing:0.04em; }
+  .diag-cell canvas { flex:1 1 auto; min-height:0; min-width:0; width:100%; display:block; }
+
+  #panel   { grid-area: panel; background:#0b0d11; padding:14px 16px; overflow-y:auto; }
+  #panel h4 { margin: 14px 0 6px; font-size:11px; color:#8a93a3; letter-spacing:0.06em; text-transform:uppercase; font-weight:600; }
+  #panel h4:first-child { margin-top:0; }
+  .row { margin: 8px 0 2px; }
+  .row label { display:flex; justify-content:space-between; font-size:11px; color:#8a93a3; margin-bottom:3px; }
+  .row label .v { color:#cbd2dc; }
   input[type=range] { width:100%; accent-color:#e63946; }
-  select {
-    width:100%; background:#1a1f2a; color:#cbd2dc; border:1px solid #232a36;
-    padding:6px 8px; font:inherit; border-radius:3px;
-  }
-  .btns { margin-top:14px; display:flex; gap:6px; flex-wrap:wrap; }
+  select.full { width:100%; background:#1a1f2a; color:#cbd2dc; border:1px solid #232a36; padding:5px 7px; font:inherit; border-radius:3px; }
+  .btns { display:flex; gap:6px; flex-wrap:wrap; margin-top:10px; }
   button {
     background:#1a1f2a; color:#cbd2dc; border:1px solid #232a36;
-    padding:6px 12px; cursor:pointer; font:inherit; border-radius:3px;
+    padding:5px 10px; cursor:pointer; font:inherit; border-radius:3px;
   }
   button:hover { background:#232a36; }
-  hr { border:0; border-top:1px solid #1f2530; margin:16px 0; }
-  .legend { display:flex; align-items:center; gap:8px; margin-top:10px; font-size:11px; color:#8a93a3; }
-  .swatch {
-    flex: 1 1 auto; height: 8px; border-radius: 2px;
-    background: linear-gradient(90deg, #2c5fbf 0%, #6b7280 50%, #e63946 100%);
-  }
-  .stat { font-size:11px; color:#8a93a3; margin-top:6px; }
-  .stat b { color:#cbd2dc; font-weight:500; }
+  .stats { font-size:11px; color:#8a93a3; line-height:1.7; }
+  .stats b { color:#cbd2dc; font-weight:500; font-variant-numeric: tabular-nums; }
+  .legend { display:flex; align-items:center; gap:6px; margin-top:8px; font-size:11px; color:#8a93a3; }
+  .swatch { flex:1 1 auto; height:6px; border-radius:2px; background:linear-gradient(90deg,#2c5fbf,#6b7280,#e63946); }
+  .pill { display:inline-block; background:#1a1f2a; border:1px solid #232a36; padding:1px 6px; border-radius:10px; font-size:10px; color:#8a93a3; }
+  .turing-on { color:#e63946; }
+  .turing-off { color:#6b7280; }
+  .reaction-params { font-size:10px; color:#6b7280; margin-top:6px; line-height:1.6; font-variant-numeric: tabular-nums; }
 </style>
 </head>
 <body>
-<div id="stage">
-  <canvas id="cv"></canvas>
+<div id="app">
+  <header>
+    <span class="title">Network Turing</span>
+    <span class="ref">Nakao &amp; Mikhailov, <i>Nature Physics</i> <b>6</b>, 544 (2010)</span>
+    <span class="preset">
+      <span style="color:#6b7280">preset</span>
+      <select id="preset">
+        <option value="mm-sub">MM · subcritical (no pattern)</option>
+        <option value="mm-onset">MM · just past Turing onset</option>
+        <option value="mm-strong" selected>MM · strong Turing</option>
+        <option value="mm-hub">MM · hub-organized (BA)</option>
+        <option value="mm-ws">MM · small-world (WS)</option>
+        <option value="brus">Brusselator (reference)</option>
+      </select>
+    </span>
+  </header>
+
+  <div id="netbox">
+    <canvas id="netcv"></canvas>
+    <div class="overlay" id="netinfo">·</div>
+  </div>
+
+  <div id="diag">
+    <div class="diag-cell">
+      <div class="ttl">u histogram (live) <span id="histinfo" class="pill">·</span></div>
+      <canvas id="histcv"></canvas>
+    </div>
+    <div class="diag-cell">
+      <div class="ttl">σ(u) over time</div>
+      <canvas id="tscv"></canvas>
+    </div>
+    <div class="diag-cell">
+      <div class="ttl">graph Laplacian spectrum &amp; Turing band <span id="bandinfo" class="pill">·</span></div>
+      <canvas id="speccv"></canvas>
+    </div>
+  </div>
+
   <aside id="panel">
-    <h3>Network Turing</h3>
-    <div class="sub">
-      Brusselator reaction at each node, diffusion via the graph Laplacian.
-      Turing instability appears when D<sub>v</sub> ≫ D<sub>u</sub>.
+    <h4>reaction</h4>
+    <div class="row">
+      <select id="kind" class="full">
+        <option value="mm">Mimura–Murray</option>
+        <option value="brus">Brusselator</option>
+      </select>
+    </div>
+    <div class="reaction-params" id="rparams"></div>
+
+    <h4>diffusion</h4>
+    <div class="row">
+      <label>D<sub>u</sub> <span class="v" id="duv"></span></label>
+      <input id="du" type="range" min="0" max="1" step="0.001" value="0.05">
+    </div>
+    <div class="row">
+      <label>D<sub>v</sub> <span class="v" id="dvv"></span></label>
+      <input id="dv" type="range" min="0" max="10" step="0.01" value="3.00">
     </div>
 
+    <h4>topology</h4>
     <div class="row">
-      <label>D<sub>u</sub> (activator) <span class="v" id="duv"></span></label>
-      <input id="du" type="range" min="0" max="3" step="0.01" value="1.00">
+      <select id="topo" class="full">
+        <option value="er">Erdős–Rényi</option>
+        <option value="ba" selected>Barabási–Albert</option>
+        <option value="ws">Watts–Strogatz</option>
+      </select>
     </div>
     <div class="row">
-      <label>D<sub>v</sub> (inhibitor) <span class="v" id="dvv"></span></label>
-      <input id="dv" type="range" min="0" max="20" step="0.1" value="10.0">
-    </div>
-
-    <hr>
-
-    <div class="row">
-      <label>nodes <span class="v" id="nv"></span></label>
-      <input id="n" type="range" min="20" max="200" step="10" value="60">
+      <label>N <span class="v" id="nv"></span></label>
+      <input id="n" type="range" min="20" max="120" step="5" value="80">
     </div>
     <div class="row">
       <label>avg degree <span class="v" id="kv"></span></label>
       <input id="k" type="range" min="2" max="14" step="1" value="6">
     </div>
-    <div class="row">
-      <label>topology</label>
-      <select id="topo">
-        <option value="er">Erdős–Rényi</option>
-        <option value="ba" selected>Barabási–Albert (scale-free)</option>
-        <option value="ws">Watts–Strogatz (small-world)</option>
-      </select>
-    </div>
 
     <div class="btns">
-      <button id="reset">reset graph</button>
+      <button id="rebuild">rebuild graph</button>
       <button id="reseed">reseed state</button>
       <button id="pause">pause</button>
+    </div>
+
+    <h4>state</h4>
+    <div class="stats">
+      time <b id="tval">0.00</b> · steps <b id="sval">0</b><br>
+      u<sup>*</sup>=<b id="ufp">·</b> &nbsp; v<sup>*</sup>=<b id="vfp">·</b><br>
+      ⟨u⟩=<b id="umean">·</b> &nbsp; σ(u)=<b id="usig">·</b><br>
+      Turing: <b id="tstate">·</b>
     </div>
 
     <div class="legend">
       <span>low&nbsp;u</span><span class="swatch"></span><span>high&nbsp;u</span>
     </div>
 
-    <hr>
-
-    <div class="stat">edges: <b id="nedges">0</b> · max deg: <b id="maxdeg">0</b></div>
-    <div class="stat">range u: <b id="urange">·</b></div>
-
-    <div class="sub" style="margin-top:14px">
-      <b>Try:</b> defaults sit in the Turing-unstable regime — wait ~5 s for the pattern to appear. Drag D<sub>u</sub> above ~2 and the inhomogeneity dissolves. On the BA topology, watch the hubs lock to one branch (Nakao &amp; Mikhailov, <i>Nature Physics</i>, 2010).
+    <h4 style="margin-top:18px">notes</h4>
+    <div class="stats" style="font-size:10px;line-height:1.55">
+      Layout is force-directed once and then frozen — node position has no role in the dynamics; only the adjacency matters. The "Turing band" on the spectrum panel marks the eigenvalues of L for which the homogeneous fixed point is linearly unstable, computed from the dispersion relation at the current (D<sub>u</sub>, D<sub>v</sub>).
     </div>
   </aside>
 </div>
@@ -114,35 +165,68 @@
 <script>
 "use strict";
 
-// ---------- canvas ----------
-const cv = document.getElementById('cv');
-const ctx = cv.getContext('2d');
-function fit(){
-  const r = cv.getBoundingClientRect();
-  cv.width  = Math.max(200, Math.floor(r.width));
-  cv.height = Math.max(200, Math.floor(r.height));
-}
-addEventListener('resize', fit);
-fit();
+// =====================================================================
+// REACTION KINETICS
+// =====================================================================
+//
+// Mimura–Murray ecological model (used in Nakao & Mikhailov 2010):
+//   f(u,v) = ((a + b u - u^2)/c - v) u
+//   g(u,v) = (u - 1 - d v) v
+// With (a,b,c,d) = (35, 16, 9, 0.4) the homogeneous fixed point is (u*, v*) = (5, 10).
+//
+// Brusselator (classical Turing reference):
+//   f(u,v) = a - (b+1) u + u^2 v
+//   g(u,v) = b u - u^2 v
+// Fixed point (a, b/a). Turing condition: b > 1 + a^2 D_u/D_v · (1+sqrt(...))^2; for
+// (a,b)=(3,9), instability appears for D_v/D_u above roughly 7.
 
-// ---------- model: Brusselator ----------
-//   f(u,v) = A - (B+1)u + u^2 v
-//   g(u,v) = B u - u^2 v
-// Homogeneous fixed point (u*, v*) = (A, B/A). With A=3, B=9 → (3, 3).
-// Linear stability: trace = B - 1 - A^2 = -2 (< 0, FP locally stable).
-// Diffusive (Turing) instability appears for D_v/D_u above a threshold ~7.
-const A_PARAM = 3, B_PARAM = 9;
-const U_STAR = A_PARAM, V_STAR = B_PARAM / A_PARAM;
-const fReact = (u,v) => A_PARAM - (B_PARAM + 1) * u + u * u * v;
-const gReact = (u,v) => B_PARAM * u - u * u * v;
+const REACTIONS = {
+  mm: {
+    name: 'Mimura–Murray',
+    params: { a: 35, b: 16, c: 9, d: 0.4 },
+    f: (u,v,p) => ((p.a + p.b*u - u*u) / p.c - v) * u,
+    g: (u,v,p) => (u - 1 - p.d * v) * v,
+    // Closed-form FP for the standard MM form: solve u - 1 - d v = 0 with v = (a+bu-u^2)/c
+    fp: (p) => {
+      const {a,b,c,d} = p;
+      // Substitute v = (u-1)/d into v = (a+bu-u^2)/c → c(u-1) = d(a+bu-u^2)
+      // → d u^2 - (b d - c) u - (a d + c) = 0
+      const A = d, B = -(b*d - c), C = -(a*d + c);
+      const u = (-B + Math.sqrt(B*B - 4*A*C)) / (2*A);
+      return [u, (u - 1) / d];
+    },
+    uRange: [0, 12]
+  },
+  brus: {
+    name: 'Brusselator',
+    params: { a: 3, b: 9 },
+    f: (u,v,p) => p.a - (p.b + 1) * u + u*u*v,
+    g: (u,v,p) => p.b * u - u*u*v,
+    fp: (p) => [p.a, p.b / p.a],
+    uRange: [0, 6]
+  }
+};
 
-// ---------- graph ----------
-let N, adj, edges, deg, u, v, pos, vel;
+// =====================================================================
+// PRESETS — named numerical scenarios
+// =====================================================================
+const PRESETS = {
+  'mm-sub':    { kind:'mm',  Du:0.10, Dv:0.50, topo:'er', N:80,  k:8 },
+  'mm-onset':  { kind:'mm',  Du:0.08, Dv:1.50, topo:'er', N:80,  k:8 },
+  'mm-strong': { kind:'mm',  Du:0.05, Dv:3.00, topo:'er', N:80,  k:8 },
+  'mm-hub':    { kind:'mm',  Du:0.05, Dv:3.00, topo:'ba', N:100, k:4 },
+  'mm-ws':     { kind:'mm',  Du:0.05, Dv:3.00, topo:'ws', N:100, k:6 },
+  'brus':      { kind:'brus',Du:1.00, Dv:10.0, topo:'er', N:80,  k:8 }
+};
+
+// =====================================================================
+// GRAPH GENERATION
+// =====================================================================
+let N, adj, edges, deg;
 
 function emptyAdj(n){ return Array.from({length:n}, () => []); }
 function addEdge(i, j){
-  if (i === j) return;
-  if (adj[i].indexOf(j) !== -1) return;
+  if (i === j || adj[i].includes(j)) return;
   adj[i].push(j); adj[j].push(i);
   edges.push(i < j ? [i,j] : [j,i]);
 }
@@ -151,22 +235,18 @@ function buildER(n, avgK){
   adj = emptyAdj(n); edges = [];
   const p = avgK / Math.max(1, n - 1);
   for (let i=0;i<n;i++) for (let j=i+1;j<n;j++) if (Math.random() < p) addEdge(i,j);
-  // ensure connected-ish: link any isolated node to a random other
   for (let i=0;i<n;i++) if (adj[i].length === 0){
-    const j = (i + 1 + Math.floor(Math.random()*(n-1))) % n;
-    addEdge(i, j);
+    addEdge(i, (i + 1 + Math.floor(Math.random()*(n-1))) % n);
   }
 }
-
 function buildBA(n, avgK){
   adj = emptyAdj(n); edges = [];
   const m = Math.max(1, Math.round(avgK / 2));
-  // seed: small clique of m+1
   const seed = m + 1;
   for (let i=0;i<seed;i++) for (let j=i+1;j<seed;j++) addEdge(i,j);
   const targets = [];
   for (const [i,j] of edges) { targets.push(i); targets.push(j); }
-  for (let i = seed; i < n; i++){
+  for (let i=seed; i<n; i++){
     const picked = new Set();
     let safety = 0;
     while (picked.size < m && safety < 1000){
@@ -174,12 +254,10 @@ function buildBA(n, avgK){
       safety++;
     }
     for (const j of picked){
-      addEdge(i, j);
-      targets.push(i); targets.push(j);
+      addEdge(i, j); targets.push(i); targets.push(j);
     }
   }
 }
-
 function buildWS(n, avgK, beta){
   adj = emptyAdj(n); edges = [];
   const half = Math.max(1, Math.floor(avgK / 2));
@@ -191,58 +269,193 @@ function buildWS(n, avgK, beta){
       adj[i] = adj[i].filter(x => x !== j);
       adj[j] = adj[j].filter(x => x !== i);
       const idx = edges.indexOf(e); if (idx >= 0) edges.splice(idx, 1);
-      let k, tries = 0;
-      do { k = Math.floor(Math.random()*n); tries++; }
-      while ((k === i || adj[i].indexOf(k) !== -1) && tries < 80);
-      if (tries < 80) addEdge(i, k);
+      let kk, tries = 0;
+      do { kk = Math.floor(Math.random()*n); tries++; }
+      while ((kk === i || adj[i].includes(kk)) && tries < 80);
+      if (tries < 80) addEdge(i, kk);
     }
   }
 }
 
-// ---------- init / reseed ----------
-function buildGraph(){
-  N = +document.getElementById('n').value;
-  const k = +document.getElementById('k').value;
-  const topo = document.getElementById('topo').value;
-  if      (topo === 'er') buildER(N, k);
-  else if (topo === 'ba') buildBA(N, k);
-  else                    buildWS(N, k, 0.15);
-  deg = adj.map(a => a.length);
+// =====================================================================
+// SIMULATION STATE
+// =====================================================================
+let u, v, pos;
+let kindKey = 'mm';
+let R = REACTIONS[kindKey];
+let fp = R.fp(R.params);
+let simTime = 0, simSteps = 0;
+let running = true;
 
-  // place nodes on a circle so the layout starts well-conditioned
-  pos = new Array(N);
-  vel = new Array(N);
-  const cx = cv.width / 2, cy = cv.height / 2;
-  const R  = Math.min(cv.width, cv.height) * 0.35;
-  for (let i=0;i<N;i++){
-    const a = (i / N) * Math.PI * 2;
-    pos[i] = [cx + R * Math.cos(a), cy + R * Math.sin(a)];
-    vel[i] = [0, 0];
-  }
-  reseedState();
-  updateStats();
-}
+// time series ring buffer
+const TS_LEN = 240;
+let tsBuf = new Float64Array(TS_LEN);
+let tsHead = 0, tsCount = 0;
+
+// graph spectrum (Laplacian eigenvalues)
+let spectrum = null;
+let jacobianAtFP = null;
+let turing = null; // {lo, hi} or null
 
 function reseedState(){
+  const [u0, v0] = fp;
   u = new Float64Array(N);
   v = new Float64Array(N);
   for (let i=0;i<N;i++){
-    u[i] = U_STAR + (Math.random() - 0.5) * 0.4;
-    v[i] = V_STAR + (Math.random() - 0.5) * 0.4;
+    u[i] = u0 + (Math.random() - 0.5) * 0.1;
+    v[i] = v0 + (Math.random() - 0.5) * 0.1;
+  }
+  simTime = 0; simSteps = 0;
+  tsBuf.fill(0); tsHead = 0; tsCount = 0;
+}
+
+// =====================================================================
+// LAYOUT (force-directed, run synchronously then frozen)
+// =====================================================================
+function computeLayout(W, H){
+  pos = new Array(N);
+  const vel = new Array(N);
+  const cx = W / 2, cy = H / 2;
+  const Rr = Math.min(W, H) * 0.36;
+  for (let i=0;i<N;i++){
+    const a = (i / N) * Math.PI * 2;
+    pos[i] = [cx + Rr * Math.cos(a), cy + Rr * Math.sin(a)];
+    vel[i] = [0, 0];
+  }
+  const ITER = 220;
+  const kRep = 1500, kSpr = 0.05, L0 = 60, damp = 0.82, fMax = 25, vMax = 10;
+  for (let it=0; it<ITER; it++){
+    const cool = 1 - it / ITER;
+    for (let i=0;i<N;i++){
+      let fx = 0, fy = 0;
+      for (let j=0;j<N;j++){
+        if (j===i) continue;
+        let dx = pos[i][0]-pos[j][0], dy = pos[i][1]-pos[j][1];
+        let r2 = dx*dx + dy*dy; if (r2 < 1) r2 = 1;
+        const r = Math.sqrt(r2), F = kRep / r2;
+        fx += F*dx/r; fy += F*dy/r;
+      }
+      for (const j of adj[i]){
+        const dx = pos[j][0]-pos[i][0], dy = pos[j][1]-pos[i][1];
+        const r = Math.sqrt(dx*dx + dy*dy) + 1e-3;
+        const F = kSpr * (r - L0);
+        fx += F*dx/r; fy += F*dy/r;
+      }
+      fx += (cx - pos[i][0]) * 0.003;
+      fy += (cy - pos[i][1]) * 0.003;
+      const fm = Math.sqrt(fx*fx+fy*fy);
+      if (fm > fMax){ fx *= fMax/fm; fy *= fMax/fm; }
+      let vx = (vel[i][0] + fx) * damp * cool;
+      let vy = (vel[i][1] + fy) * damp * cool;
+      const vm = Math.sqrt(vx*vx+vy*vy);
+      if (vm > vMax){ vx *= vMax/vm; vy *= vMax/vm; }
+      vel[i][0] = vx; vel[i][1] = vy;
+      pos[i][0] += vx; pos[i][1] += vy;
+    }
+  }
+  // clamp into bounds
+  const M = 24;
+  for (let i=0;i<N;i++){
+    pos[i][0] = Math.max(M, Math.min(W-M, pos[i][0]));
+    pos[i][1] = Math.max(M, Math.min(H-M, pos[i][1]));
   }
 }
 
-// ---------- dynamics ----------
-// Forward Euler with sub-stepping. Diffusion is the unnormalized graph Laplacian
-//   (Lu)_i = Σ_{j ~ i} (u_i - u_j)
-// so the diffusion contribution to du_i/dt is -D_u (Lu)_i = D_u Σ (u_j - u_i).
-const DT_SUB   = 0.005;   // small enough that hubs don't blow up
-const SUB_PER  = 12;      // 12 * 0.005 = 0.06 simulated time per render frame
-const CLAMP_HI =  20;
-const CLAMP_LO = -10;
+// =====================================================================
+// LAPLACIAN EIGENDECOMPOSITION (cyclic Jacobi for symmetric matrices)
+// =====================================================================
+function computeSpectrum(){
+  // Build L = D - A as a dense N×N matrix.
+  const A = Array.from({length:N}, () => new Float64Array(N));
+  for (let i=0;i<N;i++){
+    A[i][i] = deg[i];
+    for (const j of adj[i]) A[i][j] = -1;
+  }
+  // Cyclic Jacobi
+  const maxSweeps = 50;
+  const tol = 1e-9;
+  for (let sweep=0; sweep<maxSweeps; sweep++){
+    let off = 0;
+    for (let i=0;i<N;i++) for (let j=i+1;j<N;j++) off += A[i][j]*A[i][j];
+    if (off < tol*tol) break;
+    for (let p=0;p<N-1;p++){
+      for (let q=p+1;q<N;q++){
+        const apq = A[p][q];
+        if (Math.abs(apq) < 1e-13) continue;
+        const app = A[p][p], aqq = A[q][q];
+        const theta = (aqq - app) / (2*apq);
+        let t;
+        if (Math.abs(theta) > 1e15) t = 1/(2*theta);
+        else t = (theta>=0?1:-1) / (Math.abs(theta) + Math.sqrt(theta*theta + 1));
+        const cc = 1/Math.sqrt(t*t + 1);
+        const ss = t * cc;
+        A[p][p] = app - t*apq;
+        A[q][q] = aqq + t*apq;
+        A[p][q] = A[q][p] = 0;
+        for (let i=0;i<N;i++){
+          if (i===p || i===q) continue;
+          const aip = A[i][p], aiq = A[i][q];
+          A[i][p] = A[p][i] = cc*aip - ss*aiq;
+          A[i][q] = A[q][i] = ss*aip + cc*aiq;
+        }
+      }
+    }
+  }
+  const eigs = new Array(N);
+  for (let i=0;i<N;i++) eigs[i] = A[i][i];
+  eigs.sort((a,b) => a - b);
+  return eigs;
+}
+
+// =====================================================================
+// REACTION JACOBIAN AT FP (numerical, central differences)
+// =====================================================================
+function computeJacobianAtFP(){
+  const [u0, v0] = fp;
+  const h = 1e-5;
+  const f_u = (R.f(u0+h, v0, R.params) - R.f(u0-h, v0, R.params)) / (2*h);
+  const f_v = (R.f(u0, v0+h, R.params) - R.f(u0, v0-h, R.params)) / (2*h);
+  const g_u = (R.g(u0+h, v0, R.params) - R.g(u0-h, v0, R.params)) / (2*h);
+  const g_v = (R.g(u0, v0+h, R.params) - R.g(u0, v0-h, R.params)) / (2*h);
+  return { f_u, f_v, g_u, g_v };
+}
+
+// =====================================================================
+// TURING DISPERSION RELATION
+// =====================================================================
+//
+// Linearize around FP: dW/dt = (J - Λ·D) W, where Λ runs over eigenvalues of L
+// and D = diag(D_u, D_v). Instability for an eigen-mode requires
+//     det(J - Λ·D) < 0   (with trace negative, which is true for Λ ≥ 0 if J is
+//                         stable in the well-mixed case)
+// Expanding: D_u D_v Λ^2  -  (f_u D_v + g_v D_u) Λ  +  (f_u g_v - f_v g_u)  <  0
+// → an interval [Λ−, Λ+] of unstable wavenumbers (if real, positive roots exist).
+function computeTuringBand(){
+  if (!jacobianAtFP) return null;
+  const Du = +$('du').value, Dv = +$('dv').value;
+  const A = Du * Dv;
+  if (A <= 0) return null;
+  const J = jacobianAtFP;
+  const B = -(J.f_u * Dv + J.g_v * Du);
+  const C = J.f_u * J.g_v - J.f_v * J.g_u;
+  const disc = B*B - 4*A*C;
+  if (disc <= 0) return null;
+  const sd = Math.sqrt(disc);
+  const lo = (-B - sd) / (2*A);
+  const hi = (-B + sd) / (2*A);
+  if (hi <= 0) return null;
+  return { lo: Math.max(0, lo), hi };
+}
+
+// =====================================================================
+// DYNAMICS — forward Euler with sub-stepping, no clamping
+// =====================================================================
+const DT_SUB = 0.002;
+const SUB_PER_FRAME = 25;   // simulated time per visual frame ≈ 0.05
 
 function step(Du, Dv){
-  for (let s=0; s<SUB_PER; s++){
+  const f = R.f, g = R.g, P = R.params;
+  for (let s=0; s<SUB_PER_FRAME; s++){
     const du = new Float64Array(N), dv = new Float64Array(N);
     for (let i=0;i<N;i++){
       let su = 0, sv = 0;
@@ -252,90 +465,52 @@ function step(Du, Dv){
         su += u[j] - u[i];
         sv += v[j] - v[i];
       }
-      du[i] = fReact(u[i], v[i]) + Du * su;
-      dv[i] = gReact(u[i], v[i]) + Dv * sv;
+      du[i] = f(u[i], v[i], P) + Du * su;
+      dv[i] = g(u[i], v[i], P) + Dv * sv;
     }
     for (let i=0;i<N;i++){
-      let nu = u[i] + DT_SUB * du[i];
-      let nv = v[i] + DT_SUB * dv[i];
-      if (nu < CLAMP_LO) nu = CLAMP_LO; else if (nu > CLAMP_HI) nu = CLAMP_HI;
-      if (nv < CLAMP_LO) nv = CLAMP_LO; else if (nv > CLAMP_HI) nv = CLAMP_HI;
-      u[i] = nu; v[i] = nv;
+      u[i] += DT_SUB * du[i];
+      v[i] += DT_SUB * dv[i];
     }
+    simTime += DT_SUB; simSteps++;
   }
+  // record σ(u)
+  let s1 = 0, s2 = 0;
+  for (let i=0;i<N;i++){ s1 += u[i]; s2 += u[i]*u[i]; }
+  const mean = s1 / N;
+  const variance = Math.max(0, s2 / N - mean*mean);
+  tsBuf[tsHead] = Math.sqrt(variance);
+  tsHead = (tsHead + 1) % TS_LEN;
+  if (tsCount < TS_LEN) tsCount++;
 }
 
-// ---------- force-directed layout ----------
-const LAY = {
-  kRep: 1800,    // node-node repulsion strength
-  kSpr: 0.04,    // edge spring stiffness
-  L0:   70,      // resting edge length
-  damp: 0.82,    // velocity damping
-  pull: 0.0025,  // pull toward canvas center
-  fMax: 30,      // hard cap on per-step force magnitude (prevents explosions)
-  vMax: 12,      // hard cap on per-step velocity magnitude
-};
+// =====================================================================
+// RENDERING
+// =====================================================================
+const $ = id => document.getElementById(id);
+const netcv = $('netcv'), netctx = netcv.getContext('2d');
+const histcv = $('histcv'), histctx = histcv.getContext('2d');
+const tscv = $('tscv'), tsctx = tscv.getContext('2d');
+const speccv = $('speccv'), specctx = speccv.getContext('2d');
 
-function clampMag(x, y, m){
-  const r = Math.sqrt(x*x + y*y);
-  if (r > m){ const s = m / r; return [x*s, y*s]; }
-  return [x, y];
+function fitCanvas(c){
+  const r = c.getBoundingClientRect();
+  c.width = Math.max(50, Math.floor(r.width));
+  c.height = Math.max(50, Math.floor(r.height));
 }
-
-function layoutTick(){
-  const cx = cv.width / 2, cy = cv.height / 2;
-  const W = cv.width, H = cv.height, M = 24;
-  for (let i=0;i<N;i++){
-    let fx = 0, fy = 0;
-    // pairwise repulsion
-    for (let j=0;j<N;j++){
-      if (j === i) continue;
-      let dx = pos[i][0] - pos[j][0];
-      let dy = pos[i][1] - pos[j][1];
-      let r2 = dx*dx + dy*dy;
-      if (r2 < 1) r2 = 1;
-      const r  = Math.sqrt(r2);
-      const F  = LAY.kRep / r2;
-      fx += F * dx / r;
-      fy += F * dy / r;
-    }
-    // spring along edges
-    for (const j of adj[i]){
-      const dx = pos[j][0] - pos[i][0];
-      const dy = pos[j][1] - pos[i][1];
-      const r  = Math.sqrt(dx*dx + dy*dy) + 1e-3;
-      const F  = LAY.kSpr * (r - LAY.L0);
-      fx += F * dx / r;
-      fy += F * dy / r;
-    }
-    // gentle pull to center
-    fx += (cx - pos[i][0]) * LAY.pull;
-    fy += (cy - pos[i][1]) * LAY.pull;
-
-    [fx, fy] = clampMag(fx, fy, LAY.fMax);
-
-    let vx = (vel[i][0] + fx) * LAY.damp;
-    let vy = (vel[i][1] + fy) * LAY.damp;
-    [vx, vy] = clampMag(vx, vy, LAY.vMax);
-    vel[i][0] = vx; vel[i][1] = vy;
-
-    let nx = pos[i][0] + vx;
-    let ny = pos[i][1] + vy;
-    // hard canvas bounds with a soft bounce
-    if (nx < M)         { nx = M;       vel[i][0] *= -0.3; }
-    else if (nx > W - M){ nx = W - M;   vel[i][0] *= -0.3; }
-    if (ny < M)         { ny = M;       vel[i][1] *= -0.3; }
-    else if (ny > H - M){ ny = H - M;   vel[i][1] *= -0.3; }
-    pos[i][0] = nx; pos[i][1] = ny;
-  }
+function fitAll(){
+  fitCanvas(netcv); fitCanvas(histcv); fitCanvas(tscv); fitCanvas(speccv);
 }
+addEventListener('resize', () => { fitAll(); if (adj) computeLayout(netcv.width, netcv.height); });
 
-// ---------- render ----------
 function colorFor(x){
-  // map u centered on U_STAR=3 with half-width ~2.5
-  let t = (x - U_STAR) / 2.5;
+  const [lo, hi] = R.uRange;
+  const fp_u = fp[0];
+  // diverging colormap centered on FP
+  let t;
+  if (x >= fp_u) t = (x - fp_u) / Math.max(1e-9, hi - fp_u);
+  else           t = -(fp_u - x) / Math.max(1e-9, fp_u - lo);
   if (t < -1) t = -1; else if (t > 1) t = 1;
-  // -1 → blue, 0 → grey, 1 → red
   const a = (t + 1) / 2;
   const r = Math.round( 44 + (230 -  44) * a);
   const g = Math.round( 95 + ( 57 -  95) * a);
@@ -343,76 +518,254 @@ function colorFor(x){
   return `rgb(${r},${g},${b})`;
 }
 
-function draw(){
-  ctx.clearRect(0, 0, cv.width, cv.height);
-
-  // edges
-  ctx.strokeStyle = 'rgba(140,150,170,0.18)';
-  ctx.lineWidth = 1;
-  ctx.beginPath();
+function drawNetwork(){
+  netctx.clearRect(0,0,netcv.width,netcv.height);
+  netctx.strokeStyle = 'rgba(140,150,170,0.18)';
+  netctx.lineWidth = 1;
+  netctx.beginPath();
   for (const [i,j] of edges){
-    ctx.moveTo(pos[i][0], pos[i][1]);
-    ctx.lineTo(pos[j][0], pos[j][1]);
+    netctx.moveTo(pos[i][0], pos[i][1]);
+    netctx.lineTo(pos[j][0], pos[j][1]);
   }
-  ctx.stroke();
-
-  // nodes
+  netctx.stroke();
   for (let i=0;i<N;i++){
-    const r = 4 + Math.sqrt(deg[i] || 1) * 1.4;
-    ctx.fillStyle = colorFor(u[i]);
-    ctx.beginPath();
-    ctx.arc(pos[i][0], pos[i][1], r, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.strokeStyle = 'rgba(0,0,0,0.35)';
-    ctx.lineWidth = 1;
-    ctx.stroke();
+    const r = 4 + Math.sqrt(deg[i] || 1) * 1.5;
+    netctx.fillStyle = colorFor(u[i]);
+    netctx.beginPath();
+    netctx.arc(pos[i][0], pos[i][1], r, 0, Math.PI*2);
+    netctx.fill();
+    netctx.strokeStyle = 'rgba(0,0,0,0.45)';
+    netctx.stroke();
   }
 }
 
-// ---------- ui ----------
-const $ = id => document.getElementById(id);
-let running = true;
-let frame = 0;
+function drawHist(){
+  const W = histcv.width, H = histcv.height;
+  histctx.clearRect(0,0,W,H);
+  const [lo, hi] = R.uRange;
+  const BINS = 30;
+  const bins = new Int32Array(BINS);
+  for (let i=0;i<N;i++){
+    let t = (u[i] - lo) / (hi - lo);
+    if (t < 0) t = 0; else if (t > 1) t = 0.9999;
+    bins[Math.floor(t * BINS)]++;
+  }
+  let mx = 1;
+  for (let b=0;b<BINS;b++) if (bins[b]>mx) mx = bins[b];
+  const bw = W / BINS;
+  for (let b=0;b<BINS;b++){
+    const t = (b + 0.5) / BINS;
+    const uv = lo + t * (hi - lo);
+    histctx.fillStyle = colorFor(uv);
+    const h = (bins[b] / mx) * (H - 14);
+    histctx.fillRect(b*bw + 1, H - h - 4, bw - 2, h);
+  }
+  // FP marker
+  const fpx = ((fp[0] - lo) / (hi - lo)) * W;
+  histctx.strokeStyle = 'rgba(232,237,244,0.5)';
+  histctx.setLineDash([2,2]);
+  histctx.beginPath(); histctx.moveTo(fpx, 0); histctx.lineTo(fpx, H); histctx.stroke();
+  histctx.setLineDash([]);
+  // axis label
+  histctx.fillStyle = '#6b7280';
+  histctx.font = '10px ui-monospace, monospace';
+  histctx.fillText(lo.toFixed(0), 2, H - 1);
+  histctx.fillText(hi.toFixed(0), W - 14, H - 1);
+}
 
+function drawTimeSeries(){
+  const W = tscv.width, H = tscv.height;
+  tsctx.clearRect(0,0,W,H);
+  if (tsCount < 2) return;
+  let mx = 0;
+  for (let i=0;i<tsCount;i++) if (tsBuf[i]>mx) mx = tsBuf[i];
+  if (mx < 1e-6) mx = 1;
+  // grid
+  tsctx.strokeStyle = 'rgba(140,150,170,0.1)';
+  tsctx.beginPath();
+  for (let i=1;i<4;i++){ tsctx.moveTo(0, i*H/4); tsctx.lineTo(W, i*H/4); }
+  tsctx.stroke();
+  // line
+  tsctx.strokeStyle = '#e63946';
+  tsctx.lineWidth = 1.4;
+  tsctx.beginPath();
+  for (let i=0;i<tsCount;i++){
+    const idx = (tsHead - tsCount + i + TS_LEN) % TS_LEN;
+    const x = (i / (TS_LEN - 1)) * W;
+    const y = H - 4 - (tsBuf[idx] / mx) * (H - 8);
+    if (i===0) tsctx.moveTo(x, y); else tsctx.lineTo(x, y);
+  }
+  tsctx.stroke();
+  tsctx.fillStyle = '#6b7280';
+  tsctx.font = '10px ui-monospace, monospace';
+  tsctx.fillText('σ(u) max = ' + mx.toFixed(2), 4, 12);
+}
+
+function drawSpectrum(){
+  const W = speccv.width, H = speccv.height;
+  specctx.clearRect(0,0,W,H);
+  if (!spectrum) return;
+  const mxLam = Math.max(...spectrum) * 1.05 + 0.5;
+  const lam2pix = lam => 4 + (lam / mxLam) * (W - 8);
+
+  // turing band (under the dots)
+  if (turing){
+    const x0 = lam2pix(turing.lo);
+    const x1 = lam2pix(Math.min(turing.hi, mxLam));
+    specctx.fillStyle = 'rgba(230, 57, 70, 0.18)';
+    specctx.fillRect(x0, 4, Math.max(1, x1 - x0), H - 16);
+    specctx.strokeStyle = 'rgba(230, 57, 70, 0.5)';
+    specctx.setLineDash([3,3]);
+    specctx.beginPath();
+    specctx.moveTo(x0, 4); specctx.lineTo(x0, H - 12);
+    specctx.moveTo(x1, 4); specctx.lineTo(x1, H - 12);
+    specctx.stroke();
+    specctx.setLineDash([]);
+    specctx.fillStyle = '#e63946';
+    specctx.font = '10px ui-monospace, monospace';
+    specctx.fillText(`Turing band [${turing.lo.toFixed(2)}, ${turing.hi.toFixed(2)}]`, 6, 12);
+  } else {
+    specctx.fillStyle = '#6b7280';
+    specctx.font = '10px ui-monospace, monospace';
+    specctx.fillText('no Turing instability for current (D_u, D_v)', 6, 12);
+  }
+  // axis line
+  specctx.strokeStyle = 'rgba(140,150,170,0.3)';
+  specctx.beginPath();
+  specctx.moveTo(4, H-12); specctx.lineTo(W-4, H-12);
+  specctx.stroke();
+  // eigenvalue dots
+  for (let i=0;i<spectrum.length;i++){
+    const x = lam2pix(spectrum[i]);
+    const inBand = turing && spectrum[i] >= turing.lo && spectrum[i] <= turing.hi;
+    specctx.fillStyle = inBand ? '#e63946' : '#cbd2dc';
+    specctx.beginPath();
+    specctx.arc(x, H - 12, inBand ? 3 : 2, 0, Math.PI*2);
+    specctx.fill();
+  }
+  // x-axis labels
+  specctx.fillStyle = '#6b7280';
+  specctx.font = '10px ui-monospace, monospace';
+  specctx.fillText('Λ = 0', 4, H - 1);
+  specctx.fillText('Λ ≈ ' + mxLam.toFixed(1), W - 50, H - 1);
+}
+
+// =====================================================================
+// REBUILD / REFRESH
+// =====================================================================
+function rebuildAll(){
+  N = +$('n').value;
+  const k = +$('k').value;
+  const topo = $('topo').value;
+  if (topo === 'er') buildER(N, k);
+  else if (topo === 'ba') buildBA(N, k);
+  else                    buildWS(N, k, 0.15);
+  deg = adj.map(a => a.length);
+
+  fitAll();
+  computeLayout(netcv.width, netcv.height);
+  spectrum = computeSpectrum();
+  reseedState();
+  refreshAll();
+  $('netinfo').textContent =
+    `N=${N} · |E|=${edges.length} · ⟨k⟩=${(2*edges.length/N).toFixed(2)} · Δ=${Math.max(...deg)}`;
+}
+
+function refreshAll(){
+  jacobianAtFP = computeJacobianAtFP();
+  turing = computeTuringBand();
+  $('tstate').className = turing ? 'turing-on' : 'turing-off';
+  $('tstate').textContent = turing
+    ? `unstable on Λ ∈ [${turing.lo.toFixed(2)}, ${turing.hi.toFixed(2)}]`
+    : 'stable (homogeneous)';
+  // count graph eigenvalues inside Turing band
+  let nIn = 0;
+  if (spectrum && turing){
+    for (const lam of spectrum) if (lam >= turing.lo && lam <= turing.hi) nIn++;
+  }
+  $('bandinfo').textContent = turing ? `${nIn} of ${spectrum?spectrum.length:0} modes unstable` : 'subcritical';
+}
+
+// =====================================================================
+// UI BINDINGS
+// =====================================================================
 function refreshLabels(){
-  $('duv').textContent = (+$('du').value).toFixed(2);
-  $('dvv').textContent = (+$('dv').value).toFixed(1);
+  $('duv').textContent = (+$('du').value).toFixed(3);
+  $('dvv').textContent = (+$('dv').value).toFixed(2);
   $('nv').textContent  = $('n').value;
   $('kv').textContent  = $('k').value;
 }
-function updateStats(){
-  $('nedges').textContent = edges.length;
-  $('maxdeg').textContent = deg.reduce((a,b)=>Math.max(a,b), 0);
+function showReactionParams(){
+  const P = R.params;
+  $('rparams').textContent = Object.entries(P).map(([k,v])=>`${k}=${v}`).join('  ');
+  const [u0, v0] = fp;
+  $('ufp').textContent = u0.toFixed(3);
+  $('vfp').textContent = v0.toFixed(3);
 }
-function updateURange(){
-  let lo = Infinity, hi = -Infinity;
-  for (let i=0;i<N;i++){ if (u[i]<lo) lo=u[i]; if (u[i]>hi) hi=u[i]; }
-  $('urange').textContent = `${lo.toFixed(2)} … ${hi.toFixed(2)}`;
+function applyReaction(){
+  kindKey = $('kind').value;
+  R = REACTIONS[kindKey];
+  fp = R.fp(R.params);
+  // re-tune slider ranges to fit the new kinetics
+  if (kindKey === 'mm'){
+    $('du').max = '1';   $('du').step = '0.001';
+    $('dv').max = '10';  $('dv').step = '0.01';
+  } else {
+    $('du').max = '5';   $('du').step = '0.01';
+    $('dv').max = '40';  $('dv').step = '0.1';
+  }
+  showReactionParams();
+}
+function applyPreset(key){
+  const P = PRESETS[key]; if (!P) return;
+  $('kind').value = P.kind; applyReaction();
+  $('topo').value = P.topo;
+  $('n').value = P.N; $('k').value = P.k;
+  $('du').value = P.Du; $('dv').value = P.Dv;
+  refreshLabels();
+  rebuildAll();
 }
 
-['du','dv'].forEach(id => $(id).addEventListener('input', refreshLabels));
-['n','k','topo'].forEach(id => $(id).addEventListener('input', () => {
-  refreshLabels(); buildGraph();
-}));
-$('reset' ).addEventListener('click', buildGraph);
-$('reseed').addEventListener('click', reseedState);
-$('pause' ).addEventListener('click', () => {
+['du','dv'].forEach(id => $(id).addEventListener('input', () => { refreshLabels(); refreshAll(); }));
+['n','k','topo'].forEach(id => $(id).addEventListener('input', () => { refreshLabels(); rebuildAll(); }));
+$('kind').addEventListener('input', () => { applyReaction(); rebuildAll(); });
+$('preset').addEventListener('input', e => applyPreset(e.target.value));
+$('rebuild').addEventListener('click', rebuildAll);
+$('reseed').addEventListener('click', () => { reseedState(); });
+$('pause').addEventListener('click', () => {
   running = !running;
   $('pause').textContent = running ? 'pause' : 'play';
 });
 
-refreshLabels();
-buildGraph();
-
+// =====================================================================
+// MAIN LOOP
+// =====================================================================
 function loop(){
   if (running){
     step(+$('du').value, +$('dv').value);
-    layoutTick();
-    if ((frame++ & 7) === 0) updateURange();
   }
-  draw();
+  drawNetwork();
+  drawHist();
+  drawTimeSeries();
+  drawSpectrum();
+  // stats
+  let s1 = 0, s2 = 0;
+  for (let i=0;i<N;i++){ s1 += u[i]; s2 += u[i]*u[i]; }
+  const mean = s1/N;
+  const sigma = Math.sqrt(Math.max(0, s2/N - mean*mean));
+  $('umean').textContent = mean.toFixed(3);
+  $('usig').textContent  = sigma.toFixed(3);
+  $('tval').textContent  = simTime.toFixed(2);
+  $('sval').textContent  = simSteps;
+  $('histinfo').textContent = `n=${N}, bins=30`;
   requestAnimationFrame(loop);
 }
+
+// =====================================================================
+// BOOT
+// =====================================================================
+applyReaction();
+applyPreset('mm-strong');
 loop();
 </script>
 </body>

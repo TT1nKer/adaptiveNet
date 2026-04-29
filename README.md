@@ -8,7 +8,7 @@ The plan: each landmark paper becomes a single-file HTML demo you can open, para
 
 | File | Paper | What you see |
 | --- | --- | --- |
-| [`nakao.html`](nakao.html) | Nakao & Mikhailov, *Turing patterns in network-organized activator–inhibitor systems*, **Nature Physics 6**, 544–550 (2010). | Mimura–Murray activator–inhibitor reaction at each node, diffusion via the graph Laplacian. With D<sub>v</sub> ≫ D<sub>u</sub> the homogeneous state goes Turing-unstable and the network splits into high-u / low-u clusters. Switch to a Barabási–Albert topology and hubs act as pattern organizers. |
+| [`nakao.html`](nakao.html) | Nakao & Mikhailov, *Turing patterns in network-organized activator–inhibitor systems*, **Nature Physics 6**, 544–550 (2010). | Mimura–Murray activator–inhibitor reaction at each node, diffusion via the graph Laplacian. Live diagnostics: u-distribution histogram, σ(u) time series, Laplacian eigenvalue spectrum with the Turing-instability band overlaid (computed analytically from the linearized dispersion relation at the homogeneous fixed point). Named numerical presets reproduce subcritical, onset, strong, hub-organized (BA), and small-world (WS) regimes. |
 
 ## Why
 
