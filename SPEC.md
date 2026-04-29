@@ -50,6 +50,24 @@ The MVP follows from this:
 
 The MVP is a **demo browser that happens to run on the substrate**, not a model-authoring tool that happens to ship with examples. Authoring becomes the v2 theme once the consumption surface is good enough to attract first users.
 
+### 1.3 Medium — web is the MVP host, not the platform
+
+The MVP runs in the browser because that medium has the lowest friction for "click a link, see emergence" — zero install, instant share, runs on any device. **The browser is the v1 host, not a platform commitment.**
+
+Long-term productive use of this tool is more likely to live in:
+- a **native desktop app** (Tauri / wgpu-rs / Metal / CUDA), where memory ceilings are higher and a real GPU is reachable,
+- a **Python library / CLI** for scripting big parameter sweeps and importing from pandas / scientific stacks,
+- or a hybrid: web playground + native or Python backend.
+
+Architectural implications today:
+
+- The **model file format** must be medium-independent (JSON or equivalent), not coupled to browser storage / URLs / DOM state.
+- The **substrate definition** (X, W, primitives, four-block model) is the portable contract. Anything browser-specific (canvas rendering, slider widgets, URL serialization) lives outside the substrate, in the rendering layer.
+- The **rule language**, when introduced in v2, must not be JS or any browser-bound language. The "host JS engine" path is rejected; v2 will use a small expression DSL or a tracer-based array-program API.
+- WebGPU is **not** assumed to be the long-term GPU target. WebGPU may be one v2 backend among several (CUDA, Metal, Vulkan, wgpu-rs). The substrate compiles to whichever backend the host environment provides.
+
+In practice, for v1 this means: write the MVP in JS for the browser, but treat `(model file format, substrate semantics, rule semantics)` as the durable contract that survives the eventual port off the web.
+
 ---
 
 ## 2. What it is not
