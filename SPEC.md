@@ -27,6 +27,29 @@ Defaults are tuned for *casual / interest exploration* — NetLogo-style "open i
 
 This positioning is the design hinge for several downstream decisions: rule UX must accommodate both audiences (rules out a JAX-code-only path; argues for layered access), the GUI must privilege the casual default while exposing the rigor switches without hiding them, and the model file format must serialize the preamble state so a researcher can audit "what mode was this run in."
 
+### 1.2 MVP scope — the consumption side first
+
+Most users want to **open the tool, browse polished demos, drag sliders, see emergence**. That is the entire interaction. NetLogo's actual usage distribution makes this concrete: the vast majority of users never author a model — they explore the Models Library. NetLogo's real product is the library, not the language.
+
+The MVP follows from this:
+
+**In scope for MVP:**
+- A **demo gallery**: 3–5 polished preset models, each with a cover, a one-paragraph description, and a one-click open.
+- For each demo: live slider controls over a small set of meaningful parameters; a visible network with state-driven coloring; one or two basic diagnostics (histogram, time series).
+- Seed control + a "reseed" button (cheap; essential for the "again with different randomness" experience).
+- Play / pause / reset.
+- A way to share a model (URL-encoded `(model_id, params, seed)`).
+
+**Out of scope for MVP — important but later:**
+- Authoring new models from scratch (rule editor, language docs, full primitive surface).
+- Copy-and-modify a demo into "my model."
+- Fork trees, research-mode history scrubbing.
+- Determinism / precision / backend switches (assume `approx` / `fp32` / `auto` for v1).
+- Validation, NaN guards, dimensional checks.
+- Sparse-W path.
+
+The MVP is a **demo browser that happens to run on the substrate**, not a model-authoring tool that happens to ship with examples. Authoring becomes the v2 theme once the consumption surface is good enough to attract first users.
+
 ---
 
 ## 2. What it is not
@@ -138,14 +161,15 @@ Two related but distinct features.
 
 These are NOT decided and must be answered before architecture is committed.
 
+Resolved:
 - ~~**Target user.**~~ **Resolved (§1.1):** both casual/interest and research, progressive disclosure via preamble defaults.
+- ~~**MVP scope.**~~ **Resolved (§1.2):** demo gallery first; authoring comes later.
 
 Still open:
 
-1. **Target N.** ≤1K (dense W comfortable on browser GPU) vs. ~10K (dense ~400 MB, marginal) vs. ≥100K (sparse mandatory). Determines whether dense-only or dense+sparse is required for v1. Constrained by §1.1: casual default should be small enough to feel instant on a laptop browser; research mode may want a path to larger.
-2. **Rule editing UX.** Range from "pick from menu" → "write expressions" → "write full array-program code" → "wire visual node graph." Constrained by §1.1: must accommodate both audiences, which probably argues for *layered access* (templates → expressions → full code) rather than a single point on the spectrum.
+1. **Target N.** ≤1K (dense W comfortable on browser GPU) vs. ~10K (dense ~400 MB, marginal) vs. ≥100K (sparse mandatory). Determines whether dense-only or dense+sparse is required. Constrained by §1.1 + §1.2: MVP demos should feel instant at small N; research opt-ins may want a path to larger later.
+2. **Rule editing UX.** Range from "pick from menu" → "write expressions" → "write full array-program code" → "wire visual node graph." Constrained by §1.1: must accommodate both audiences, which probably argues for *layered access* rather than a single point. Defer concrete decision until post-MVP, since authoring is out of MVP scope.
 3. **`observe` layer specifics.** What primitives the user has for declaring diagnostics. Defer until (2) is settled.
-4. **MVP scope.** What is the minimum demo that proves the concept? Does MVP need fork? History scrubbing or only replay? Multiple kinetics or only one? Should the MVP target the casual mode only and add research switches later, or both from day one?
 
 ---
 
