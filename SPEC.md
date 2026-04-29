@@ -10,6 +10,23 @@ A general-purpose, browser-runnable tool for defining and exploring **node–edg
 
 One-line positioning: **NetLogo's spirit (fixed substrate, user-editable rules) on a substrate that is GPU-native and edge-state-aware.**
 
+### 1.1 Target user — both casual and research, with progressive disclosure
+
+The tool serves **two audiences with one product**, distinguished only by which preamble switches they flip:
+
+| | Casual / interest user (default) | Researcher (opt-in via preamble) |
+|---|---|---|
+| precision | auto (fp32 / fp16) | user-selected (fp64 available) |
+| determinism | `approx` (fast, GPU-parallel reduction order) | `strict` (bit-exact replay, ~3× slower) |
+| history | ring buffer, last N steps | full record, configurable |
+| rule editing | template / expression language with friendly defaults | same language, full power |
+| validation | light | strict (NaN guards, conservation checks, dimensional sanity) |
+| reproducibility guarantee | trajectory shape | bit-exact |
+
+Defaults are tuned for *casual / interest exploration* — NetLogo-style "open it, click run, see emergence." Researchers reach the rigor by writing one or two extra preamble lines. Models written in casual mode and models written in research mode are **interoperable**: the substrate, the rule language, and the file format are identical. A researcher can pick up a casual user's model and tighten it without rewriting.
+
+This positioning is the design hinge for several downstream decisions: rule UX must accommodate both audiences (rules out a JAX-code-only path; argues for layered access), the GUI must privilege the casual default while exposing the rigor switches without hiding them, and the model file format must serialize the preamble state so a researcher can audit "what mode was this run in."
+
 ---
 
 ## 2. What it is not
@@ -119,13 +136,16 @@ Two related but distinct features.
 
 ## 7. Open questions
 
-These are NOT decided and must be answered before architecture is committed:
+These are NOT decided and must be answered before architecture is committed.
 
-1. **Target user.** Researcher? Student? Hobbyist? Self only? Each pulls the rule UX in different directions.
-2. **Target N.** ≤1K (dense W comfortable on browser GPU) vs. ~10K (dense ~400 MB, marginal) vs. ≥100K (sparse mandatory). Determines whether dense-only or dense+sparse is required for v1.
-3. **Rule editing UX.** Range from "pick from menu" → "write expressions" → "write full array-program code" → "wire visual node graph." Depends on (1).
-4. **`observe` layer specifics.** What primitives the user has for declaring diagnostics. Defer until (1) and (3) are settled.
-5. **MVP scope.** What is the minimum demo that proves the concept? Does MVP need fork? History scrubbing or only replay? Multiple kinetics or only one?
+- ~~**Target user.**~~ **Resolved (§1.1):** both casual/interest and research, progressive disclosure via preamble defaults.
+
+Still open:
+
+1. **Target N.** ≤1K (dense W comfortable on browser GPU) vs. ~10K (dense ~400 MB, marginal) vs. ≥100K (sparse mandatory). Determines whether dense-only or dense+sparse is required for v1. Constrained by §1.1: casual default should be small enough to feel instant on a laptop browser; research mode may want a path to larger.
+2. **Rule editing UX.** Range from "pick from menu" → "write expressions" → "write full array-program code" → "wire visual node graph." Constrained by §1.1: must accommodate both audiences, which probably argues for *layered access* (templates → expressions → full code) rather than a single point on the spectrum.
+3. **`observe` layer specifics.** What primitives the user has for declaring diagnostics. Defer until (2) is settled.
+4. **MVP scope.** What is the minimum demo that proves the concept? Does MVP need fork? History scrubbing or only replay? Multiple kinetics or only one? Should the MVP target the casual mode only and add research switches later, or both from day one?
 
 ---
 
