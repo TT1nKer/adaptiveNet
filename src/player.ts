@@ -340,36 +340,73 @@ function coerceParam(spec: ParamSpec, raw: string | number): string | number {
   return Number.isFinite(n) ? n : (spec as NumericParamSpec).default;
 }
 
+function showBootError(stage: string, err: unknown): void {
+  const msg = err instanceof Error ? `${err.message}\n\n${err.stack ?? ''}` : String(err);
+  console.error(`[adaptiveNet] boot failed at "${stage}":`, err);
+  document.body.innerHTML =
+    `<div style="padding:32px;color:#e63946;font:13px ui-monospace,monospace;line-height:1.6">` +
+    `<h2 style="color:#e8edf4;margin:0 0 8px">boot error at: ${stage}</h2>` +
+    `<pre style="white-space:pre-wrap;background:#0e1014;padding:16px;border:1px solid #232a36;border-radius:4px">${escapeHtml(msg)}</pre>` +
+    `<p><a href="index.html" style="color:#e63946">← back to gallery</a></p>` +
+    `</div>`;
+}
+function escapeHtml(s: string): string {
+  return s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c] as string));
+}
+
 async function boot(): Promise<void> {
-  const url = parseURL();
-  seed = url.seed;
-  (el('seed') as HTMLInputElement).value = String(seed);
+  let stage = 'parseURL';
+  try {
+    const url = parseURL();
+    seed = url.seed;
 
-  const loader = MODEL_REGISTRY[url.id];
-  if (!loader) {
-    document.body.innerHTML = `<div style="padding:40px">unknown model: <b>${url.id}</b>. <a href="index.html">back to gallery</a></div>`;
-    return;
+    stage = 'set seed input';
+    (el('seed') as HTMLInputElement).value = String(seed);
+
+    stage = 'lookup model';
+    const loader = MODEL_REGISTRY[url.id];
+    if (!loader) {
+      document.body.innerHTML = `<div style="padding:40px">unknown model: <b>${escapeHtml(url.id)}</b>. <a href="index.html">back to gallery</a></div>`;
+      return;
+    }
+
+    stage = `import model ${url.id}`;
+    model = (await loader()).default;
+    console.log('[adaptiveNet] model loaded:', model.id);
+
+    stage = 'merge params with URL overrides';
+    params = {};
+    for (const [k, spec] of Object.entries(model.params)) {
+      params[k] = (k in url.params) ? coerceParam(spec, url.params[k]!) : spec.default;
+    }
+    console.log('[adaptiveNet] params:', params);
+
+    stage = 'set chrome';
+    el('model-name').textContent = model.name;
+    el('description').innerHTML = renderDescription(model.long || model.short || '');
+    document.title = `adaptiveNet — ${model.name}`;
+
+    stage = 'buildParamsUI';
+    buildParamsUI();
+
+    stage = 'attachActions';
+    attachActions();
+
+    stage = 'first rebuild';
+    requestAnimationFrame(() => {
+      try {
+        rebuild();
+        console.log('[adaptiveNet] rebuild complete:',
+          'canvas', netcv.width, '×', netcv.height,
+          '· N', state?.N, '· edges', state?.graph.edges.length);
+        loop();
+      } catch (e) {
+        showBootError('first rebuild', e);
+      }
+    });
+  } catch (e) {
+    showBootError(stage, e);
   }
-  model = (await loader()).default;
-
-  params = {};
-  for (const [k, spec] of Object.entries(model.params)) {
-    params[k] = (k in url.params) ? coerceParam(spec, url.params[k]!) : spec.default;
-  }
-
-  el('model-name').textContent = model.name;
-  el('description').innerHTML = renderDescription(model.long || model.short || '');
-  document.title = `adaptiveNet — ${model.name}`;
-
-  buildParamsUI();
-  attachActions();
-  // Wait one frame so CSS Grid has assigned canvas dimensions before
-  // the layout sees them. Without this delay the first paint can land
-  // in the fallback 800×600 region with most of the network off-canvas.
-  requestAnimationFrame(() => {
-    rebuild();
-    loop();
-  });
 }
 
 function attachActions(): void {
