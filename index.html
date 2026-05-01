@@ -1,6 +1,34 @@
 <!DOCTYPE html>
+<html lang="en">
+<head>
 <meta charset="utf-8">
 <title>adaptiveNet</title>
-<meta http-equiv="refresh" content="0; url=nakao.html">
-<link rel="canonical" href="nakao.html">
-<p>Redirecting to <a href="nakao.html">nakao.html</a>.</p>
+<link rel="stylesheet" href="style.css">
+</head>
+<body class="gallery-page">
+  <h1>adaptiveNet</h1>
+  <p class="lead">
+    Interactive demos of node–edge dynamical systems — networks where node states and edge weights coevolve under simple rules. Click a card to open the demo, drag the sliders, watch the emergence. See <a href="https://github.com/TT1nKer/adaptiveNet/blob/main/SPEC.md">SPEC.md</a> for the design.
+  </p>
+
+  <div class="cards">
+    <a class="card" href="player.html?model=nakao-2010">
+      <div class="title">Network Turing Patterns</div>
+      <div class="short">Reaction–diffusion on a graph. When the inhibitor diffuses much faster than the activator, the network splits into high / low clusters. Hubs become pattern organizers.</div>
+      <div class="open">open →</div>
+    </a>
+
+    <div class="card placeholder">
+      <div class="title">Adaptive Voter (Holme–Newman)</div>
+      <div class="short">Coming soon. Edges rewire when neighbors disagree; opinions copy when they don't. Echo chambers form below a critical rewire rate.</div>
+      <div class="open">soon</div>
+    </div>
+
+    <div class="card placeholder">
+      <div class="title">Hopfield Retrieval</div>
+      <div class="short">Coming soon. Patterns encoded in edge weights via Hebbian learning. A noisy initial state converges to the nearest stored memory.</div>
+      <div class="open">soon</div>
+    </div>
+  </div>
+</body>
+</html>

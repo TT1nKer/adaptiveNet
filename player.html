@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>adaptiveNet — player</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body class="player-page">
+  <header>
+    <a href="index.html" class="back">← gallery</a>
+    <span id="model-name" class="title">·</span>
+    <span id="model-ref" class="ref"></span>
+    <span class="actions">
+      <button id="reset" title="rebuild graph and re-init state">reset</button>
+      <button id="reseed" title="new random seed, same params">reseed</button>
+      <button id="pause">pause</button>
+      <button id="share" title="copy a permalink to this exact configuration">copy link</button>
+    </span>
+  </header>
+
+  <div id="netbox">
+    <canvas id="netcv"></canvas>
+    <div id="loading" class="overlay" style="display:none">computing layout…</div>
+    <div id="netinfo" class="overlay-bottom">·</div>
+  </div>
+
+  <aside id="panel">
+    <div id="description"></div>
+
+    <h4>parameters</h4>
+    <div id="params"></div>
+
+    <h4>seed</h4>
+    <div id="seed-row" class="row">
+      <input id="seed" type="number" min="1" step="1" value="1">
+      <button id="seed-rand" title="pick a random seed">🎲</button>
+    </div>
+
+    <h4>state</h4>
+    <div id="stats" class="stats">
+      t = <b id="t-val">0.00</b><br>
+      steps = <b id="step-val">0</b>
+    </div>
+  </aside>
+
+  <footer id="diag">
+    <div class="diag-cell">
+      <div class="ttl" id="hist-ttl">·</div>
+      <canvas id="histcv"></canvas>
+    </div>
+    <div class="diag-cell">
+      <div class="ttl" id="ts-ttl">·</div>
+      <canvas id="tscv"></canvas>
+    </div>
+  </footer>
+
+  <script type="module" src="player.js"></script>
+</body>
+</html>

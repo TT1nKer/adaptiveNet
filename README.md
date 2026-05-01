@@ -8,9 +8,20 @@ A general-purpose tool for defining and exploring **node–edge dynamical system
 
 Single-file HTML demo of network Turing patterns (Nakao & Mikhailov 2010) lives at [`nakao.html`](nakao.html). It is a *concrete instance* of what the tool will eventually express as one entry in a library — useful as a sanity-check for the substrate, not as the product.
 
-## Run the existing demo
+## Run
 
-Open [`nakao.html`](nakao.html) in a browser. No dependencies.
+The site is a small static site of ES modules. Two ways to run it:
+
+**On GitHub Pages (recommended for trying it):** open the published URL.
+
+**Locally:** ES modules cannot be loaded over `file://`, so serve the directory:
+
+```sh
+python3 -m http.server 8000
+# then open http://localhost:8000/
+```
+
+No build step, no `npm install`, no dependencies. Just static files.
 
 ## License
 
