@@ -11,6 +11,7 @@ import type { Model, ModelState, ParamSpec, ParamValues, NumericParamSpec, Categ
 // ---------- model registry ----------
 const MODEL_REGISTRY: Record<string, () => Promise<{ default: Model }>> = {
   'nakao-2010': () => import('./models/nakao.ts'),
+  'holme-newman': () => import('./models/voter.ts'),
 };
 
 // ---------- DOM helpers ----------
