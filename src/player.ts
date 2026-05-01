@@ -239,7 +239,7 @@ function drawHist(): void {
     histctx.fillRect(b * bw + 1, H - h - 4, bw - 2, h);
   }
   histctx.fillStyle = '#6b7280';
-  histctx.font = '10px ui-monospace, monospace';
+  histctx.font = '11px ui-monospace, monospace';
   histctx.fillText(String(lo), 2, H - 1);
   histctx.fillText(String(hi), W - 18, H - 1);
 
@@ -282,7 +282,7 @@ function drawTimeSeries(): void {
   tsctx.stroke();
 
   tsctx.fillStyle = '#6b7280';
-  tsctx.font = '10px ui-monospace, monospace';
+  tsctx.font = '11px ui-monospace, monospace';
   tsctx.fillText(`max = ${mx.toFixed(3)}`, 4, 12);
 }
 
