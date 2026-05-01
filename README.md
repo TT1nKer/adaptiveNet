@@ -10,18 +10,28 @@ Single-file HTML demo of network Turing patterns (Nakao & Mikhailov 2010) lives 
 
 ## Run
 
-The site is a small static site of ES modules. Two ways to run it:
-
-**On GitHub Pages (recommended for trying it):** open the published URL.
-
-**Locally:** ES modules cannot be loaded over `file://`, so serve the directory:
+The project is a small TypeScript + Vite static site.
 
 ```sh
-python3 -m http.server 8000
-# then open http://localhost:8000/
+# install deps once (Bun, npm, yarn, or pnpm all work)
+bun install
+
+# dev server with hot reload
+bun run dev
+# open http://localhost:8000/
+
+# type-check only
+bun run typecheck
+
+# production build → dist/
+bun run build
+
+# serve the built site
+bun run preview
 ```
 
-No build step, no `npm install`, no dependencies. Just static files.
+If you don't have Bun installed, the same scripts work with `npm run` /
+`pnpm run` / `yarn` once Node and the deps are installed.
 
 ## License
 
