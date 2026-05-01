@@ -73,6 +73,15 @@ let state: ModelState | null = null;
 let layout: Layout | null = null;
 let running = true;
 
+// view transform (canvas-space → screen-space)
+let zoom = 1;
+let panX = 0;
+let panY = 0;
+let hoverNode: number | null = null;
+let isDragging = false;
+let dragStart = { x: 0, y: 0, panX: 0, panY: 0 };
+let didPan = false;
+
 const TS_LEN = 240;
 const tsBuf = new Float64Array(TS_LEN);
 let tsHead = 0;
@@ -155,6 +164,8 @@ function rebuild(): void {
   tsBuf.fill(0);
   tsHead = 0;
   tsCount = 0;
+  resetView();
+  hoverNode = null;
   let maxDeg = 0;
   for (let i = 0; i < state.graph.deg.length; i++) {
     const d = state.graph.deg[i]!;
@@ -172,10 +183,14 @@ function drawNetwork(): void {
   if (!state || !layout || !model) return;
   const pos = layout.pos;
 
+  netctx.save();
+  netctx.translate(panX, panY);
+  netctx.scale(zoom, zoom);
+
   const edges = state.graph.edges;
   const alpha = model.render.edgeAlpha ?? 0.18;
   netctx.strokeStyle = `rgba(140,150,170,${alpha})`;
-  netctx.lineWidth = 1;
+  netctx.lineWidth = 1 / zoom;
   netctx.beginPath();
   for (let e = 0; e < edges.length; e++) {
     const [i, j] = edges[e]!;
@@ -191,8 +206,100 @@ function drawNetwork(): void {
     netctx.arc(pos[i * 2]!, pos[i * 2 + 1]!, r, 0, Math.PI * 2);
     netctx.fill();
     netctx.strokeStyle = 'rgba(0,0,0,0.4)';
+    netctx.lineWidth = 1 / zoom;
     netctx.stroke();
   }
+
+  // highlight hovered node
+  if (hoverNode !== null && hoverNode < state.N) {
+    const i = hoverNode;
+    const r = model.render.nodeSize(state, i, params);
+    netctx.strokeStyle = '#e8edf4';
+    netctx.lineWidth = 2 / zoom;
+    netctx.beginPath();
+    netctx.arc(pos[i * 2]!, pos[i * 2 + 1]!, r + 3 / zoom, 0, Math.PI * 2);
+    netctx.stroke();
+  }
+
+  netctx.restore();
+
+  // tooltip in screen space
+  if (hoverNode !== null && hoverNode < state.N) drawTooltip(hoverNode);
+
+  // zoom indicator
+  if (Math.abs(zoom - 1) > 0.01) {
+    netctx.fillStyle = '#6b7280';
+    netctx.font = '11px ui-monospace, monospace';
+    netctx.fillText(`zoom ${zoom.toFixed(2)}× — double-click to reset`, 10, 18);
+  }
+}
+
+function drawTooltip(i: number): void {
+  if (!state || !layout || !model) return;
+  const pos = layout.pos;
+  const sx = pos[i * 2]! * zoom + panX;
+  const sy = pos[i * 2 + 1]! * zoom + panY;
+  const r = model.render.nodeSize(state, i, params) * zoom;
+
+  const lines: string[] = [`node ${i} · deg ${state.graph.deg[i]}`];
+  for (let k = 0; k < state.d; k++) {
+    const v = state.X[i * state.d + k]!;
+    lines.push(`X[${k}] = ${v.toFixed(3)}`);
+  }
+
+  netctx.font = '12px ui-monospace, monospace';
+  const padding = 8;
+  const lineHeight = 16;
+  let textWidth = 0;
+  for (const ln of lines) {
+    const w = netctx.measureText(ln).width;
+    if (w > textWidth) textWidth = w;
+  }
+  const boxW = textWidth + padding * 2;
+  const boxH = lines.length * lineHeight + padding * 2 - 4;
+
+  let bx = sx + r + 10;
+  let by = sy - boxH / 2;
+  if (bx + boxW > netcv.width - 4) bx = sx - r - 10 - boxW;
+  if (by < 4) by = 4;
+  if (by + boxH > netcv.height - 4) by = netcv.height - 4 - boxH;
+
+  netctx.fillStyle = 'rgba(11,13,17,0.95)';
+  netctx.fillRect(bx, by, boxW, boxH);
+  netctx.strokeStyle = '#232a36';
+  netctx.lineWidth = 1;
+  netctx.strokeRect(bx + 0.5, by + 0.5, boxW, boxH);
+
+  netctx.fillStyle = '#cbd2dc';
+  for (let k = 0; k < lines.length; k++) {
+    netctx.fillText(lines[k]!, bx + padding, by + padding + (k + 1) * lineHeight - 5);
+  }
+}
+
+function findNearestNode(mxModel: number, myModel: number, screenThreshold: number): number | null {
+  if (!state || !layout) return null;
+  const pos = layout.pos;
+  // threshold in model coords (screen distance / zoom)
+  const t = screenThreshold / zoom;
+  const t2 = t * t;
+  let best = -1;
+  let bestD2 = t2;
+  for (let i = 0; i < state.N; i++) {
+    const dx = mxModel - pos[i * 2]!;
+    const dy = myModel - pos[i * 2 + 1]!;
+    const d2 = dx * dx + dy * dy;
+    if (d2 < bestD2) {
+      bestD2 = d2;
+      best = i;
+    }
+  }
+  return best >= 0 ? best : null;
+}
+
+function resetView(): void {
+  zoom = 1;
+  panX = 0;
+  panY = 0;
 }
 
 function colorFromObserved(val: number): string {
@@ -450,7 +557,67 @@ function attachActions(): void {
     if (state) {
       // recompute the layout in-place; gives the resize a fresh "settle" pass.
       layout = new Layout(state.graph, netcv.width, netcv.height, new RNG(seed ^ 0xa5a5a5));
+      resetView();
     }
+  });
+
+  // ----- pan / zoom / hover on the network canvas -----
+  netcv.style.cursor = 'grab';
+
+  netcv.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    const rect = netcv.getBoundingClientRect();
+    const sx = (e.clientX - rect.left) * (netcv.width / rect.width);
+    const sy = (e.clientY - rect.top) * (netcv.height / rect.height);
+    const factor = e.deltaY > 0 ? 0.9 : 1.111;
+    const newZoom = Math.max(0.2, Math.min(20, zoom * factor));
+    // zoom centered on the mouse position
+    panX = sx - (sx - panX) * (newZoom / zoom);
+    panY = sy - (sy - panY) * (newZoom / zoom);
+    zoom = newZoom;
+  }, { passive: false });
+
+  netcv.addEventListener('mousedown', (e) => {
+    isDragging = true;
+    didPan = false;
+    dragStart = { x: e.clientX, y: e.clientY, panX, panY };
+    netcv.style.cursor = 'grabbing';
+  });
+
+  netcv.addEventListener('mousemove', (e) => {
+    const rect = netcv.getBoundingClientRect();
+    const sx = (e.clientX - rect.left) * (netcv.width / rect.width);
+    const sy = (e.clientY - rect.top) * (netcv.height / rect.height);
+
+    if (isDragging) {
+      const dx = e.clientX - dragStart.x;
+      const dy = e.clientY - dragStart.y;
+      if (Math.abs(dx) + Math.abs(dy) > 3) didPan = true;
+      panX = dragStart.panX + dx * (netcv.width / rect.width);
+      panY = dragStart.panY + dy * (netcv.height / rect.height);
+      hoverNode = null;
+    } else {
+      // hover: convert screen → model coords, find nearest node
+      const mx = (sx - panX) / zoom;
+      const my = (sy - panY) / zoom;
+      hoverNode = findNearestNode(mx, my, 12);
+      netcv.style.cursor = hoverNode !== null ? 'pointer' : 'grab';
+    }
+  });
+
+  netcv.addEventListener('mouseup', () => {
+    isDragging = false;
+    netcv.style.cursor = hoverNode !== null ? 'pointer' : 'grab';
+  });
+
+  netcv.addEventListener('mouseleave', () => {
+    isDragging = false;
+    hoverNode = null;
+    netcv.style.cursor = 'grab';
+  });
+
+  netcv.addEventListener('dblclick', () => {
+    resetView();
   });
 }
 
