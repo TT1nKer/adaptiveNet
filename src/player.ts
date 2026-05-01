@@ -29,8 +29,11 @@ const tsctx = tscv.getContext('2d')!;
 
 function fitCanvas(c: HTMLCanvasElement): void {
   const r = c.getBoundingClientRect();
-  c.width = Math.max(50, Math.floor(r.width));
-  c.height = Math.max(50, Math.floor(r.height));
+  // If CSS layout hasn't completed (rect is zero), fall back to a reasonable
+  // default so we never render into a 50×50 stamp in the corner. The next
+  // resize / rebuild will pick up real dimensions.
+  c.width = r.width > 1 ? Math.floor(r.width) : 800;
+  c.height = r.height > 1 ? Math.floor(r.height) : 600;
 }
 function fitAll(): void {
   fitCanvas(netcv);
@@ -360,8 +363,13 @@ async function boot(): Promise<void> {
 
   buildParamsUI();
   attachActions();
-  rebuild();
-  loop();
+  // Wait one frame so CSS Grid has assigned canvas dimensions before
+  // the layout sees them. Without this delay the first paint can land
+  // in the fallback 800×600 region with most of the network off-canvas.
+  requestAnimationFrame(() => {
+    rebuild();
+    loop();
+  });
 }
 
 function attachActions(): void {
