@@ -5,7 +5,7 @@
 // shareable permalink.
 
 import { RNG } from './rng.ts';
-import { computeLayout } from './layout.ts';
+import { Layout } from './layout.ts';
 import type { Model, ModelState, ParamSpec, ParamValues, NumericParamSpec, CategoricalParamSpec } from './types.ts';
 
 // ---------- model registry ----------
@@ -67,7 +67,7 @@ let model: Model | null = null;
 let params: ParamValues = {};
 let seed = 1;
 let state: ModelState | null = null;
-let pos: Float64Array | null = null;
+let layout: Layout | null = null;
 let running = true;
 
 const TS_LEN = 240;
@@ -143,27 +143,22 @@ function buildParamsUI(): void {
 // ---------- init / rebuild ----------
 function rebuild(): void {
   if (!model) return;
-  const overlay = el('loading');
-  overlay.style.display = 'flex';
-  // yield a frame so the overlay paints before the heavy work
-  setTimeout(() => {
-    if (!model) return;
-    fitAll();
-    const rng = new RNG(seed);
-    state = model.init(params, rng);
-    pos = computeLayout(state.graph, netcv.width, netcv.height, rng);
-    tsBuf.fill(0);
-    tsHead = 0;
-    tsCount = 0;
-    let maxDeg = 0;
-    for (let i = 0; i < state.graph.deg.length; i++) {
-      const d = state.graph.deg[i]!;
-      if (d > maxDeg) maxDeg = d;
-    }
-    el('netinfo').textContent =
-      `N=${state.N} · |E|=${state.graph.edges.length} · ⟨k⟩=${(2 * state.graph.edges.length / state.N).toFixed(2)} · Δ=${maxDeg}`;
-    overlay.style.display = 'none';
-  }, 16);
+  fitAll();
+  const rng = new RNG(seed);
+  state = model.init(params, rng);
+  // Incremental layout: starts from a circle, converges over a second or so
+  // before the dynamics begin. Visible "settling in" is a feature.
+  layout = new Layout(state.graph, netcv.width, netcv.height, rng);
+  tsBuf.fill(0);
+  tsHead = 0;
+  tsCount = 0;
+  let maxDeg = 0;
+  for (let i = 0; i < state.graph.deg.length; i++) {
+    const d = state.graph.deg[i]!;
+    if (d > maxDeg) maxDeg = d;
+  }
+  el('netinfo').textContent =
+    `N=${state.N} · |E|=${state.graph.edges.length} · ⟨k⟩=${(2 * state.graph.edges.length / state.N).toFixed(2)} · Δ=${maxDeg}`;
 }
 
 // ---------- rendering ----------
@@ -171,7 +166,8 @@ function drawNetwork(): void {
   const W = netcv.width;
   const H = netcv.height;
   netctx.clearRect(0, 0, W, H);
-  if (!state || !pos || !model) return;
+  if (!state || !layout || !model) return;
+  const pos = layout.pos;
 
   const edges = state.graph.edges;
   const alpha = model.render.edgeAlpha ?? 0.18;
@@ -288,7 +284,23 @@ function drawTimeSeries(): void {
 
 // ---------- main loop ----------
 function loop(): void {
-  if (running && state && model) {
+  // Phase 1: layout converges. Phase 2: dynamics run on frozen layout.
+  if (state && layout && !layout.done) {
+    // 2 iters per frame for small N, 1 for large — keep frame budget < 16 ms.
+    const stepsPerFrame = state.N > 500 ? 1 : 2;
+    for (let s = 0; s < stepsPerFrame; s++) layout.step();
+    el('netinfo').textContent =
+      `settling layout… ${layout.iter}/${layout.maxIter}`;
+    if (layout.done) {
+      let maxDeg = 0;
+      for (let i = 0; i < state.graph.deg.length; i++) {
+        const d = state.graph.deg[i]!;
+        if (d > maxDeg) maxDeg = d;
+      }
+      el('netinfo').textContent =
+        `N=${state.N} · |E|=${state.graph.edges.length} · ⟨k⟩=${(2 * state.graph.edges.length / state.N).toFixed(2)} · Δ=${maxDeg}`;
+    }
+  } else if (running && state && model) {
     model.step(state, params, new RNG(seed ^ state.step_count));
     const ts = model.observe?.timeSeries;
     if (ts) {
@@ -391,7 +403,8 @@ function attachActions(): void {
   addEventListener('resize', () => {
     fitAll();
     if (state) {
-      pos = computeLayout(state.graph, netcv.width, netcv.height, new RNG(seed ^ 0xa5a5a5));
+      // recompute the layout in-place; gives the resize a fresh "settle" pass.
+      layout = new Layout(state.graph, netcv.width, netcv.height, new RNG(seed ^ 0xa5a5a5));
     }
   });
 }

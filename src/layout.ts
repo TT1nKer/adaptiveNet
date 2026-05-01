@@ -1,36 +1,65 @@
-// Force-directed layout, computed once per graph rebuild and then frozen.
-// Iteration count scales down with N to keep the up-front cost reasonable.
+// Force-directed layout, computed incrementally so the convergence is
+// visible. The runtime drives a few `step()` calls per animation frame
+// until `done`, then freezes and lets the dynamics take over.
 
 import type { Graph } from './types.ts';
 import type { RNG } from './rng.ts';
 
-export function computeLayout(graph: Graph, W: number, H: number, rng: RNG): Float64Array {
-  const { N, adj } = graph;
-  const pos = new Float64Array(N * 2);
-  const vel = new Float64Array(N * 2);
+export class Layout {
+  readonly pos: Float64Array;
+  private readonly vel: Float64Array;
+  private readonly graph: Graph;
+  private readonly W: number;
+  private readonly H: number;
 
-  const cx = W / 2;
-  const cy = H / 2;
-  const R = Math.min(W, H) * 0.36;
+  iter: number;
+  readonly maxIter: number;
 
-  for (let i = 0; i < N; i++) {
-    const a = (i / N) * Math.PI * 2 + rng.uniform(-0.05, 0.05);
-    pos[i * 2] = cx + R * Math.cos(a);
-    pos[i * 2 + 1] = cy + R * Math.sin(a);
+  constructor(graph: Graph, W: number, H: number, rng: RNG) {
+    this.graph = graph;
+    this.W = W;
+    this.H = H;
+
+    const N = graph.N;
+    this.pos = new Float64Array(N * 2);
+    this.vel = new Float64Array(N * 2);
+
+    const cx = W / 2;
+    const cy = H / 2;
+    const R = Math.min(W, H) * 0.36;
+    for (let i = 0; i < N; i++) {
+      const a = (i / N) * Math.PI * 2 + rng.uniform(-0.05, 0.05);
+      this.pos[i * 2] = cx + R * Math.cos(a);
+      this.pos[i * 2 + 1] = cy + R * Math.sin(a);
+    }
+
+    this.iter = 0;
+    // 220 iters at N=200 ≈ 8M ops; 60 iters at N=1000 ≈ 60M ops.
+    this.maxIter = Math.max(40, Math.min(220, Math.floor(40000 / N)));
   }
 
-  // 220 iters at N=200 ≈ 8M ops; 60 iters at N=1000 ≈ 60M ops.
-  const ITER = Math.max(40, Math.min(220, Math.floor(40000 / N)));
+  get done(): boolean {
+    return this.iter >= this.maxIter;
+  }
 
-  const kRep = 1500;
-  const kSpr = 0.05;
-  const L0 = 60;
-  const damp = 0.82;
-  const fMax = 25;
-  const vMax = 10;
+  /** Run one Fruchterman–Reingold-ish iteration. */
+  step(): void {
+    if (this.done) return;
+    const { graph, W, H, pos, vel, maxIter } = this;
+    const N = graph.N;
+    const adj = graph.adj;
 
-  for (let it = 0; it < ITER; it++) {
-    const cool = 1 - it / ITER;
+    const cx = W / 2;
+    const cy = H / 2;
+    const cool = 1 - this.iter / maxIter;
+
+    const kRep = 1500;
+    const kSpr = 0.05;
+    const L0 = 60;
+    const damp = 0.82;
+    const fMax = 25;
+    const vMax = 10;
+
     for (let i = 0; i < N; i++) {
       const xi = pos[i * 2]!;
       const yi = pos[i * 2 + 1]!;
@@ -81,12 +110,20 @@ export function computeLayout(graph: Graph, W: number, H: number, rng: RNG): Flo
       pos[i * 2] = xi + vx;
       pos[i * 2 + 1] = yi + vy;
     }
-  }
 
-  const M = 24;
-  for (let i = 0; i < N; i++) {
-    pos[i * 2] = Math.max(M, Math.min(W - M, pos[i * 2]!));
-    pos[i * 2 + 1] = Math.max(M, Math.min(H - M, pos[i * 2 + 1]!));
+    const M = 24;
+    for (let i = 0; i < N; i++) {
+      pos[i * 2] = Math.max(M, Math.min(W - M, pos[i * 2]!));
+      pos[i * 2 + 1] = Math.max(M, Math.min(H - M, pos[i * 2 + 1]!));
+    }
+
+    this.iter++;
   }
-  return pos;
+}
+
+/** Convenience: run the whole layout in one call. */
+export function computeLayout(graph: Graph, W: number, H: number, rng: RNG): Float64Array {
+  const layout = new Layout(graph, W, H, rng);
+  while (!layout.done) layout.step();
+  return layout.pos;
 }
