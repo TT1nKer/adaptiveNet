@@ -127,3 +127,35 @@ export function computeLayout(graph: Graph, W: number, H: number, rng: RNG): Flo
   while (!layout.done) layout.step();
   return layout.pos;
 }
+
+/**
+ * Trivial layout for grid models: place node (r, c) at the centre of its
+ * cell. Already converged at construction time, so the runtime can drop
+ * straight into dynamics.
+ */
+export class GridLayout {
+  readonly pos: Float64Array;
+  readonly maxIter = 0;
+  iter = 0;
+
+  constructor(cols: number, rows: number, W: number, H: number) {
+    const N = cols * rows;
+    const cellW = W / cols;
+    const cellH = H / rows;
+    this.pos = new Float64Array(N * 2);
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        const i = r * cols + c;
+        this.pos[i * 2] = (c + 0.5) * cellW;
+        this.pos[i * 2 + 1] = (r + 0.5) * cellH;
+      }
+    }
+  }
+
+  get done(): boolean {
+    return true;
+  }
+  step(): void {
+    /* no-op */
+  }
+}

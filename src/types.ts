@@ -55,6 +55,9 @@ export interface ModelState {
   graph: Graph;
   t: number;
   step_count: number;
+  /** Grid dimensions. Required when Model.view === 'grid'. */
+  cols?: number;
+  rows?: number;
 }
 
 // ---------- rendering ----------
@@ -95,6 +98,15 @@ export interface Model<S extends ModelState = ModelState> {
   /** Multi-paragraph description for the player panel. Optional. */
   long?: string;
   params: ParamSchema;
+
+  /**
+   * How the runtime should lay out and render this model.
+   *   'graph' (default): force-directed positions, draw nodes as circles
+   *                      with edge lines.
+   *   'grid':            cell positions from state.cols × state.rows,
+   *                      draw filled square cells with no edge lines.
+   */
+  view?: 'graph' | 'grid';
 
   init(params: ParamValues, rng: RNG): S;
   step(state: S, params: ParamValues, rng: RNG): void;

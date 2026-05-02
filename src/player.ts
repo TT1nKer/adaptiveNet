@@ -5,13 +5,16 @@
 // shareable permalink.
 
 import { RNG } from './rng.ts';
-import { Layout } from './layout.ts';
+import { Layout, GridLayout } from './layout.ts';
 import type { Model, ModelState, ParamSpec, ParamValues, NumericParamSpec, CategoricalParamSpec } from './types.ts';
+
+type AnyLayout = Layout | GridLayout;
 
 // ---------- model registry ----------
 const MODEL_REGISTRY: Record<string, () => Promise<{ default: Model }>> = {
   'nakao-2010': () => import('./models/nakao.ts'),
   'holme-newman': () => import('./models/voter.ts'),
+  'gray-scott': () => import('./models/gray-scott.ts'),
 };
 
 // ---------- DOM helpers ----------
@@ -71,7 +74,7 @@ let model: Model | null = null;
 let params: ParamValues = {};
 let seed = 1;
 let state: ModelState | null = null;
-let layout: Layout | null = null;
+let layout: AnyLayout | null = null;
 let running = true;
 
 // view transform (canvas-space → screen-space)
@@ -159,9 +162,13 @@ function rebuild(): void {
   fitAll();
   const rng = new RNG(seed);
   state = model.init(params, rng);
-  // Incremental layout: starts from a circle, converges over a second or so
-  // before the dynamics begin. Visible "settling in" is a feature.
-  layout = new Layout(state.graph, netcv.width, netcv.height, rng);
+  if (model.view === 'grid' && state.cols && state.rows) {
+    layout = new GridLayout(state.cols, state.rows, netcv.width, netcv.height);
+  } else {
+    // Incremental force-directed layout for graph view: starts from a circle,
+    // converges over a second or so before the dynamics begin.
+    layout = new Layout(state.graph, netcv.width, netcv.height, rng);
+  }
   tsBuf.fill(0);
   tsHead = 0;
   tsCount = 0;
@@ -172,8 +179,12 @@ function rebuild(): void {
     const d = state.graph.deg[i]!;
     if (d > maxDeg) maxDeg = d;
   }
-  el('netinfo').textContent =
-    `N=${state.N} · |E|=${state.graph.edges.length} · ⟨k⟩=${(2 * state.graph.edges.length / state.N).toFixed(2)} · Δ=${maxDeg}`;
+  if (model.view === 'grid') {
+    el('netinfo').textContent = `${state.cols} × ${state.rows} grid · N=${state.N}`;
+  } else {
+    el('netinfo').textContent =
+      `N=${state.N} · |E|=${state.graph.edges.length} · ⟨k⟩=${(2 * state.graph.edges.length / state.N).toFixed(2)} · Δ=${maxDeg}`;
+  }
 }
 
 // ---------- rendering ----------
@@ -188,38 +199,60 @@ function drawNetwork(): void {
   netctx.translate(panX, panY);
   netctx.scale(zoom, zoom);
 
-  const edges = state.graph.edges;
-  const alpha = model.render.edgeAlpha ?? 0.18;
-  netctx.strokeStyle = `rgba(140,150,170,${alpha})`;
-  netctx.lineWidth = 1 / zoom;
-  netctx.beginPath();
-  for (let e = 0; e < edges.length; e++) {
-    const [i, j] = edges[e]!;
-    netctx.moveTo(pos[i * 2]!, pos[i * 2 + 1]!);
-    netctx.lineTo(pos[j * 2]!, pos[j * 2 + 1]!);
-  }
-  netctx.stroke();
-
-  for (let i = 0; i < state.N; i++) {
-    const r = model.render.nodeSize(state, i, params);
-    netctx.fillStyle = model.render.nodeColor(state, i, params);
-    netctx.beginPath();
-    netctx.arc(pos[i * 2]!, pos[i * 2 + 1]!, r, 0, Math.PI * 2);
-    netctx.fill();
-    netctx.strokeStyle = 'rgba(0,0,0,0.4)';
+  if (model.view === 'grid' && state.cols && state.rows) {
+    // ----- grid view: filled cells, no edges -----
+    const cols = state.cols;
+    const rows = state.rows;
+    const cellW = W / cols;
+    const cellH = H / rows;
+    for (let i = 0; i < state.N; i++) {
+      const c = i % cols;
+      const r = (i / cols) | 0;
+      netctx.fillStyle = model.render.nodeColor(state, i, params);
+      // +0.5 fudge keeps neighbouring cells from showing seam gaps
+      netctx.fillRect(c * cellW, r * cellH, cellW + 0.5, cellH + 0.5);
+    }
+    if (hoverNode !== null && hoverNode < state.N) {
+      const c = hoverNode % cols;
+      const r = (hoverNode / cols) | 0;
+      netctx.strokeStyle = '#e8edf4';
+      netctx.lineWidth = 2 / zoom;
+      netctx.strokeRect(c * cellW, r * cellH, cellW, cellH);
+    }
+  } else {
+    // ----- graph view: edges + node circles -----
+    const edges = state.graph.edges;
+    const alpha = model.render.edgeAlpha ?? 0.18;
+    netctx.strokeStyle = `rgba(140,150,170,${alpha})`;
     netctx.lineWidth = 1 / zoom;
-    netctx.stroke();
-  }
-
-  // highlight hovered node
-  if (hoverNode !== null && hoverNode < state.N) {
-    const i = hoverNode;
-    const r = model.render.nodeSize(state, i, params);
-    netctx.strokeStyle = '#e8edf4';
-    netctx.lineWidth = 2 / zoom;
     netctx.beginPath();
-    netctx.arc(pos[i * 2]!, pos[i * 2 + 1]!, r + 3 / zoom, 0, Math.PI * 2);
+    for (let e = 0; e < edges.length; e++) {
+      const [i, j] = edges[e]!;
+      netctx.moveTo(pos[i * 2]!, pos[i * 2 + 1]!);
+      netctx.lineTo(pos[j * 2]!, pos[j * 2 + 1]!);
+    }
     netctx.stroke();
+
+    for (let i = 0; i < state.N; i++) {
+      const r = model.render.nodeSize(state, i, params);
+      netctx.fillStyle = model.render.nodeColor(state, i, params);
+      netctx.beginPath();
+      netctx.arc(pos[i * 2]!, pos[i * 2 + 1]!, r, 0, Math.PI * 2);
+      netctx.fill();
+      netctx.strokeStyle = 'rgba(0,0,0,0.4)';
+      netctx.lineWidth = 1 / zoom;
+      netctx.stroke();
+    }
+
+    if (hoverNode !== null && hoverNode < state.N) {
+      const i = hoverNode;
+      const r = model.render.nodeSize(state, i, params);
+      netctx.strokeStyle = '#e8edf4';
+      netctx.lineWidth = 2 / zoom;
+      netctx.beginPath();
+      netctx.arc(pos[i * 2]!, pos[i * 2 + 1]!, r + 3 / zoom, 0, Math.PI * 2);
+      netctx.stroke();
+    }
   }
 
   netctx.restore();
@@ -277,10 +310,20 @@ function drawTooltip(i: number): void {
   }
 }
 
-function findNearestNode(mxModel: number, myModel: number, screenThreshold: number): number | null {
-  if (!state || !layout) return null;
+function findNodeAtPoint(mxModel: number, myModel: number, screenThreshold: number): number | null {
+  if (!state) return null;
+  // grid view: direct cell lookup, no proximity search
+  if (model?.view === 'grid' && state.cols && state.rows) {
+    const cellW = netcv.width / state.cols;
+    const cellH = netcv.height / state.rows;
+    const c = Math.floor(mxModel / cellW);
+    const r = Math.floor(myModel / cellH);
+    if (c < 0 || c >= state.cols || r < 0 || r >= state.rows) return null;
+    return r * state.cols + c;
+  }
+  // graph view: nearest-node within a screen-space radius
+  if (!layout) return null;
   const pos = layout.pos;
-  // threshold in model coords (screen distance / zoom)
   const t = screenThreshold / zoom;
   const t2 = t * t;
   let best = -1;
@@ -601,7 +644,7 @@ function attachActions(): void {
       // hover: convert screen → model coords, find nearest node
       const mx = (sx - panX) / zoom;
       const my = (sy - panY) / zoom;
-      hoverNode = findNearestNode(mx, my, 12);
+      hoverNode = findNodeAtPoint(mx, my, 12);
       netcv.style.cursor = hoverNode !== null ? 'pointer' : 'grab';
     }
   });
