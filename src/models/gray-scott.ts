@@ -74,16 +74,16 @@ Reference: Pearson, *Science* 261, 189 (1993). Original chemistry: Gray & Scott 
     },
     {
       id: 'worms',
-      name: 'worms (wandering filaments)',
-      short: 'f=0.04, k=0.06. Filaments slowly wander and split. Quasi-stable.',
-      params: { Du: 0.04, Dv: 0.02, f: 0.04, k: 0.06, size: 96 },
+      name: 'worms (slow wanderers)',
+      short: 'f=0.046, k=0.063. Long curling filaments that grow, split, and slowly drift. Visually similar to maze but never quite settles.',
+      params: { Du: 0.04, Dv: 0.02, f: 0.046, k: 0.063, size: 96 },
       seed: 1,
     },
     {
       id: 'maze',
       name: 'maze (stationary stripes)',
-      short: 'f=0.055, k=0.062. Reaches a stationary stripe maze.',
-      params: { Du: 0.04, Dv: 0.02, f: 0.055, k: 0.062, size: 96 },
+      short: 'f=0.062, k=0.061. Stripes fill the canvas and lock in place. Munafo\'s ε region.',
+      params: { Du: 0.04, Dv: 0.02, f: 0.062, k: 0.061, size: 96 },
       seed: 1,
     },
     {
@@ -117,26 +117,40 @@ Reference: Pearson, *Science* 261, 189 (1993). Original chemistry: Gray & Scott 
       X[i * 2] = 1;
       X[i * 2 + 1] = 0;
     }
-    // Seed: a small disc of activator v in the centre, and depleted u there.
-    // Without a seed the homogeneous state stays flat forever.
-    const cx = (size / 2) | 0;
-    const cy = (size / 2) | 0;
-    const radius = Math.max(4, (size / 12) | 0);
-    for (let dy = -radius; dy <= radius; dy++) {
-      for (let dx = -radius; dx <= radius; dx++) {
-        if (dx * dx + dy * dy > radius * radius) continue;
-        const r = cy + dy;
-        const c = cx + dx;
-        if (r < 0 || r >= size || c < 0 || c >= size) continue;
-        const i = r * size + c;
-        X[i * 2] = 0.5 + rng.uniform(-0.05, 0.05);
-        X[i * 2 + 1] = 0.25 + rng.uniform(-0.05, 0.05);
+
+    // Drop a handful of small high-v discs at random positions. A single
+    // central seed is enough to ignite mitosis but marginal regimes (maze,
+    // some worm regions) need multiple ignition points to spread reliably.
+    const stamp = (cx: number, cy: number, radius: number): void => {
+      for (let dy = -radius; dy <= radius; dy++) {
+        for (let dx = -radius; dx <= radius; dx++) {
+          if (dx * dx + dy * dy > radius * radius) continue;
+          const r = cy + dy;
+          const c = cx + dx;
+          if (r < 0 || r >= size || c < 0 || c >= size) continue;
+          const i = r * size + c;
+          X[i * 2] = 0.5 + rng.uniform(-0.05, 0.05);
+          X[i * 2 + 1] = 0.25 + rng.uniform(-0.05, 0.05);
+        }
       }
+    };
+
+    const baseR = Math.max(5, (size / 10) | 0);
+    // central seed (mitosis-style demo stays clean)
+    stamp((size / 2) | 0, (size / 2) | 0, baseR);
+    // a few smaller offset seeds so marginal regimes have enough fronts to merge
+    const extra = 3;
+    for (let s = 0; s < extra; s++) {
+      const cx = (size * 0.2 + rng.next() * size * 0.6) | 0;
+      const cy = (size * 0.2 + rng.next() * size * 0.6) | 0;
+      stamp(cx, cy, Math.max(3, (baseR / 2) | 0));
     }
-    // tiny global noise to break pixel-perfect symmetry
+
+    // tiny global noise so the homogeneous (1, 0) regions also have something
+    // to amplify when (f, k) sits in a Turing-unstable corner of the map.
     for (let i = 0; i < N; i++) {
       X[i * 2] += rng.uniform(-0.005, 0.005);
-      X[i * 2 + 1] += rng.uniform(-0.005, 0.005);
+      X[i * 2 + 1] += rng.uniform(0, 0.01);
     }
 
     return {
