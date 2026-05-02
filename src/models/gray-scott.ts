@@ -57,6 +57,44 @@ Reference: Pearson, *Science* 261, 189 (1993). Original chemistry: Gray & Scott 
 
   view: 'grid',
 
+  presets: [
+    {
+      id: 'mitosis',
+      name: 'mitosis (spots that divide)',
+      short: 'Pearson f=0.0367, k=0.0649. Default. A seed disc divides, divides again, fills the canvas with replicating spots.',
+      params: { Du: 0.04, Dv: 0.02, f: 0.0367, k: 0.0649, size: 96 },
+      seed: 1,
+    },
+    {
+      id: 'excitable',
+      name: 'excitable waves (never settles)',
+      short: 'Low f. Wave fronts propagate, reflect off boundaries, annihilate on collision — the system never reaches a stationary state. Pearson’s ε region; full excitable-medium phenomenology.',
+      params: { Du: 0.04, Dv: 0.02, f: 0.014, k: 0.045, size: 96 },
+      seed: 1,
+    },
+    {
+      id: 'worms',
+      name: 'worms (wandering filaments)',
+      short: 'f=0.04, k=0.06. Filaments slowly wander and split. Quasi-stable.',
+      params: { Du: 0.04, Dv: 0.02, f: 0.04, k: 0.06, size: 96 },
+      seed: 1,
+    },
+    {
+      id: 'maze',
+      name: 'maze (stationary stripes)',
+      short: 'f=0.055, k=0.062. Reaches a stationary stripe maze.',
+      params: { Du: 0.04, Dv: 0.02, f: 0.055, k: 0.062, size: 96 },
+      seed: 1,
+    },
+    {
+      id: 'bubbles',
+      name: 'bubbles',
+      short: 'f=0.098, k=0.057. Round bubbles nucleate and grow.',
+      params: { Du: 0.04, Dv: 0.02, f: 0.098, k: 0.057, size: 96 },
+      seed: 1,
+    },
+  ],
+
   params: {
     // Note: defaults are 1/4 of the standard literature values because we use
     // the unnormalised graph Laplacian (sum of neighbour differences) and the

@@ -6,7 +6,7 @@
 
 import { RNG } from './rng.ts';
 import { Layout, GridLayout } from './layout.ts';
-import type { Model, ModelState, ParamSpec, ParamValues, NumericParamSpec, CategoricalParamSpec } from './types.ts';
+import type { Model, ModelState, ParamSpec, ParamValues, NumericParamSpec, CategoricalParamSpec, Preset } from './types.ts';
 
 type AnyLayout = Layout | GridLayout;
 
@@ -47,7 +47,12 @@ function fitAll(): void {
 }
 
 // ---------- URL state ----------
-function parseURL(): { id: string; seed: number; params: Record<string, string | number> } {
+function parseURL(): {
+  id: string;
+  seed: number;
+  params: Record<string, string | number>;
+  presetId: string | null;
+} {
   const u = new URL(location.href);
   const id = u.searchParams.get('model') || 'nakao-2010';
   const seedRaw = u.searchParams.get('seed');
@@ -62,7 +67,8 @@ function parseURL(): { id: string; seed: number; params: Record<string, string |
       params[k] = Number.isNaN(num) || /[^0-9.+\-eE]/.test(v) ? v : num;
     }
   }
-  return { id, seed, params };
+  const presetId = u.searchParams.get('preset');
+  return { id, seed, params, presetId };
 }
 
 function buildQuery(id: string, seed: number, params: ParamValues): string {
@@ -103,9 +109,15 @@ function isNumericSpec(s: ParamSpec): s is NumericParamSpec {
   return (s as NumericParamSpec).options === undefined;
 }
 
+// Refs so applyPreset can sync slider visuals without rebuilding the DOM.
+const paramInputs = new Map<string, HTMLInputElement | HTMLSelectElement>();
+const paramValueSpans = new Map<string, HTMLSpanElement>();
+
 function buildParamsUI(): void {
   const root = el('params');
   root.innerHTML = '';
+  paramInputs.clear();
+  paramValueSpans.clear();
   if (!model) return;
 
   for (const [key, specRaw] of Object.entries(model.params)) {
@@ -137,6 +149,7 @@ function buildParamsUI(): void {
         if (!cspec.live) rebuild();
       });
       row.appendChild(select);
+      paramInputs.set(key, select);
     } else {
       const input = document.createElement('input');
       input.type = 'range';
@@ -152,8 +165,89 @@ function buildParamsUI(): void {
         if (!spec.live) rebuild();
       });
       row.appendChild(input);
+      paramInputs.set(key, input);
     }
+    paramValueSpans.set(key, valSpan);
     root.appendChild(row);
+  }
+}
+
+function syncParamUI(): void {
+  if (!model) return;
+  for (const [key, input] of paramInputs) {
+    const v = params[key];
+    if (v === undefined) continue;
+    input.value = String(v);
+    const span = paramValueSpans.get(key);
+    if (span) {
+      const spec = model.params[key]!;
+      if (isNumericSpec(spec)) {
+        span.textContent = formatNum(v as number, spec.step);
+      } else {
+        span.textContent = String(v);
+      }
+    }
+  }
+}
+
+// ---------- presets ----------
+function buildPresetsUI(): void {
+  const section = el('preset-section');
+  const select = el('preset-select') as HTMLSelectElement;
+  const note = el('preset-note');
+  select.innerHTML = '';
+  note.textContent = '';
+  if (!model || !model.presets || model.presets.length === 0) {
+    section.style.display = 'none';
+    return;
+  }
+  section.style.display = '';
+
+  const placeholder = document.createElement('option');
+  placeholder.value = '';
+  placeholder.textContent = '— pick a regime —';
+  select.appendChild(placeholder);
+
+  for (const preset of model.presets) {
+    const opt = document.createElement('option');
+    opt.value = preset.id;
+    opt.textContent = preset.name;
+    select.appendChild(opt);
+  }
+
+  select.addEventListener('change', () => {
+    const id = select.value;
+    if (!id) {
+      note.textContent = '';
+      return;
+    }
+    const preset = model!.presets!.find((p) => p.id === id);
+    if (!preset) return;
+    applyPreset(preset);
+    note.textContent = preset.short ?? '';
+  });
+}
+
+function applyPreset(preset: Preset): void {
+  if (!model) return;
+  for (const [k, v] of Object.entries(preset.params)) {
+    if (v !== undefined) params[k] = v;
+  }
+  if (preset.seed !== undefined) {
+    seed = preset.seed;
+    (el('seed') as HTMLInputElement).value = String(seed);
+  }
+  syncParamUI();
+  rebuild();
+}
+
+function selectPresetInUI(id: string, showNote = true): void {
+  const select = el('preset-select') as HTMLSelectElement;
+  if (!select) return;
+  select.value = id;
+  if (showNote && model?.presets) {
+    const preset = model.presets.find((p) => p.id === id);
+    if (preset) el('preset-note').textContent = preset.short ?? '';
   }
 }
 
@@ -531,15 +625,32 @@ async function boot(): Promise<void> {
     for (const [k, spec] of Object.entries(model.params)) {
       params[k] = (k in url.params) ? coerceParam(spec, url.params[k]!) : spec.default;
     }
+    // If a preset is named in the URL, layer its values on top of the
+    // resolved defaults. Explicit ?p= entries still win because we apply
+    // them again afterward.
+    if (url.presetId && model.presets) {
+      const preset = model.presets.find((p) => p.id === url.presetId);
+      if (preset) {
+        for (const [k, v] of Object.entries(preset.params)) {
+          if (v !== undefined && !(k in url.params)) params[k] = v;
+        }
+        if (preset.seed !== undefined && !url.params['seed']) {
+          seed = preset.seed;
+        }
+      }
+    }
     console.log('[adaptiveNet] params:', params);
 
     stage = 'set chrome';
     el('model-name').textContent = model.name;
     el('description').innerHTML = renderDescription(model.long || model.short || '');
     document.title = `adaptiveNet — ${model.name}`;
+    (el('seed') as HTMLInputElement).value = String(seed);
 
     stage = 'buildParamsUI';
     buildParamsUI();
+    buildPresetsUI();
+    if (url.presetId) selectPresetInUI(url.presetId);
 
     stage = 'attachActions';
     attachActions();

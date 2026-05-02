@@ -90,6 +90,23 @@ export interface ObserveConfig<S extends ModelState = ModelState> {
 
 // ---------- the Model interface ----------
 
+/**
+ * Named parameter scenario. Lets a model offer "interesting regimes" the user
+ * can jump to by name, instead of dragging sliders into the right region by
+ * hand. Selecting a preset overrides any params it specifies; unspecified
+ * params keep their current values.
+ */
+export interface Preset {
+  id: string;
+  name: string;
+  /** One-line note shown when the preset is selected. */
+  short?: string;
+  /** Subset of params to override. Other params keep their current values. */
+  params: Partial<ParamValues>;
+  /** Optional seed override for full reproducibility. */
+  seed?: number;
+}
+
 export interface Model<S extends ModelState = ModelState> {
   id: string;
   name: string;
@@ -98,6 +115,8 @@ export interface Model<S extends ModelState = ModelState> {
   /** Multi-paragraph description for the player panel. Optional. */
   long?: string;
   params: ParamSchema;
+  /** Named parameter scenarios. Optional. */
+  presets?: Preset[];
 
   /**
    * How the runtime should lay out and render this model.
