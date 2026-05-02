@@ -156,9 +156,40 @@ Reference: Hopfield, *PNAS* 79, 2554 (1982).`,
 
   params: {
     pattern: { label: 'recall pattern', options: PATTERN_NAMES, default: 'X', live: false },
-    noise:   { label: 'noise level',   min: 0,  max: 0.5, step: 0.01, default: 0.30, live: false },
+    noise:   { label: 'noise level',   min: 0,  max: 1,   step: 0.01, default: 0.30, live: false },
     size:    { label: 'grid size',     min: 16, max: 48,  step: 8,    default: 32,   live: false },
   },
+
+  presets: [
+    {
+      id: 'clean',
+      name: 'clean recall',
+      short: 'noise=0.3 from X. Initial state is most-X-with-some-flips; dynamics fix the wrong pixels in a few seconds. The standard "associative memory" demo.',
+      params: { pattern: 'X', noise: 0.3, size: 32 },
+      seed: 1,
+    },
+    {
+      id: 'basin-boundary',
+      name: 'basin boundary (noise = 0.5)',
+      short: 'noise=0.5 — initial state has ~zero overlap with the chosen pattern (essentially random). Outcome depends on which of the 8 real attractors and ~16 spurious ones the random seed happens to be closest to.',
+      params: { pattern: 'X', noise: 0.5, size: 32 },
+      seed: 1,
+    },
+    {
+      id: 'spurious-mixture',
+      name: 'spurious mixed state (3-pattern)',
+      short: 'A specific seed and grid size that lands in a 3-pattern spurious attractor: looks like X, O, +, ◻ all faintly superimposed. Not any single stored memory — Hopfield\'s classical failure mode (Amit–Gutfreund–Sompolinsky 1985).',
+      params: { pattern: 'O', noise: 0.5, size: 48 },
+      seed: 499708377,
+    },
+    {
+      id: 'inverse',
+      name: 'inverse recall (high noise)',
+      short: 'noise=0.9 — most pixels are flipped from the cue. Converges to the *inverse* of the chosen pattern (Hopfield energy is symmetric under X → -X, so every stored pattern\'s negative is equally stable).',
+      params: { pattern: 'X', noise: 0.9, size: 32 },
+      seed: 1,
+    },
+  ],
 
   init(params: ParamValues, rng: RNG): HopfieldState {
     const size = Math.round(params.size as number);
