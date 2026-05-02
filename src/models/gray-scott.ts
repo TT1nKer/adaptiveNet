@@ -58,11 +58,14 @@ Reference: Pearson, *Science* 261, 189 (1993). Original chemistry: Gray & Scott 
   view: 'grid',
 
   params: {
-    Du:   { label: 'D_u (diffusion of u)', min: 0,    max: 0.5,  step: 0.01,  default: 0.16,   live: true },
-    Dv:   { label: 'D_v (diffusion of v)', min: 0,    max: 0.5,  step: 0.01,  default: 0.08,   live: true },
-    f:    { label: 'feed rate (f)',        min: 0,    max: 0.12, step: 0.001, default: 0.0367, live: true },
-    k:    { label: 'kill rate (k)',        min: 0.04, max: 0.08, step: 0.001, default: 0.0649, live: true },
-    size: { label: 'grid size',            min: 32,   max: 200,  step: 8,     default: 96,     live: false },
+    // Note: defaults are 1/4 of the standard literature values because we use
+    // the unnormalised graph Laplacian (sum of neighbour differences) and the
+    // textbook stencil (1/4)*Σ.  Graph 0.04 ≡ stencil 0.16.
+    Du:   { label: 'D_u (substrate)',  min: 0,    max: 0.2,  step: 0.005, default: 0.040,  live: true },
+    Dv:   { label: 'D_v (activator)',  min: 0,    max: 0.1,  step: 0.001, default: 0.020,  live: true },
+    f:    { label: 'feed rate (f)',    min: 0,    max: 0.12, step: 0.001, default: 0.0367, live: true },
+    k:    { label: 'kill rate (k)',    min: 0.04, max: 0.08, step: 0.001, default: 0.0649, live: true },
+    size: { label: 'grid size',        min: 32,   max: 200,  step: 8,     default: 96,     live: false },
   },
 
   init(params: ParamValues, rng: RNG): ModelState {
@@ -118,8 +121,8 @@ Reference: Pearson, *Science* 261, 189 (1993). Original chemistry: Gray & Scott 
     const { N, X, graph } = state;
     const adj = graph.adj;
 
-    // Forward Euler. dt = 1 is standard for Gray-Scott with Du≈0.16, Dv≈0.08.
-    // 8 substeps per frame keeps pattern formation visible without burning CPU.
+    // Forward Euler. dt = 1 is standard for Gray-Scott. 8 substeps per frame
+    // keeps pattern formation visible without burning CPU.
     const DT = 1.0;
     const SUB = 8;
 
@@ -140,8 +143,9 @@ Reference: Pearson, *Science* 261, 189 (1993). Original chemistry: Gray & Scott 
           su += X[j * 2]! - u;
           sv += X[j * 2 + 1]! - v;
         }
-        // unnormalised graph Laplacian. Each interior cell has 4 neighbours,
-        // so this is just the standard 5-point stencil.
+        // Unnormalised graph Laplacian (sum of neighbour differences). On a
+        // 4-regular interior cell this is 4× the standard normalised
+        // 5-point stencil — the slider defaults compensate.
         du[i] = reactU + Du * su;
         dv[i] = reactV + Dv * sv;
       }
