@@ -125,25 +125,35 @@ Reference: Pearson, *Science* 261, 189 (1993). Original chemistry: Gray & Scott 
     },
 
     // ---- on / near the critical curve — never-settles dynamics ----
+    // Munafo's classification grid (mrob.com/pub/comp/xmorphia/pearson-classes.html)
+    // names the regions in low-F territory α, β, γ, ξ. Each preset below
+    // sits in a verified named class.
     {
-      id: 'excitable',
-      name: 'excitable chaos',
-      short: 'f=0.014, k=0.045. Deep in the excitable region. Wave fronts collide and annihilate; system never reaches a stationary state. Chaotic, no stable structures.',
+      id: 'xi-bz-spirals',
+      name: 'ξ region — BZ-like spirals',
+      short: 'f=0.014, k=0.045. Munafo ξ region: "large, sustained spirals similar to Belousov–Zhabotinsky." The same chemical excitable-medium dynamics seen in cardiac arrhythmia and Dictyostelium signalling.',
       params: { Du: 0.04, Dv: 0.02, f: 0.014, k: 0.045, size: 160 },
       seed: 1,
     },
     {
-      id: 'drifting',
-      name: 'drifting waves',
-      short: 'f=0.017, k=0.05. Between chaotic excitable and U-skate gliders. Persistent waves with semi-stable filaments slowly drifting and recombining.',
+      id: 'beta-wavefield',
+      name: 'β region — wave field with voids',
+      short: 'f=0.017, k=0.05. Munafo β region: chaotic waves on a "blue ocean" with periodic red voids that open and refill. Different flavour of never-settling dynamics from ξ.',
       params: { Du: 0.04, Dv: 0.02, f: 0.017, k: 0.05, size: 160 },
       seed: 1,
     },
     {
+      id: 'alpha-wavelet-chaos',
+      name: 'α region — wavelet chaos',
+      short: 'f=0.012, k=0.05. Munafo α region: spatial-temporal chaos of wavelets that quickly annihilate on contact. Smaller-scale, faster-tempo cousin of ξ.',
+      params: { Du: 0.04, Dv: 0.02, f: 0.012, k: 0.05, size: 160 },
+      seed: 1,
+    },
+    {
       id: 'u-skate',
-      name: 'U-skate / gliders',
-      short: 'f=0.0203, k=0.0535. Munafo\'s U-skate world. Small wave packets glide stably across the periodic grid until they collide with each other.',
-      params: { Du: 0.04, Dv: 0.02, f: 0.0203, k: 0.0535, size: 160 },
+      name: 'U-skate world (π region)',
+      short: 'f=0.062, k=0.0609. Munafo\'s U-skate world. Moving solitons ("skates") that keep their shape and drift indefinitely until colliding. Conway\'s Game of Life-like complexity in continuous reaction-diffusion.',
+      params: { Du: 0.04, Dv: 0.02, f: 0.062, k: 0.0609, size: 160 },
       seed: 1,
     },
   ],
