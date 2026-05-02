@@ -18,8 +18,10 @@ const MODEL_REGISTRY: Record<string, () => Promise<{ default: Model<any> }>> = {
   'brusselator-grid': () => import('./models/brusselator.ts'),
   'hopfield': () => import('./models/hopfield.ts'),
   'hopfield-capacity': () => import('./models/hopfield-capacity.ts'),
+  'hopfield-modern': () => import('./models/hopfield-modern.ts'),
   'ising': () => import('./models/ising.ts'),
   'lif': () => import('./models/lif.ts'),
+  'avalanches': () => import('./models/avalanches.ts'),
 };
 
 // ---------- DOM helpers ----------
