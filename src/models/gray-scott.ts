@@ -12,20 +12,29 @@ import type { Model, ModelState, ParamValues } from '../types.ts';
 import type { Graph } from '../types.ts';
 import type { RNG } from '../rng.ts';
 
-function buildGrid(cols: number, rows: number): Graph {
+function buildGrid(cols: number, rows: number, periodic = true): Graph {
   const N = cols * rows;
   const adj: number[][] = Array.from({ length: N }, () => []);
   const edges: Array<[number, number]> = [];
   const link = (i: number, j: number): void => {
+    if (i === j) return;
+    if (adj[i]!.includes(j)) return;
     adj[i]!.push(j);
     adj[j]!.push(i);
-    edges.push([i, j]);
+    edges.push(i < j ? [i, j] : [j, i]);
   };
   for (let r = 0; r < rows; r++) {
     for (let c = 0; c < cols; c++) {
       const i = r * cols + c;
-      if (c + 1 < cols) link(i, r * cols + (c + 1));
-      if (r + 1 < rows) link(i, (r + 1) * cols + c);
+      if (periodic) {
+        // wrap: every cell has exactly 4 neighbours, including the edges
+        link(i, r * cols + ((c + 1) % cols));
+        link(i, ((r + 1) % rows) * cols + c);
+      } else {
+        // Neumann (zero-flux): edge cells have 2-3 neighbours
+        if (c + 1 < cols) link(i, r * cols + (c + 1));
+        if (r + 1 < rows) link(i, (r + 1) * cols + c);
+      }
     }
   }
   const deg = new Int32Array(N);
@@ -61,22 +70,29 @@ Reference: Pearson, *Science* 261, 189 (1993). Original chemistry: Gray & Scott 
     {
       id: 'mitosis',
       name: 'mitosis (spots that divide)',
-      short: 'f=0.0367, k=0.0649. A seed disc divides, divides again, eventually fills the canvas with replicating spots.',
-      params: { Du: 0.04, Dv: 0.02, f: 0.0367, k: 0.0649, size: 96 },
+      short: 'f=0.0367, k=0.0649. Spots emerge from noise and divide repeatedly, filling the periodic grid with replicating dots.',
+      params: { Du: 0.04, Dv: 0.02, f: 0.0367, k: 0.0649, size: 160 },
       seed: 1,
     },
     {
       id: 'excitable',
       name: 'excitable waves (never settles)',
-      short: 'Low f. Wave fronts propagate, reflect off boundaries, annihilate on collision — full excitable-medium phenomenology, no stationary state ever.',
-      params: { Du: 0.04, Dv: 0.02, f: 0.014, k: 0.045, size: 96 },
+      short: 'Low f. Wave fronts propagate, collide and annihilate. With periodic boundaries the waves wrap rather than reflect — the system never reaches a stationary state.',
+      params: { Du: 0.04, Dv: 0.02, f: 0.014, k: 0.045, size: 160 },
       seed: 1,
     },
     {
-      id: 'spreading',
-      name: 'slow spreading',
-      short: 'f=0.04, k=0.06. The seed slowly grows outward into stripe-like structures. Less iconic than mitosis but visibly diffusing.',
-      params: { Du: 0.04, Dv: 0.02, f: 0.04, k: 0.06, size: 96 },
+      id: 'worms',
+      name: 'worms / labyrinth',
+      short: 'f=0.04, k=0.06. Wandering filaments form across the grid, slowly extending and merging. Munafo λ region.',
+      params: { Du: 0.04, Dv: 0.02, f: 0.04, k: 0.06, size: 160 },
+      seed: 1,
+    },
+    {
+      id: 'maze',
+      name: 'maze (stationary stripes)',
+      short: 'f=0.062, k=0.061. Stripes nucleate everywhere, lock into a stationary maze. With noise init + periodic BC, fills the grid as in Munafo\'s ε region.',
+      params: { Du: 0.04, Dv: 0.02, f: 0.062, k: 0.061, size: 160 },
       seed: 1,
     },
   ],
@@ -89,26 +105,30 @@ Reference: Pearson, *Science* 261, 189 (1993). Original chemistry: Gray & Scott 
     Dv:   { label: 'D_v (activator)',  min: 0,    max: 0.1,  step: 0.001, default: 0.020,  live: true },
     f:    { label: 'feed rate (f)',    min: 0,    max: 0.12, step: 0.001, default: 0.0367, live: true },
     k:    { label: 'kill rate (k)',    min: 0.04, max: 0.08, step: 0.001, default: 0.0649, live: true },
-    size: { label: 'grid size',        min: 32,   max: 200,  step: 8,     default: 96,     live: false },
+    size: { label: 'grid size',        min: 32,   max: 256,  step: 8,     default: 160,    live: false },
   },
 
   init(params: ParamValues, rng: RNG): ModelState {
     const size = Math.round(params.size as number);
     const N = size * size;
-    const graph = buildGrid(size, size);
+    const graph = buildGrid(size, size, /* periodic */ true);
 
+    // Noise init across the entire grid (matching the Munafo / Pearson
+    // convention). Every cell starts close to the homogeneous fixed point
+    // (1, 0) but with small perturbations so any Turing-unstable regime can
+    // amplify them. This makes maze, worms, and other "needs perturbation
+    // everywhere" regimes work identically to the literature.
     const X = new Float64Array(N * 2);
-    // Homogeneous fixed point of Gray-Scott: u = 1, v = 0.
     for (let i = 0; i < N; i++) {
-      X[i * 2] = 1;
-      X[i * 2 + 1] = 0;
+      X[i * 2] = 1.0 + rng.uniform(-0.05, 0.05);
+      X[i * 2 + 1] = rng.uniform(0, 0.10);
     }
-    // Single central seed — small disc of activator. Without a seed the
-    // homogeneous (1, 0) state stays flat forever; with too many seeds the
-    // mitosis demo loses its iconic "one spot divides" character.
+    // Drop a single stronger central seed. Doesn't affect maze/worms
+    // (they form everywhere from the noise) but gives mitosis a clean
+    // visible "first spot" to demonstrate replication.
     const cx = (size / 2) | 0;
     const cy = (size / 2) | 0;
-    const radius = Math.max(4, (size / 12) | 0);
+    const radius = Math.max(4, (size / 16) | 0);
     for (let dy = -radius; dy <= radius; dy++) {
       for (let dx = -radius; dx <= radius; dx++) {
         if (dx * dx + dy * dy > radius * radius) continue;
@@ -119,11 +139,6 @@ Reference: Pearson, *Science* 261, 189 (1993). Original chemistry: Gray & Scott 
         X[i * 2] = 0.5 + rng.uniform(-0.05, 0.05);
         X[i * 2 + 1] = 0.25 + rng.uniform(-0.05, 0.05);
       }
-    }
-    // tiny global noise to break pixel-perfect symmetry
-    for (let i = 0; i < N; i++) {
-      X[i * 2] += rng.uniform(-0.005, 0.005);
-      X[i * 2 + 1] += rng.uniform(-0.005, 0.005);
     }
 
     return {

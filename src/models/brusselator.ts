@@ -19,20 +19,27 @@ import type { Model, ModelState, ParamValues } from '../types.ts';
 import type { Graph } from '../types.ts';
 import type { RNG } from '../rng.ts';
 
-function buildGrid(cols: number, rows: number): Graph {
+function buildGrid(cols: number, rows: number, periodic = true): Graph {
   const N = cols * rows;
   const adj: number[][] = Array.from({ length: N }, () => []);
   const edges: Array<[number, number]> = [];
   const link = (i: number, j: number): void => {
+    if (i === j) return;
+    if (adj[i]!.includes(j)) return;
     adj[i]!.push(j);
     adj[j]!.push(i);
-    edges.push([i, j]);
+    edges.push(i < j ? [i, j] : [j, i]);
   };
   for (let r = 0; r < rows; r++) {
     for (let c = 0; c < cols; c++) {
       const i = r * cols + c;
-      if (c + 1 < cols) link(i, r * cols + (c + 1));
-      if (r + 1 < rows) link(i, (r + 1) * cols + c);
+      if (periodic) {
+        link(i, r * cols + ((c + 1) % cols));
+        link(i, ((r + 1) % rows) * cols + c);
+      } else {
+        if (c + 1 < cols) link(i, r * cols + (c + 1));
+        if (r + 1 < rows) link(i, (r + 1) * cols + c);
+      }
     }
   }
   const deg = new Int32Array(N);
@@ -68,7 +75,7 @@ Reference: Turing, *Phil. Trans. R. Soc. B* 237, 37 (1952). Brusselator: Prigogi
     b:    { label: 'b',                   min: 1,    max: 12,  step: 0.1,   default: 7.5,  live: true },
     Du:   { label: 'D_u (activator)',     min: 0,    max: 2,   step: 0.01,  default: 0.50, live: true },
     Dv:   { label: 'D_v (inhibitor)',     min: 0,    max: 12,  step: 0.05,  default: 4.00, live: true },
-    size: { label: 'grid size',           min: 32,   max: 200, step: 8,     default: 96,   live: false },
+    size: { label: 'grid size',           min: 32,   max: 256, step: 8,     default: 160,  live: false },
   },
 
   init(params: ParamValues, rng: RNG): ModelState {
@@ -76,7 +83,7 @@ Reference: Turing, *Phil. Trans. R. Soc. B* 237, 37 (1952). Brusselator: Prigogi
     const a = params.a as number;
     const b = params.b as number;
     const N = size * size;
-    const graph = buildGrid(size, size);
+    const graph = buildGrid(size, size, /* periodic */ true);
 
     // Initialize at the homogeneous fixed point (a, b/a) plus small noise.
     // No seed needed — Turing instability amplifies noise into pattern.
