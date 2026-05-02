@@ -2,7 +2,9 @@
 
 A general-purpose tool for defining and exploring **node–edge dynamical systems** — systems where N entities have state, the pairwise weights between them also have state, and both coevolve under user-defined rules. Browser-runnable, GPU-native substrate, NetLogo-style separation between fixed substrate and user-editable rules.
 
-**See [`SPEC.md`](SPEC.md) for the full problem definition.** The repository is currently in the problem-definition phase; architecture and tech choices are deliberately not yet committed.
+**Live at https://tt1nker.github.io/adaptiveNet/** — open it, click any demo, drag the sliders.
+
+See [`SPEC.md`](SPEC.md) for the full design notes.
 
 ## Current state
 
