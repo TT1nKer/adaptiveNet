@@ -111,7 +111,7 @@ function isNumericSpec(s: ParamSpec): s is NumericParamSpec {
 
 // Refs so applyPreset can sync slider visuals without rebuilding the DOM.
 const paramInputs = new Map<string, HTMLInputElement | HTMLSelectElement>();
-const paramValueSpans = new Map<string, HTMLSpanElement>();
+const paramValueSpans = new Map<string, HTMLElement>();
 
 function buildParamsUI(): void {
   const root = el('params');
@@ -126,13 +126,16 @@ function buildParamsUI(): void {
     row.className = 'row';
 
     const label = document.createElement('label');
-    const valSpan = document.createElement('span');
-    valSpan.className = 'v';
-    label.textContent = (spec.label || key) + ' ';
-    label.appendChild(valSpan);
-    row.appendChild(label);
+    label.appendChild(document.createTextNode((spec.label || key) + ' '));
 
     if (!isNumericSpec(spec)) {
+      // categorical: dropdown with the current value mirrored as a label span
+      const valSpan = document.createElement('span');
+      valSpan.className = 'v';
+      valSpan.textContent = String(params[key]);
+      label.appendChild(valSpan);
+      row.appendChild(label);
+
       const select = document.createElement('select');
       const cspec = spec as CategoricalParamSpec;
       for (const opt of cspec.options) {
@@ -142,7 +145,6 @@ function buildParamsUI(): void {
         select.appendChild(o);
       }
       select.value = String(params[key]);
-      valSpan.textContent = String(params[key]);
       select.addEventListener('input', () => {
         params[key] = select.value;
         valSpan.textContent = select.value;
@@ -150,24 +152,61 @@ function buildParamsUI(): void {
       });
       row.appendChild(select);
       paramInputs.set(key, select);
+      paramValueSpans.set(key, valSpan);
     } else {
-      const input = document.createElement('input');
-      input.type = 'range';
-      input.min = String(spec.min);
-      input.max = String(spec.max);
-      input.step = String(spec.step);
-      input.value = String(params[key]);
-      valSpan.textContent = formatNum(params[key] as number, spec.step);
-      input.addEventListener('input', () => {
-        const v = parseFloat(input.value);
+      // numeric: editable number input (in the label) + range slider beneath.
+      // Either control writes the same value; the other mirrors it.
+      const min = spec.min;
+      const max = spec.max;
+      const step = spec.step;
+      const live = !!spec.live;
+
+      const valInput = document.createElement('input');
+      valInput.type = 'number';
+      valInput.className = 'v';
+      valInput.min = String(min);
+      valInput.max = String(max);
+      valInput.step = String(step);
+      valInput.value = formatNum(params[key] as number, step);
+      label.appendChild(valInput);
+      row.appendChild(label);
+
+      const range = document.createElement('input');
+      range.type = 'range';
+      range.min = String(min);
+      range.max = String(max);
+      range.step = String(step);
+      range.value = String(params[key]);
+      row.appendChild(range);
+
+      const apply = (raw: number, source: 'range' | 'text'): void => {
+        let v = raw;
+        if (Number.isNaN(v)) {
+          // bad text → revert
+          valInput.value = formatNum(params[key] as number, step);
+          return;
+        }
+        if (v < min) v = min;
+        if (v > max) v = max;
         params[key] = v;
-        valSpan.textContent = formatNum(v, spec.step);
-        if (!spec.live) rebuild();
+        if (source !== 'text') valInput.value = formatNum(v, step);
+        if (source !== 'range') range.value = String(v);
+        if (!live) rebuild();
+      };
+
+      range.addEventListener('input', () => apply(parseFloat(range.value), 'range'));
+      // commit typed value on Enter or blur, but don't rebuild on every keystroke
+      valInput.addEventListener('change', () => apply(parseFloat(valInput.value), 'text'));
+      valInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          (e.target as HTMLInputElement).blur();
+        }
       });
-      row.appendChild(input);
-      paramInputs.set(key, input);
+
+      paramInputs.set(key, range);
+      paramValueSpans.set(key, valInput);
     }
-    paramValueSpans.set(key, valSpan);
+
     root.appendChild(row);
   }
 }
@@ -178,14 +217,13 @@ function syncParamUI(): void {
     const v = params[key];
     if (v === undefined) continue;
     input.value = String(v);
-    const span = paramValueSpans.get(key);
-    if (span) {
-      const spec = model.params[key]!;
-      if (isNumericSpec(spec)) {
-        span.textContent = formatNum(v as number, spec.step);
-      } else {
-        span.textContent = String(v);
-      }
+    const display = paramValueSpans.get(key);
+    if (!display) continue;
+    const spec = model.params[key]!;
+    if (display instanceof HTMLInputElement && isNumericSpec(spec)) {
+      display.value = formatNum(v as number, spec.step);
+    } else {
+      display.textContent = String(v);
     }
   }
 }
