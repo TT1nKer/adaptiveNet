@@ -12,6 +12,40 @@ import type { Model, ModelState, ParamValues } from '../types.ts';
 import type { Graph } from '../types.ts';
 import type { RNG } from '../rng.ts';
 
+/**
+ * Spatially-correlated noise on a `size`×`size` grid. Sample white noise on
+ * a coarser `size/scale` grid and bilinearly upsample. Output values are in
+ * [0, 1]. Larger `scale` → larger blobs.
+ */
+function coarseNoise(size: number, scale: number, rng: RNG): Float64Array {
+  const coarseSize = Math.max(2, (size / scale) | 0);
+  const coarse = new Float64Array(coarseSize * coarseSize);
+  for (let i = 0; i < coarse.length; i++) coarse[i] = rng.next();
+
+  const out = new Float64Array(size * size);
+  const cMax = coarseSize - 1;
+  for (let r = 0; r < size; r++) {
+    for (let c = 0; c < size; c++) {
+      const cr = (r / size) * cMax;
+      const cc = (c / size) * cMax;
+      const r0 = cr | 0;
+      const r1 = Math.min(r0 + 1, cMax);
+      const c0 = cc | 0;
+      const c1 = Math.min(c0 + 1, cMax);
+      const fr = cr - r0;
+      const fc = cc - c0;
+      const v00 = coarse[r0 * coarseSize + c0]!;
+      const v01 = coarse[r0 * coarseSize + c1]!;
+      const v10 = coarse[r1 * coarseSize + c0]!;
+      const v11 = coarse[r1 * coarseSize + c1]!;
+      const top = v00 * (1 - fc) + v01 * fc;
+      const bot = v10 * (1 - fc) + v11 * fc;
+      out[r * size + c] = top * (1 - fr) + bot * fr;
+    }
+  }
+  return out;
+}
+
 function buildGrid(cols: number, rows: number, periodic = true): Graph {
   const N = cols * rows;
   const adj: number[][] = Array.from({ length: N }, () => []);
@@ -113,19 +147,22 @@ Reference: Pearson, *Science* 261, 189 (1993). Original chemistry: Gray & Scott 
     const N = size * size;
     const graph = buildGrid(size, size, /* periodic */ true);
 
-    // Noise init across the entire grid (matching the Munafo / Pearson
-    // convention). Every cell starts close to the homogeneous fixed point
-    // (1, 0) but with small perturbations so any Turing-unstable regime can
-    // amplify them. This makes maze, worms, and other "needs perturbation
-    // everywhere" regimes work identically to the literature.
+    // Spatially-correlated noise on both fields gives the initial state
+    // visible "regions" rather than uniform statistics. Each blob acts as
+    // its own incipient pattern domain — exactly what maze and worm regimes
+    // amplify. Two independent fields at slightly different scales so u and
+    // v don't trivially correlate.
+    const uField = coarseNoise(size, 10, rng);
+    const vField = coarseNoise(size, 8, rng);
     const X = new Float64Array(N * 2);
     for (let i = 0; i < N; i++) {
-      X[i * 2] = 1.0 + rng.uniform(-0.05, 0.05);
-      X[i * 2 + 1] = rng.uniform(0, 0.10);
+      // u: 0.85–1.00 with smooth blobs of slight depletion
+      X[i * 2] = 0.85 + 0.15 * uField[i]! + rng.uniform(-0.01, 0.01);
+      // v: 0–0.20 with smooth blobs of activator
+      X[i * 2 + 1] = 0.20 * vField[i]! + rng.uniform(0, 0.01);
     }
-    // Drop a single stronger central seed. Doesn't affect maze/worms
-    // (they form everywhere from the noise) but gives mitosis a clean
-    // visible "first spot" to demonstrate replication.
+    // Add a slightly stronger central seed so the mitosis demo has a clean
+    // "first spot" amid the textured background.
     const cx = (size / 2) | 0;
     const cy = (size / 2) | 0;
     const radius = Math.max(4, (size / 16) | 0);
@@ -137,7 +174,7 @@ Reference: Pearson, *Science* 261, 189 (1993). Original chemistry: Gray & Scott 
         if (r < 0 || r >= size || c < 0 || c >= size) continue;
         const i = r * size + c;
         X[i * 2] = 0.5 + rng.uniform(-0.05, 0.05);
-        X[i * 2 + 1] = 0.25 + rng.uniform(-0.05, 0.05);
+        X[i * 2 + 1] = 0.30 + rng.uniform(-0.05, 0.05);
       }
     }
 

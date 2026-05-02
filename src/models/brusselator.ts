@@ -19,6 +19,35 @@ import type { Model, ModelState, ParamValues } from '../types.ts';
 import type { Graph } from '../types.ts';
 import type { RNG } from '../rng.ts';
 
+/** Spatially-correlated noise on a `size`×`size` grid (see gray-scott.ts). */
+function coarseNoise(size: number, scale: number, rng: RNG): Float64Array {
+  const coarseSize = Math.max(2, (size / scale) | 0);
+  const coarse = new Float64Array(coarseSize * coarseSize);
+  for (let i = 0; i < coarse.length; i++) coarse[i] = rng.next();
+  const out = new Float64Array(size * size);
+  const cMax = coarseSize - 1;
+  for (let r = 0; r < size; r++) {
+    for (let c = 0; c < size; c++) {
+      const cr = (r / size) * cMax;
+      const cc = (c / size) * cMax;
+      const r0 = cr | 0;
+      const r1 = Math.min(r0 + 1, cMax);
+      const c0 = cc | 0;
+      const c1 = Math.min(c0 + 1, cMax);
+      const fr = cr - r0;
+      const fc = cc - c0;
+      const v00 = coarse[r0 * coarseSize + c0]!;
+      const v01 = coarse[r0 * coarseSize + c1]!;
+      const v10 = coarse[r1 * coarseSize + c0]!;
+      const v11 = coarse[r1 * coarseSize + c1]!;
+      const top = v00 * (1 - fc) + v01 * fc;
+      const bot = v10 * (1 - fc) + v11 * fc;
+      out[r * size + c] = top * (1 - fr) + bot * fr;
+    }
+  }
+  return out;
+}
+
 function buildGrid(cols: number, rows: number, periodic = true): Graph {
   const N = cols * rows;
   const adj: number[][] = Array.from({ length: N }, () => []);
@@ -85,14 +114,19 @@ Reference: Turing, *Phil. Trans. R. Soc. B* 237, 37 (1952). Brusselator: Prigogi
     const N = size * size;
     const graph = buildGrid(size, size, /* periodic */ true);
 
-    // Initialize at the homogeneous fixed point (a, b/a) plus small noise.
-    // No seed needed — Turing instability amplifies noise into pattern.
+    // Initialize around the homogeneous fixed point (a, b/a) with
+    // spatially-correlated noise. The Turing instability amplifies the
+    // dominant unstable wavelength, but starting from blobby noise (rather
+    // than independent per-pixel noise) gives the final pattern visible
+    // domain structure rather than a statistically uniform stripe field.
     const u0 = a;
     const v0 = b / a;
+    const uField = coarseNoise(size, 10, rng);
+    const vField = coarseNoise(size, 8, rng);
     const X = new Float64Array(N * 2);
     for (let i = 0; i < N; i++) {
-      X[i * 2] = u0 + rng.uniform(-0.05, 0.05);
-      X[i * 2 + 1] = v0 + rng.uniform(-0.05, 0.05);
+      X[i * 2] = u0 + (uField[i]! - 0.5) * 0.3 + rng.uniform(-0.01, 0.01);
+      X[i * 2 + 1] = v0 + (vField[i]! - 0.5) * 0.3 + rng.uniform(-0.01, 0.01);
     }
 
     return {
