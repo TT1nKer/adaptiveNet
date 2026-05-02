@@ -101,18 +101,12 @@ Reference: Pearson, *Science* 261, 189 (1993). Original chemistry: Gray & Scott 
   view: 'grid',
 
   presets: [
+    // ---- stable / quasi-stable regimes ----
     {
       id: 'mitosis',
       name: 'mitosis (spots that divide)',
       short: 'f=0.0367, k=0.0649. Spots emerge from noise and divide repeatedly, filling the periodic grid with replicating dots.',
       params: { Du: 0.04, Dv: 0.02, f: 0.0367, k: 0.0649, size: 160 },
-      seed: 1,
-    },
-    {
-      id: 'excitable',
-      name: 'excitable waves (never settles)',
-      short: 'Low f. Wave fronts propagate, collide and annihilate. With periodic boundaries the waves wrap rather than reflect — the system never reaches a stationary state.',
-      params: { Du: 0.04, Dv: 0.02, f: 0.014, k: 0.045, size: 160 },
       seed: 1,
     },
     {
@@ -125,8 +119,31 @@ Reference: Pearson, *Science* 261, 189 (1993). Original chemistry: Gray & Scott 
     {
       id: 'maze',
       name: 'maze (stationary stripes)',
-      short: 'f=0.062, k=0.061. Stripes nucleate everywhere, lock into a stationary maze. With noise init + periodic BC, fills the grid as in Munafo\'s ε region.',
+      short: 'f=0.062, k=0.061. Stripes nucleate everywhere, lock into a stationary maze. Munafo ε region.',
       params: { Du: 0.04, Dv: 0.02, f: 0.062, k: 0.061, size: 160 },
+      seed: 1,
+    },
+
+    // ---- on / near the critical curve — never-settles dynamics ----
+    {
+      id: 'excitable',
+      name: 'excitable chaos',
+      short: 'f=0.014, k=0.045. Deep in the excitable region. Wave fronts collide and annihilate; system never reaches a stationary state. Chaotic, no stable structures.',
+      params: { Du: 0.04, Dv: 0.02, f: 0.014, k: 0.045, size: 160 },
+      seed: 1,
+    },
+    {
+      id: 'drifting',
+      name: 'drifting waves',
+      short: 'f=0.017, k=0.05. Between chaotic excitable and U-skate gliders. Persistent waves with semi-stable filaments slowly drifting and recombining.',
+      params: { Du: 0.04, Dv: 0.02, f: 0.017, k: 0.05, size: 160 },
+      seed: 1,
+    },
+    {
+      id: 'u-skate',
+      name: 'U-skate / gliders',
+      short: 'f=0.0203, k=0.0535. Munafo\'s U-skate world. Small wave packets glide stably across the periodic grid until they collide with each other.',
+      params: { Du: 0.04, Dv: 0.02, f: 0.0203, k: 0.0535, size: 160 },
       seed: 1,
     },
   ],
