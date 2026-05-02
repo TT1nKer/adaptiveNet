@@ -202,14 +202,35 @@ References: Hopfield, *PNAS* 79, 2554 (1982); Amit, Gutfreund & Sompolinsky, *Ph
         return state.X;
       },
     },
+    // Two overlap traces tell different stories:
+    //   target:  did we keep / recall the *intended* pattern?
+    //   max:     did we recall *any* stored pattern?
+    // Below α_c both ≈ 1. Just past α_c, target may drop while max stays high
+    // (system fell into a wrong-but-still-stored attractor). Deep in spin
+    // glass, both collapse — no stored pattern is a fixed point any more.
     timeSeries: {
-      label: 'σ = overlap with target pattern (1 = stored, 0 = unrelated)',
+      label: 'σ overlap with target',
       value(state: CapacityState): number {
         const N = state.N;
         const target = state.patterns[state.targetPattern]!;
         let s = 0;
         for (let i = 0; i < N; i++) s += state.X[i]! * target[i]!;
         return s / N;
+      },
+    },
+    timeSeries2: {
+      label: '|σ| max overlap with any stored',
+      value(state: CapacityState): number {
+        const N = state.N;
+        let best = 0;
+        for (let p = 0; p < state.patterns.length; p++) {
+          const pat = state.patterns[p]!;
+          let s = 0;
+          for (let i = 0; i < N; i++) s += state.X[i]! * pat[i]!;
+          const m = Math.abs(s) / N;
+          if (m > best) best = m;
+        }
+        return best;
       },
     },
   },

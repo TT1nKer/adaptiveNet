@@ -86,6 +86,12 @@ export interface TimeSeriesObservation<S extends ModelState = ModelState> {
 export interface ObserveConfig<S extends ModelState = ModelState> {
   histogram?: HistogramObservation<S>;
   timeSeries?: TimeSeriesObservation<S>;
+  /**
+   * Optional second time-series, drawn on the same chart in a contrasting
+   * colour. Useful when two related quantities make sense overlaid (e.g.
+   * "recall to target" vs "recall to anything").
+   */
+  timeSeries2?: TimeSeriesObservation<S>;
 }
 
 // ---------- the Model interface ----------

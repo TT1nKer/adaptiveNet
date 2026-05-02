@@ -101,8 +101,10 @@ let didPan = false;
 
 const TS_LEN = 240;
 const tsBuf = new Float64Array(TS_LEN);
+const tsBuf2 = new Float64Array(TS_LEN);
 let tsHead = 0;
 let tsCount = 0;
+let hasTs2 = false;
 
 // ---------- formatting ----------
 function formatNum(v: number, step: number): string {
@@ -309,8 +311,10 @@ function rebuild(): void {
     layout = new Layout(state.graph, netcv.width, netcv.height, rng);
   }
   tsBuf.fill(0);
+  tsBuf2.fill(0);
   tsHead = 0;
   tsCount = 0;
+  hasTs2 = !!model.observe?.timeSeries2;
   resetView();
   hoverNode = null;
   let maxDeg = 0;
@@ -540,16 +544,29 @@ function drawTimeSeries(): void {
   if (!model) return;
   const obs = model.observe?.timeSeries;
   if (!obs) return;
-  el('ts-ttl').textContent = obs.label;
+  const obs2 = model.observe?.timeSeries2;
+
+  // Title text — combine both labels if a second series exists
+  if (obs2) {
+    el('ts-ttl').innerHTML =
+      `<span style="color:#e63946">●</span> ${obs.label} &nbsp;&nbsp; <span style="color:#fbbf24">●</span> ${obs2.label}`;
+  } else {
+    el('ts-ttl').textContent = obs.label;
+  }
 
   const W = tscv.width;
   const H = tscv.height;
   if (tsCount < 2) return;
 
+  // Find max across both series for shared y-axis
   let mx = 0;
-  for (let i = 0; i < tsCount; i++) if (tsBuf[i]! > mx) mx = tsBuf[i]!;
+  for (let i = 0; i < tsCount; i++) {
+    if (tsBuf[i]! > mx) mx = tsBuf[i]!;
+    if (hasTs2 && tsBuf2[i]! > mx) mx = tsBuf2[i]!;
+  }
   if (mx < 1e-6) mx = 1;
 
+  // grid lines
   tsctx.strokeStyle = 'rgba(140,150,170,0.1)';
   tsctx.beginPath();
   for (let i = 1; i < 4; i++) {
@@ -558,6 +575,7 @@ function drawTimeSeries(): void {
   }
   tsctx.stroke();
 
+  // primary series — red
   tsctx.strokeStyle = '#e63946';
   tsctx.lineWidth = 1.4;
   tsctx.beginPath();
@@ -569,6 +587,21 @@ function drawTimeSeries(): void {
     else tsctx.lineTo(x, y);
   }
   tsctx.stroke();
+
+  // secondary series — yellow (if present)
+  if (hasTs2) {
+    tsctx.strokeStyle = '#fbbf24';
+    tsctx.lineWidth = 1.4;
+    tsctx.beginPath();
+    for (let i = 0; i < tsCount; i++) {
+      const idx = (tsHead - tsCount + i + TS_LEN) % TS_LEN;
+      const x = (i / (TS_LEN - 1)) * W;
+      const y = H - 4 - (tsBuf2[idx]! / mx) * (H - 8);
+      if (i === 0) tsctx.moveTo(x, y);
+      else tsctx.lineTo(x, y);
+    }
+    tsctx.stroke();
+  }
 
   tsctx.fillStyle = '#6b7280';
   tsctx.font = '11px ui-monospace, monospace';
@@ -596,8 +629,10 @@ function loop(): void {
   } else if (running && state && model) {
     model.step(state, params, new RNG(seed ^ state.step_count));
     const ts = model.observe?.timeSeries;
+    const ts2 = model.observe?.timeSeries2;
     if (ts) {
       tsBuf[tsHead] = ts.value(state);
+      if (ts2) tsBuf2[tsHead] = ts2.value(state);
       tsHead = (tsHead + 1) % TS_LEN;
       if (tsCount < TS_LEN) tsCount++;
     }
