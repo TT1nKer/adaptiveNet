@@ -81,6 +81,7 @@ Reference: Lapicque, *J. Physiol. Pathol. Gén.* 9, 620 (1907). The model is ove
     W_syn:   { label: 'W_syn (synaptic weight)', min: 0,    max: 3.0, step: 0.05, default: 1.0,  live: true },
     I_drive: { label: 'I_drive (drive current)', min: 0,    max: 1.5, step: 0.01, default: 0.50, live: true },
     size:    { label: 'grid size',               min: 32,   max: 200, step: 8,    default: 96,   live: false },
+    speed:   { label: 'speed',                   min: 0.1,  max: 5,   step: 0.1,  default: 1.0,  live: true },
   },
 
   presets: [
@@ -136,6 +137,7 @@ Reference: Lapicque, *J. Physiol. Pathol. Gén.* 9, 620 (1907). The model is ove
     const adj = graph.adj;
     const W = params.W_syn as number;
     const I_drive = params.I_drive as number;
+    const speed = params.speed as number;
 
     // Constants — fixed for this model. Could be exposed as sliders later.
     const tau = 20;          // membrane time constant (in steps)
@@ -149,8 +151,10 @@ Reference: Lapicque, *J. Physiol. Pathol. Gén.* 9, 620 (1907). The model is ove
     const cy = (rows! / 2) | 0;
     const driveR = Math.max(3, (Math.min(cols!, rows!) / 16) | 0);
 
-    // Sub-step once for speed; 60 fps × 1 step/frame is enough for visible propagation.
+    const SUB = Math.max(1, Math.round(speed));
     const X_new = new Float64Array(N * 2);
+
+    for (let sub = 0; sub < SUB; sub++) {
 
     for (let i = 0; i < N; i++) {
       const V = X[i * 2]!;
@@ -193,6 +197,8 @@ Reference: Lapicque, *J. Physiol. Pathol. Gén.* 9, 620 (1907). The model is ove
     for (let i = 0; i < N * 2; i++) X[i] = X_new[i]!;
     state.step_count++;
     state.t = state.step_count;
+
+    } // end SUB loop
   },
 
   render: {

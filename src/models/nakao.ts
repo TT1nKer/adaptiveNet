@@ -24,7 +24,8 @@ Reference: Nakao & Mikhailov, *Nature Physics* 6, 544–550 (2010).`,
     Dv:   { label: 'D_v (inhibitor)', min: 0,  max: 10,   step: 0.01,  default: 3.00, live: true },
     N:    { label: 'nodes',           min: 50, max: 1000, step: 10,    default: 200,  live: false },
     k:    { label: 'avg degree',      min: 2,  max: 14,   step: 1,     default: 6,    live: false },
-    topo: { label: 'topology',        options: TOPO_OPTS, default: 'ba',              live: false },
+    topo:  { label: 'topology',       options: TOPO_OPTS, default: 'ba',              live: false },
+    speed: { label: 'speed',          min: 0.1, max: 5, step: 0.1, default: 1.0,      live: true },
   },
 
   presets: [
@@ -86,7 +87,7 @@ Reference: Nakao & Mikhailov, *Nature Physics* 6, 544–550 (2010).`,
     const C = 9;
     const D = 0.4;
     const DT = 0.002;
-    const SUB = 25;
+    const SUB = Math.max(1, Math.round(25 * (params.speed as number)));
 
     const du = new Float64Array(N);
     const dv = new Float64Array(N);

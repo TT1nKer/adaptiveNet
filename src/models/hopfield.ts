@@ -158,6 +158,7 @@ Reference: Hopfield, *PNAS* 79, 2554 (1982).`,
     pattern: { label: 'recall pattern', options: PATTERN_NAMES, default: 'X', live: false },
     noise:   { label: 'noise level',   min: 0,  max: 1,   step: 0.01, default: 0.30, live: false },
     size:    { label: 'grid size',     min: 16, max: 48,  step: 8,    default: 32,   live: false },
+    speed:   { label: 'speed',         min: 0.1, max: 5,  step: 0.1,  default: 1.0,  live: true },
   },
 
   presets: [
@@ -227,7 +228,7 @@ Reference: Hopfield, *PNAS* 79, 2554 (1982).`,
     };
   },
 
-  step(state: HopfieldState, _params: ParamValues, rng: RNG): void {
+  step(state: HopfieldState, params: ParamValues, rng: RNG): void {
     const { N, X, W } = state;
     // Asynchronous update — Hopfield's original 1982 formulation: pick a
     // random node, set X[i] = sign(Σ_j W[i,j] · X[j]), repeat. Visually
@@ -236,8 +237,9 @@ Reference: Hopfield, *PNAS* 79, 2554 (1982).`,
     // synchronous updates can fall into.
     //
     // Rate is tuned so a 32×32 grid (N=1024) takes a few seconds to
-    // converge on screen — about half the grid swept per visible second.
-    const updatesPerFrame = Math.max(1, (N / 64) | 0);
+    // converge at speed=1× — about half the grid swept per visible second.
+    const speed = params.speed as number;
+    const updatesPerFrame = Math.max(1, ((N / 64) * speed) | 0);
     for (let s = 0; s < updatesPerFrame; s++) {
       const i = rng.int(N);
       let sum = 0;

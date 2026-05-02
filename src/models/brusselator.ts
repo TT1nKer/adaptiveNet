@@ -104,7 +104,8 @@ Reference: Turing, *Phil. Trans. R. Soc. B* 237, 37 (1952). Brusselator: Prigogi
     b:    { label: 'b',                   min: 1,    max: 12,  step: 0.1,   default: 7.5,  live: true },
     Du:   { label: 'D_u (activator)',     min: 0,    max: 2,   step: 0.01,  default: 0.50, live: true },
     Dv:   { label: 'D_v (inhibitor)',     min: 0,    max: 12,  step: 0.05,  default: 4.00, live: true },
-    size: { label: 'grid size',           min: 32,   max: 256, step: 8,     default: 160,  live: false },
+    size:  { label: 'grid size',          min: 32,   max: 256, step: 8,     default: 160,  live: false },
+    speed: { label: 'speed',              min: 0.1,  max: 5,   step: 0.1,   default: 1.0,  live: true },
   },
 
   presets: [
@@ -181,7 +182,7 @@ Reference: Turing, *Phil. Trans. R. Soc. B* 237, 37 (1952). Brusselator: Prigogi
     // (Λ_max=8 for a 4-regular periodic lattice) — combined ~ -45. Forward
     // Euler stability requires dt < 2/45 ≈ 0.044. Stay well below that.
     const DT = 0.02;
-    const SUB = 25;
+    const SUB = Math.max(1, Math.round(25 * (params.speed as number)));
 
     const du = new Float64Array(N);
     const dv = new Float64Array(N);

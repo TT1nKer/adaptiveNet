@@ -156,7 +156,8 @@ Reference: Pearson, *Science* 261, 189 (1993). Original chemistry: Gray & Scott 
     Dv:   { label: 'D_v (activator)',  min: 0,    max: 0.1,  step: 0.001, default: 0.020,  live: true },
     f:    { label: 'feed rate (f)',    min: 0,    max: 0.12, step: 0.001, default: 0.0367, live: true },
     k:    { label: 'kill rate (k)',    min: 0.04, max: 0.08, step: 0.001, default: 0.0649, live: true },
-    size: { label: 'grid size',        min: 32,   max: 256,  step: 8,     default: 160,    live: false },
+    size:  { label: 'grid size',       min: 32,   max: 256,  step: 8,     default: 160,    live: false },
+    speed: { label: 'speed',           min: 0.1,  max: 5,    step: 0.1,   default: 1.0,    live: true },
   },
 
   init(params: ParamValues, rng: RNG): ModelState {
@@ -216,9 +217,9 @@ Reference: Pearson, *Science* 261, 189 (1993). Original chemistry: Gray & Scott 
     const adj = graph.adj;
 
     // Forward Euler. dt = 1 is standard for Gray-Scott. 8 substeps per frame
-    // keeps pattern formation visible without burning CPU.
+    // at speed=1× keeps pattern formation visible without burning CPU.
     const DT = 1.0;
-    const SUB = 8;
+    const SUB = Math.max(1, Math.round(8 * (params.speed as number)));
 
     const du = new Float64Array(N);
     const dv = new Float64Array(N);

@@ -34,7 +34,8 @@ Reference: Holme & Newman, *Phys. Rev. E* 74, 056108 (2006).`,
     phi:  { label: 'φ (rewire prob)', min: 0,  max: 1,    step: 0.01, default: 0.4, live: true },
     N:    { label: 'nodes',           min: 50, max: 1000, step: 10,   default: 200, live: false },
     k:    { label: 'avg degree',      min: 2,  max: 14,   step: 1,    default: 4,   live: false },
-    topo: { label: 'topology (init)', options: TOPO_OPTS, default: 'er',             live: false },
+    topo:  { label: 'topology (init)', options: TOPO_OPTS, default: 'er',             live: false },
+    speed: { label: 'speed',           min: 0.1, max: 5, step: 0.1, default: 1.0,     live: true },
   },
 
   init(params: ParamValues, rng: RNG): ModelState {
@@ -59,8 +60,9 @@ Reference: Holme & Newman, *Phys. Rev. E* 74, 056108 (2006).`,
 
     if (edges.length === 0) return;
 
-    // ~5% of edges per frame: visible movement without overwhelming the eye.
-    const eventsPerFrame = Math.max(1, Math.floor(edges.length * 0.05));
+    // ~5% of edges per frame at speed=1×: visible movement without overwhelming the eye.
+    const speed = params.speed as number;
+    const eventsPerFrame = Math.max(1, Math.floor(edges.length * 0.05 * speed));
 
     for (let s = 0; s < eventsPerFrame; s++) {
       if (edges.length === 0) return;

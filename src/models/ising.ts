@@ -72,7 +72,8 @@ At **exactly T_c** the system is **scale-invariant**: domain clusters appear at 
 
   params: {
     T:    { label: 'temperature T', min: 0.05, max: 5.0, step: 0.01, default: 2.27, live: true },
-    size: { label: 'grid size',     min: 32,   max: 256, step: 8,    default: 128,  live: false },
+    size:  { label: 'grid size',    min: 32,   max: 256, step: 8,    default: 128,  live: false },
+    speed: { label: 'speed',        min: 0.1,  max: 5,   step: 0.1,  default: 1.0,  live: true },
   },
 
   presets: [
@@ -127,10 +128,11 @@ At **exactly T_c** the system is **scale-invariant**: domain clusters appear at 
 
     // Glauber heat-bath update: directly assign s_i = ±1 from its
     // conditional Boltzmann distribution given the neighbours. ~N/4
-    // updates per frame so the lattice is swept ~4 times per second
-    // at 60fps — fast enough to see dynamics, slow enough to follow
-    // critical fluctuations at T_c.
-    const updatesPerFrame = Math.max(1, (N / 4) | 0);
+    // updates per frame at speed=1× so the lattice is swept ~4 times
+    // per second at 60fps — fast enough to see dynamics, slow enough
+    // to follow critical fluctuations at T_c.
+    const speed = params.speed as number;
+    const updatesPerFrame = Math.max(1, ((N / 4) * speed) | 0);
     for (let s = 0; s < updatesPerFrame; s++) {
       const i = rng.int(N);
       const ai = adj[i]!;
