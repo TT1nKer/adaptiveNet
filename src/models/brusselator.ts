@@ -115,18 +115,21 @@ Reference: Turing, *Phil. Trans. R. Soc. B* 237, 37 (1952). Brusselator: Prigogi
     const graph = buildGrid(size, size, /* periodic */ true);
 
     // Initialize around the homogeneous fixed point (a, b/a) with
-    // spatially-correlated noise. The Turing instability amplifies the
-    // dominant unstable wavelength, but starting from blobby noise (rather
-    // than independent per-pixel noise) gives the final pattern visible
-    // domain structure rather than a statistically uniform stripe field.
+    // spatially-correlated noise. Amplitude has to be substantial relative
+    // to the FP — otherwise the Turing-unstable mode takes too long to
+    // grow visibly from rounding-level perturbations.
     const u0 = a;
     const v0 = b / a;
     const uField = coarseNoise(size, 10, rng);
     const vField = coarseNoise(size, 8, rng);
     const X = new Float64Array(N * 2);
+    // noise spans ~30% of the FP magnitude — comfortably inside the basin
+    // of attraction but big enough to see the pattern grow within seconds.
+    const uAmp = u0 * 0.3;
+    const vAmp = Math.max(0.3, v0 * 0.5);
     for (let i = 0; i < N; i++) {
-      X[i * 2] = u0 + (uField[i]! - 0.5) * 0.3 + rng.uniform(-0.01, 0.01);
-      X[i * 2 + 1] = v0 + (vField[i]! - 0.5) * 0.3 + rng.uniform(-0.01, 0.01);
+      X[i * 2] = u0 + (uField[i]! - 0.5) * uAmp + rng.uniform(-0.02, 0.02);
+      X[i * 2 + 1] = v0 + (vField[i]! - 0.5) * vAmp + rng.uniform(-0.02, 0.02);
     }
 
     return {
@@ -149,9 +152,12 @@ Reference: Turing, *Phil. Trans. R. Soc. B* 237, 37 (1952). Brusselator: Prigogi
     const { N, X, graph } = state;
     const adj = graph.adj;
 
-    // Brusselator is moderately stiff — small dt + many substeps.
-    const DT = 0.05;
-    const SUB = 10;
+    // Brusselator is stiff. At FP=(a, b/a) the reaction Jacobian fast
+    // eigenvalue is around -12, plus diffusion contributes -D_v · Λ_max
+    // (Λ_max=8 for a 4-regular periodic lattice) — combined ~ -45. Forward
+    // Euler stability requires dt < 2/45 ≈ 0.044. Stay well below that.
+    const DT = 0.02;
+    const SUB = 25;
 
     const du = new Float64Array(N);
     const dv = new Float64Array(N);
