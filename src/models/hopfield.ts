@@ -196,17 +196,25 @@ Reference: Hopfield, *PNAS* 79, 2554 (1982).`,
     };
   },
 
-  step(state: HopfieldState): void {
+  step(state: HopfieldState, _params: ParamValues, rng: RNG): void {
     const { N, X, W } = state;
-    const newX = new Float64Array(N);
-    for (let i = 0; i < N; i++) {
-      let s = 0;
+    // Asynchronous update — Hopfield's original 1982 formulation: pick a
+    // random node, set X[i] = sign(Σ_j W[i,j] · X[j]), repeat. Visually
+    // satisfying (cells flip one at a time as the static-y noise resolves
+    // into the stored pattern) and avoids the spurious 2-cycles that
+    // synchronous updates can fall into.
+    //
+    // Rate is tuned so a 32×32 grid (N=1024) takes a few seconds to
+    // converge on screen — about half the grid swept per visible second.
+    const updatesPerFrame = Math.max(1, (N / 64) | 0);
+    for (let s = 0; s < updatesPerFrame; s++) {
+      const i = rng.int(N);
+      let sum = 0;
       const off = i * N;
-      for (let j = 0; j < N; j++) s += W[off + j]! * X[j]!;
-      newX[i] = s >= 0 ? 1 : -1;
+      for (let j = 0; j < N; j++) sum += W[off + j]! * X[j]!;
+      X[i] = sum >= 0 ? 1 : -1;
     }
-    for (let i = 0; i < N; i++) X[i] = newX[i]!;
-    state.step_count++;
+    state.step_count += updatesPerFrame;
     state.t = state.step_count;
   },
 
