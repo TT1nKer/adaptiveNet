@@ -221,8 +221,13 @@ Reference: Pearson, *Science* 261, 189 (1993). Original chemistry: Gray & Scott 
     const DT = 1.0;
     const SUB = Math.max(1, Math.round(8 * (params.speed as number)));
 
-    const du = new Float64Array(N);
-    const dv = new Float64Array(N);
+    // Reuse work buffers across frames so GC doesn't pause us — at the
+    // default 160² grid this avoids ~410 KB of allocation per render frame.
+    const aux = state as ModelState & { _du?: Float64Array; _dv?: Float64Array };
+    if (!aux._du || aux._du.length !== N) aux._du = new Float64Array(N);
+    if (!aux._dv || aux._dv.length !== N) aux._dv = new Float64Array(N);
+    const du = aux._du;
+    const dv = aux._dv;
     for (let s = 0; s < SUB; s++) {
       for (let i = 0; i < N; i++) {
         const u = X[i * 2]!;

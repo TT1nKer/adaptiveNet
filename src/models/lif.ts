@@ -152,7 +152,11 @@ Reference: Lapicque, *J. Physiol. Pathol. Gén.* 9, 620 (1907). The model is ove
     const driveR = Math.max(3, (Math.min(cols!, rows!) / 16) | 0);
 
     const SUB = Math.max(1, Math.round(speed));
-    const X_new = new Float64Array(N * 2);
+
+    // Reuse work buffer — at N=96² the per-frame allocation was 147 KB.
+    const aux = state as ModelState & { _X_new?: Float64Array };
+    if (!aux._X_new || aux._X_new.length !== N * 2) aux._X_new = new Float64Array(N * 2);
+    const X_new = aux._X_new;
 
     for (let sub = 0; sub < SUB; sub++) {
 

@@ -89,8 +89,11 @@ Reference: Nakao & Mikhailov, *Nature Physics* 6, 544–550 (2010).`,
     const DT = 0.002;
     const SUB = Math.max(1, Math.round(25 * (params.speed as number)));
 
-    const du = new Float64Array(N);
-    const dv = new Float64Array(N);
+    const aux = state as ModelState & { _du?: Float64Array; _dv?: Float64Array };
+    if (!aux._du || aux._du.length !== N) aux._du = new Float64Array(N);
+    if (!aux._dv || aux._dv.length !== N) aux._dv = new Float64Array(N);
+    const du = aux._du;
+    const dv = aux._dv;
     for (let s = 0; s < SUB; s++) {
       for (let i = 0; i < N; i++) {
         const u = X[i * 2]!;

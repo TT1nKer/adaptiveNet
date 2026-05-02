@@ -184,8 +184,12 @@ Reference: Turing, *Phil. Trans. R. Soc. B* 237, 37 (1952). Brusselator: Prigogi
     const DT = 0.02;
     const SUB = Math.max(1, Math.round(25 * (params.speed as number)));
 
-    const du = new Float64Array(N);
-    const dv = new Float64Array(N);
+    // Reuse work buffers — avoids GC pauses every ~0.5s at default 160² grid.
+    const aux = state as ModelState & { _du?: Float64Array; _dv?: Float64Array };
+    if (!aux._du || aux._du.length !== N) aux._du = new Float64Array(N);
+    if (!aux._dv || aux._dv.length !== N) aux._dv = new Float64Array(N);
+    const du = aux._du;
+    const dv = aux._dv;
     for (let s = 0; s < SUB; s++) {
       for (let i = 0; i < N; i++) {
         const u = X[i * 2]!;
