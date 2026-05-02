@@ -119,8 +119,8 @@ Reference: Pearson, *Science* 261, 189 (1993). Original chemistry: Gray & Scott 
     {
       id: 'maze',
       name: 'maze (stationary stripes)',
-      short: 'f=0.062, k=0.061. Stripes nucleate everywhere, lock into a stationary maze. Munafo ε region.',
-      params: { Du: 0.04, Dv: 0.02, f: 0.062, k: 0.061, size: 160 },
+      short: 'f=0.054, k=0.063. Munafo κ region: stripes grow widthwise into disconnected hedgerow mazes that lock in place. (The previous maze coords (0.062, 0.061) were actually U-skate territory — moved here to match the named region.)',
+      params: { Du: 0.04, Dv: 0.02, f: 0.054, k: 0.063, size: 160 },
       seed: 1,
     },
 

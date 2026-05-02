@@ -40,6 +40,39 @@ See [`SPEC.md`](SPEC.md) for the substrate design — what every demo in the lib
 
 ---
 
+## References
+
+Each demo wraps published work. Use these to follow up if a regime catches your eye — the demo is for getting the intuition fast, the papers and catalogues below are where the precise claims live.
+
+**Network Turing** — Nakao & Mikhailov, *Turing patterns in network-organized activator–inhibitor systems*, *Nature Physics* **6**, 544 (2010), [doi:10.1038/nphys1651](https://doi.org/10.1038/nphys1651).
+
+**Adaptive Voter** — Holme & Newman, *Nonequilibrium phase transition in the coevolution of networks and opinions*, *Phys. Rev. E* **74**, 056108 (2006), [doi:10.1103/PhysRevE.74.056108](https://doi.org/10.1103/PhysRevE.74.056108).
+
+**Gray–Scott** —
+- Pearson, *Complex Patterns in a Simple System*, *Science* **261**, 189 (1993), [doi:10.1126/science.261.5118.189](https://doi.org/10.1126/science.261.5118.189) — the canonical (F, k) phase diagram.
+- Robert Munafo, [Pearson's Classification (Extended)](https://mrob.com/pub/comp/xmorphia/pearson-classes.html) — Greek-letter-named regions of the (F, k) plane, with descriptions and animated images. Each Gray-Scott preset corresponds to a named region:
+  - `mitosis` → near λ region, [#lam](https://mrob.com/pub/comp/xmorphia/pearson-classes.html#lam)
+  - `worms` → near δ/η transition, [#del](https://mrob.com/pub/comp/xmorphia/pearson-classes.html#del)
+  - `maze` → κ region, [#kap](https://mrob.com/pub/comp/xmorphia/pearson-classes.html#kap)
+  - `xi-bz-spirals` → ξ region, [#xi](https://mrob.com/pub/comp/xmorphia/pearson-classes.html#xi)
+  - `beta-wavefield` → β region, [#bet](https://mrob.com/pub/comp/xmorphia/pearson-classes.html#bet)
+  - `alpha-wavelet-chaos` → α region, [#alp](https://mrob.com/pub/comp/xmorphia/pearson-classes.html#alp)
+  - `u-skate` → π region: [Munafo's U-skate world](https://mrob.com/pub/comp/xmorphia/uskate-world.html)
+- The "never-settles" presets (ξ, β, α) realise behaviours that belong to the wider **excitable-media literature** — the same dynamics show up in BZ chemistry, cardiac arrhythmia, and Dictyostelium signalling. Foundational entry points: Winfree, *Spiral Waves of Chemical Activity*, *Science* **175**, 634 (1972); Tyson & Keener, *Singular perturbation theory of traveling waves in excitable media*, *Physica D* **32**, 327 (1988).
+
+**Classical Turing (Brusselator)** — Turing, *The Chemical Basis of Morphogenesis*, *Phil. Trans. R. Soc. B* **237**, 37 (1952), [doi:10.1098/rstb.1952.0012](https://doi.org/10.1098/rstb.1952.0012). Brusselator kinetics: Prigogine & Lefever (1968).
+
+**Hopfield** —
+- Hopfield, *Neural networks and physical systems with emergent collective computational abilities*, *PNAS* **79**, 2554 (1982), [doi:10.1073/pnas.79.8.2554](https://doi.org/10.1073/pnas.79.8.2554).
+- Capacity calculation: Amit, Gutfreund & Sompolinsky (1985–87), three papers in *Phys. Rev. A* and *Ann. Phys.* using the spin-glass replica method to derive the α<sub>c</sub> ≈ 0.138 critical capacity.
+- Modern attention connection: Ramsauer et al., [*Hopfield Networks is All You Need*](https://arxiv.org/abs/2008.02217), arXiv:2008.02217 (2020).
+
+**Ising** — Lenz (1920), Ising (1925); Onsager, *Crystal statistics. I. A two-dimensional model with an order-disorder transition*, *Phys. Rev.* **65**, 117 (1944), [doi:10.1103/PhysRev.65.117](https://doi.org/10.1103/PhysRev.65.117) — exact 2D solution and the T<sub>c</sub> = 2/ln(1+√2) result.
+
+**Spiking Neurons (LIF)** — Lapicque (1907); the model predates Hodgkin–Huxley by 45 years and is still the standard "neuron" used in modern neuromorphic chips. Modern textbook treatment: Gerstner, Kistler, Naud & Paninski, *Neuronal Dynamics*, Cambridge (2014), [free online](https://neuronaldynamics.epfl.ch/online/index.html).
+
+---
+
 ## Run locally
 
 ```sh
