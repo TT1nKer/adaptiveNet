@@ -27,6 +27,37 @@ Reference: Nakao & Mikhailov, *Nature Physics* 6, 544–550 (2010).`,
     topo: { label: 'topology',        options: TOPO_OPTS, default: 'ba',              live: false },
   },
 
+  presets: [
+    {
+      id: 'ba-strong',
+      name: 'BA · strong Turing (default)',
+      short: 'D_v / D_u = 60, well above the Turing threshold (~12 for these reaction params). Hubs lock to one branch and shape the pattern.',
+      params: { Du: 0.05, Dv: 3.0, N: 200, k: 6, topo: 'ba' },
+      seed: 1,
+    },
+    {
+      id: 'ba-subcritical',
+      name: 'BA · subcritical (no pattern)',
+      short: 'D_v / D_u = 10. Below the Turing threshold for Mimura–Murray at (a, b, c, d) = (35, 16, 9, 0.4) — homogeneous state stays stable, the network just sits at the fixed point.',
+      params: { Du: 0.05, Dv: 0.5, N: 200, k: 6, topo: 'ba' },
+      seed: 1,
+    },
+    {
+      id: 'er-strong',
+      name: 'Erdős–Rényi · strong Turing',
+      short: 'Same dynamics as default, but on a roughly homogeneous random graph. Pattern still forms but the "hub-organizer" effect goes away — clusters are determined by Laplacian eigenvectors instead of by degree.',
+      params: { Du: 0.05, Dv: 3.0, N: 200, k: 6, topo: 'er' },
+      seed: 1,
+    },
+    {
+      id: 'ws-strong',
+      name: 'Watts–Strogatz · small-world',
+      short: 'Strong Turing on a small-world topology — long-range shortcuts in a mostly local lattice. Pattern shows partial locality with occasional cross-links.',
+      params: { Du: 0.05, Dv: 3.0, N: 200, k: 6, topo: 'ws' },
+      seed: 1,
+    },
+  ],
+
   init(params: ParamValues, rng: RNG): ModelState {
     const N = Math.round(params.N as number);
     const k = Math.round(params.k as number);

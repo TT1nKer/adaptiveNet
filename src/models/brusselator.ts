@@ -107,6 +107,30 @@ Reference: Turing, *Phil. Trans. R. Soc. B* 237, 37 (1952). Brusselator: Prigogi
     size: { label: 'grid size',           min: 32,   max: 256, step: 8,     default: 160,  live: false },
   },
 
+  presets: [
+    {
+      id: 'turing-onset',
+      name: 'Turing onset (default)',
+      short: 'a=4.5, b=7.5 with D_v/D_u = 8. Classical Brusselator Turing region — homogeneous state goes unstable, stripes / spots emerge from noise.',
+      params: { a: 4.5, b: 7.5, Du: 0.5, Dv: 4.0, size: 160 },
+      seed: 1,
+    },
+    {
+      id: 'subcritical',
+      name: 'subcritical (no pattern)',
+      short: 'a=4.5, b=7.5 but D_v/D_u = 1. Below the Turing threshold; the homogeneous fixed point stays stable, noise just decays.',
+      params: { a: 4.5, b: 7.5, Du: 2.0, Dv: 2.0, size: 160 },
+      seed: 1,
+    },
+    {
+      id: 'deep-turing',
+      name: 'deep Turing',
+      short: 'a=4.5, b=7.5 with D_v/D_u = 20. Well past the threshold — pattern forms faster and the wavelength is shorter.',
+      params: { a: 4.5, b: 7.5, Du: 0.3, Dv: 6.0, size: 160 },
+      seed: 1,
+    },
+  ],
+
   init(params: ParamValues, rng: RNG): ModelState {
     const size = Math.round(params.size as number);
     const a = params.a as number;

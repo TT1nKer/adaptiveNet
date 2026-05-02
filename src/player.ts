@@ -11,11 +11,12 @@ import type { Model, ModelState, ParamSpec, ParamValues, NumericParamSpec, Categ
 type AnyLayout = Layout | GridLayout;
 
 // ---------- model registry ----------
-const MODEL_REGISTRY: Record<string, () => Promise<{ default: Model }>> = {
+const MODEL_REGISTRY: Record<string, () => Promise<{ default: Model<any> }>> = {
   'nakao-2010': () => import('./models/nakao.ts'),
   'holme-newman': () => import('./models/voter.ts'),
   'gray-scott': () => import('./models/gray-scott.ts'),
   'brusselator-grid': () => import('./models/brusselator.ts'),
+  'hopfield': () => import('./models/hopfield.ts'),
 };
 
 // ---------- DOM helpers ----------
@@ -77,7 +78,7 @@ function buildQuery(id: string, seed: number, params: ParamValues): string {
 }
 
 // ---------- runtime state ----------
-let model: Model | null = null;
+let model: Model<any> | null = null;
 let params: ParamValues = {};
 let seed = 1;
 let state: ModelState | null = null;
@@ -294,7 +295,7 @@ function rebuild(): void {
   if (!model) return;
   fitAll();
   const rng = new RNG(seed);
-  state = model.init(params, rng);
+  state = model.init(params, rng) as ModelState;
   if (model.view === 'grid' && state.cols && state.rows) {
     layout = new GridLayout(state.cols, state.rows, netcv.width, netcv.height);
   } else {
