@@ -157,6 +157,18 @@ This is more philosophically rich than "neuromorphic playground" and more honest
 
 The README and gallery were updated 2026-05-03 to reflect this stance: emphasising the abstract shape, mentioning neuromorphic as one of several instances, leaving the substrate question open.
 
+### Structural argument for graph-native substrate (vs lattice-native)
+
+The author added a sharp empirical / structural argument for why adaptiveNet must be **graph-native**, not lattice-native, even though many classical demos (Ising, Gray–Scott, Brusselator, LIF, Avalanches) currently live on regular grids:
+
+- A cortical pyramidal neuron averages ~7,000–10,000 synapses (Drachman 2005; Braitenberg & Schüz). Some neuron classes are higher.
+- 2D regular lattices give 4 (von Neumann) or 8 (Moore) neighbours; 3D gives 6 or 26. **Three orders of magnitude** away from biological connectivity.
+- Patching a lattice with long-range edges (Watts–Strogatz style) lowers path length but does NOT reshape the degree distribution. To reach brain-scale connectivity, generation must be graph-first, not grid + patches.
+
+Implication for the v2 substrate design (when undertaken): **arbitrary-degree graphs are the primary case; regular lattices are a derived special case (a regular grid graph)**. Hard constraint, not a preference. Bake-in assumptions like "node has 4 neighbours" or "neighbour at (x±1, y)" are anti-pattern at the substrate level — they may live inside specific lattice demos but must not propagate outward.
+
+Worth noting: even neuromorphic hardware itself does not solve this connectivity problem — Loihi 2's mesh routing, SpiNNaker's packet bandwidth, and Akida's on-chip SRAM all force lower fan-out than biology. So "general graph dynamics" is an underserved niche even on the hardware side, which further supports not betting the project on neuromorphic specifically.
+
 Source: [Cardinot, Marcos, et al. "Evoplex: A platform for agent-based modeling on networks." *SoftwareX* 9 (2019): 199-204.](https://doi.org/10.1016/j.softx.2019.02.009) — read in full.
 
 ---
