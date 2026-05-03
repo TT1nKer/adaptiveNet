@@ -138,6 +138,25 @@ Refined from the cloned-repo section above:
 
 3. **Web + zero install is now defensibly the right axis to lean on**, not because I imagined it but because the Evoplex authors named it as the obvious uncovered direction. This is the closest thing to external validation of adaptiveNet's pitch that I've found.
 
+---
+
+## Positioning constraint stated by the author (2026-05-03)
+
+The author has explicitly chosen **not to position adaptiveNet as a neuromorphic-specific tool**, even though neuromorphic computing was the personal inspiration. Reasoning:
+
+- Simulating neurons is itself a moving target — at what level of biological precision (membrane / functional / abstract)?
+- Neurons may not be the unique substrate for intelligence; betting on them prematurely closes off other candidates
+- The abstract structure (nodes + co-evolving connections) is what neuromorphic, statistical mechanics, theories of biological cognition, and several philosophy-of-mind frames all share
+
+This is intentional epistemological humility. adaptiveNet's framing should be:
+- The substrate is general
+- Neuromorphic models (LIF, Hopfield) are *one set of instances* among others (Ising, RD, voter, etc.)
+- The project does not commit to any particular candidate being the answer
+
+This is more philosophically rich than "neuromorphic playground" and more honest to the project's actual scope, but it is **harder to market** — there is no specific cultural moment ("the Nobel", "the chip wave") to attach to. The audience is correspondingly more diffuse: people interested in the substrate question itself, not in any one substrate.
+
+The README and gallery were updated 2026-05-03 to reflect this stance: emphasising the abstract shape, mentioning neuromorphic as one of several instances, leaving the substrate question open.
+
 Source: [Cardinot, Marcos, et al. "Evoplex: A platform for agent-based modeling on networks." *SoftwareX* 9 (2019): 199-204.](https://doi.org/10.1016/j.softx.2019.02.009) — read in full.
 
 ---

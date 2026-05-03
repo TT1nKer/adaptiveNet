@@ -1,6 +1,8 @@
 # adaptiveNet
 
-An interactive playground for the dynamics behind **brain-inspired computing** — Hopfield memory, spiking neurons, self-organised criticality, classical Turing patterns, the Ising model. The mathematical territory that 2024's Nobel Prize in Physics (Hopfield + Hinton) put back into mainstream conversation, and that the neuromorphic chip wave (Loihi, Akida, SpiNNaker) is betting on for the post-transformer era.
+An interactive playground for **node–edge dynamical systems** — networks where node states and connection strengths coevolve under simple rules. Spiking neurons, Hopfield memory, Ising spins, reaction–diffusion, voter dynamics, self-organised criticality: ten different specific systems, all instances of one abstract shape.
+
+The shape — *units + co-evolving connections* — is what neuromorphic computing, classical statistical mechanics, and several theories of biological cognition all share. Whether intelligence requires neurons specifically, or a more general structure, is an open question. This is a place to play with candidates.
 
 10 demos, browser, zero install. Drag sliders, hit play, share by URL.
 
