@@ -1,5 +1,7 @@
-# Replace `family-names` with your real name before formal release / JOSS submission.
-# Add `orcid` once you have one (https://orcid.org). Both are required for academic-style citation.
+# Author identity: TT1nKer is the canonical name (mononym handle, used across
+# academic and code-hosting contexts). No name split into given/family applies.
+# Add `orcid:` here once available — https://orcid.org takes ~5 minutes to set up
+# and gives you a permanent author ID that survives handle changes / institution moves.
 
 cff-version: 1.2.0
 message: "If you use adaptiveNet in academic, teaching, or published work, please cite it as below."
@@ -10,8 +12,7 @@ abstract: >-
   memory, spiking neurons, Ising spins, reaction-diffusion, voter dynamics,
   and self-organised criticality as instances of one substrate.
 authors:
-  - family-names: TT1nKer
-    alias: TT1nKer
+  - name: TT1nKer
 type: software
 repository-code: "https://github.com/TT1nKer/adaptiveNet"
 url: "https://tt1nker.github.io/adaptiveNet/"
