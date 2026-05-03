@@ -10,15 +10,60 @@ The most important finding from this round: **Evoplex** (Cardinot et al., *Softw
 
 > "Evoplex is a fast, robust and extensible platform for developing agent-based models and multi-agent systems on networks. Each agent is represented as a node and interacts with its neighbors, as defined by the network structure."
 
-Verified facts (sources cited below):
-- Built in **C++/Qt as a desktop app** (Linux/Windows/macOS), not web
-- Provides "interactive graph and grid views" + parameter sweeping + parallel execution
-- Models = plugin-extensible C++ modules
-- **Last release: v0.2.1, October 2018** — appears inactive for ~7 years
-- 145 stars on GitHub, 1003 commits, modest community
-- Has an academic publication ([Cardinot et al. 2019, SoftwareX](https://www.sciencedirect.com/science/article/pii/S2352711018302437))
+This is essentially the platform I thought adaptiveNet was filling a gap for. **It already exists.** But after cloning the repo and reading the code, the picture is more nuanced — Evoplex's pitch is right but its execution has specific weak spots that explain why it hasn't propagated, and that adaptiveNet structurally avoids.
 
-This is essentially the platform I thought adaptiveNet was filling a gap for. **It already exists.** It's not actively maintained, it's desktop-only, and the community is small — but the niche is not empty.
+### Verified by inspecting the cloned repo (2026-05-03)
+
+- **Active dev window**: November 2018 – **July 2019**. 50 commits total. Then nothing — last commit `c6e78af`, 2019-07-29.
+- **Pattern**: 7 commits in 2018, 43 in 2019, 0 since. Looks like **PhD-then-abandon**: lead author Marcos Cardinot was at NUI Galway (with O'Riordan & Griffith as supervisors, Perc as external collaborator); the SoftwareX paper came out March 2019; activity tapered through July; project then froze. Classic "research tool dies when the one PhD student moves on".
+- **Models that ship by default**: only **4** — `cellularAutomata1D`, `gameOfLife`, `populationGrowth`, `prisonersDilemma`. All classic complexity examples; **no reaction-diffusion, no Hopfield, no Ising, no spiking, no adaptive-W demos.**
+- **Graph topologies that ship**: only **6** — `cycle`, `edgesFromCSV`, `path`, `squareGrid`, `star`, `zeroEdges`. **No ER, no BA, no WS.** For a tool branded "agent-based modeling on networks", the absence of the standard network-science generators is striking.
+- **To write a new model**: subclass `AbstractModel` in C++, implement `init()` + `algorithmStep()`, declare metadata in JSON, write a CMakeLists.txt, link against EvoplexCore + Qt5, build a shared library, install it into Evoplex's plugin directory, restart the app. **Authoring barrier is high.**
+- **Distribution**: per-OS native installer (Windows/macOS/Linux), Qt5 desktop binary. **No URL share, no zero-install path.**
+- 145 stars on GitHub.
+
+Sources: [evoplex/evoplex repo](https://github.com/evoplex/evoplex), cloned and inspected directly. [Cardinot et al. 2019 SoftwareX paper](https://www.sciencedirect.com/science/article/pii/S2352711018302437).
+
+### Evoplex vs adaptiveNet — honest side-by-side
+
+| Axis | Evoplex | adaptiveNet |
+|---|---|---|
+| Project status | Dead since July 2019 | Active |
+| Authoring a new model | C++ plugin + CMake + Qt5 SDK + restart app | TypeScript file in `src/models/` + Vite hot-reload |
+| Distribution | Per-OS native installer | URL, zero install |
+| Sharing a configured run | Send a project file | URL with model + params + seed |
+| Built-in random graphs | None (no ER/BA/WS) | ER + BA + WS |
+| Built-in models | 4 classics | 10 (network Turing, voter, Hopfield × 3, Ising, RD × 2, LIF, avalanches) |
+| Adaptive-W demonstrated | Not in default set | Yes (voter demo rewires) |
+| Maintenance treadmill | C++ + Qt5 + per-OS builds | Web stack, browser handles compatibility |
+
+### Why this matters more than the niche-gap question
+
+The "niche" arguments matter less than I made them sound. **The more useful frame**: Evoplex tried this pitch, with academic backing (Perc is a heavy-hitter in complex systems on networks), and the project still ground to a halt within 9 months of publication. The reasons appear structural — high authoring barrier, OS-specific installs, no zero-install demo path, single maintainer — and adaptiveNet currently avoids most of these:
+
+- **Authoring barrier**: TS file vs C++ plugin SDK is **dramatically lower friction**. A researcher who wants to try a new model can do it in an afternoon vs a weekend.
+- **Single-maintainer risk**: still present here. Web stack has lower maintenance burden than Qt5 desktop, but still requires someone to push to it.
+- **Distribution**: URL-share vs installer is significant. NetLogo and Evoplex both require download-and-install; that's a real friction wall vs "click a link".
+
+### What this implies for adaptiveNet's strategy
+
+The risk to actually worry about is **not "is the niche real"** — Evoplex's existence proves people thought so. The risk is **"will any maintainer-worth's worth of users adopt before the maintainer (you) moves on?"** That's the same trap Evoplex fell into.
+
+What matters for surviving that trap:
+- **Low authoring friction** so other people can add models without contacting the maintainer
+- **Low maintenance burden** so the project doesn't rot when activity is low
+- **Visible enough** that a few researchers find it before the maintainer loses interest
+
+The first two adaptiveNet has structurally. The third is not addressed by anything in the codebase — that's "go talk to a researcher" work, not engineering work.
+
+### Things adaptiveNet should consider stealing from Evoplex
+
+Even though Evoplex died, parts of its design are good:
+- **Parameter sweeping as a first-class feature** (run the same model across N parameter combinations). adaptiveNet has none of this; researchers eventually want it.
+- **Custom output / data export** — Evoplex lets a model declare custom diagnostics that get written to file. adaptiveNet has live time-series but no batch export.
+- **Cite-this command** in the UI — Evoplex shipped a citation prompt; trivial to add and it normalizes academic citation.
+
+These are concrete features to consider adding, that aren't speculative — they're proven research-tool-survival features.
 
 ---
 
