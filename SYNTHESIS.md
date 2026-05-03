@@ -216,49 +216,9 @@ These are the choices that make the abstraction either powerful or shallow. They
 
 ---
 
-## Lessons from the prototype
+## Status
 
-The 5 design questions above are easier to answer once you've actually written code in the candidate language. Three v2 demos were prototyped (`src/models/nakao-v2.ts`, `voter-v2.ts`, `avalanches-v2.ts`) on top of the API in `src/v2/api.ts`. They cover three of the four scheduling regimes (sync, event-per-edge, drive-and-cascade). What this revealed:
-
-**What worked**:
-
-- **Boilerplate genuinely went away.** Each v2 demo is ~70 lines vs 150–250 for the originals. Graph construction, sub-step looping, buffer reuse, and (where applicable) cascade resolution all live in the runtime now.
-- **Topology / state / step / render / diagnostics as separable declarations** is the right top-level structure. Each demo cleanly declares one of each, and there's no awkwardness from forcing them together.
-- **The `ctx` helper bag for sync rules** (`ctx.s(i, field)`, `ctx.neighborDiffSum(i, field)`, etc.) makes the rule expression compact without losing clarity. The Nakao reaction reads almost like the math.
-- **Scheduling-regime as a tagged union** (`update.sync`, `update.eventPerEdge`, etc.) avoids the "choose a hard-coded scheduling on day one" problem. Adding a fifth regime later is just a new `update.xxx` factory + a new runner branch.
-
-**What didn't quite work / open issues**:
-
-- **Rule functions still feel imperative.** `(i, ctx, params) => [reactU, reactV]` is JS, not declarative composition. Real users would benefit from a "Mimura–Murray reaction" prefab they can pick from a dropdown, with sliders for (a, b, c, d). The next layer up is a **library of named reactions / kernels** (Mimura–Murray, Brusselator, Gray–Scott, Schnakenberg, FitzHugh–Nagumo) that compose the same way as topology / init / etc. Today's "reaction" is still bespoke per file.
-- **Drive-and-cascade hardcodes "field 0 is activity"**. The threshold is checked against `X[i*d + 0]`. This works for Avalanches but anticipates a more general "predicate / on-fire" pair. For now, OK; future demos that need different cascade conditions will force the generalisation.
-- **Speed slider** is read inside the runtime via `params.speed as number ?? 1`. This is fine but means every v2 model gets a free speed scaling whether it declares one or not — and gets it wrong if the user names the slider differently. Should probably be a runtime-level parameter, not a per-model one.
-- **Diagnostic `scalarFromState`** required casting state to a custom type (for Avalanches' `_smoothSize` field). The state-extension story works but isn't typed cleanly — same problem the original codebase has.
-- **Param schema is unchanged.** Still uses the original `ParamSchema` type. This is fine but means the v2 API doesn't yet help with params at all; that layer could shrink too.
-
-**What this changes for the v2 spec**:
-
-The substrate (X + W + sync update) survives as is. The eventual v2 surface is **two layers**:
-
-  1. **Composition**: `define({ topology, state, step, render, ... })`. Models built by composing primitives. ✓ prototype shipped.
-  2. **Library**: named prefabs for common reactions, render colour maps, diagnostics. ✓ first cut shipped: `src/v2/reactions.ts` with 5 named kernels (Mimura–Murray, Brusselator, Gray–Scott, Schnakenberg, FitzHugh–Nagumo) and `update.reactionDiffusion` pattern in api.ts.
-
-## Library layer — what dropped after shipping
-
-The 3 v2 demos written before the library used inline rule functions (`(i, ctx, params) => [...]`). After the library was added, `nakao-v2` was rewritten to use `reactions.mimuraMurray()` + `update.reactionDiffusion()`. The result:
-
-  - `nakao.ts` (production):  172 lines, all hand-written
-  - `nakao-v2.ts` (composition only): ~70 lines, declarative + inline kinetics
-  - **`nakao-v2.ts` (with library): ~40 lines, no kinetics or step code at all**
-
-A new model (`brusselator-v2.ts`) added in the library style is also ~50 lines, and changing it from Brusselator to Mimura–Murray or Gray–Scott is a one-line swap of which factory is referenced. **This is what a non-programmer dropdown UI would compile down to.**
-
-What still hurts:
-
-- The init for grid-RD models (Brusselator-v2) needs to know the FP, but the FP depends on params. Currently hardcoded to defaults; a proper library `init.fpFromReaction(reactionFactory)` could compute it. Not done yet.
-- Voter and Avalanches still use inline rules (event-per-edge and drive-and-cascade rules are too varied to library-ise yet). They're ~70 lines each.
-- Hopfield variants would need a separate `update.hopfieldRecall(...)` pattern. Not done; another future library entry.
-
-The library is now extensible: each new family of dynamics gets a named pattern in api.ts and named primitives in a sibling library file. The third layer ("UI dropdown for non-programmers") is now a clean compile-down target rather than something to be designed.
+The 5 design questions above are **not answered**. A prototype implementation that committed to specific answers (declarative blocks + JS escape hatch, 4 hard-coded update strategies, etc.) was built and then rolled back on 2026-05-03 because the design questions weren't actually decided — implementation got mistaken for decision. Fresh discussion of question 1 (rule language style) is the right next step before any v2 code is written.
 
 ## Recommendation
 
