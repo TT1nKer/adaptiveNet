@@ -1,6 +1,8 @@
 # adaptiveNet
 
-A small interactive playground for **node–edge dynamical systems** — networks where node states and pairwise weights coevolve under simple rules. Reaction-diffusion, spin glasses, spiking neurons, adaptive networks. Browser-runnable, no install.
+An interactive playground for the dynamics behind **brain-inspired computing** — Hopfield memory, spiking neurons, self-organised criticality, classical Turing patterns, the Ising model. The mathematical territory that 2024's Nobel Prize in Physics (Hopfield + Hinton) put back into mainstream conversation, and that the neuromorphic chip wave (Loihi, Akida, SpiNNaker) is betting on for the post-transformer era.
+
+10 demos, browser, zero install. Drag sliders, hit play, share by URL.
 
 **Live at https://tt1nker.github.io/adaptiveNet/** — open it, click any demo, drag the sliders.
 
