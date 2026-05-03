@@ -24,6 +24,25 @@ input[type=range] { width: 100%; accent-color: #e63946; }
 .gallery-page h1 { font-size: 28px; color: #e8edf4; margin: 0 0 6px; letter-spacing: 0.04em; }
 .gallery-page .lead { color: #8a93a3; font-size: 15px; margin: 0 0 40px; max-width: 760px; line-height: 1.75; }
 .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 18px; }
+.section { margin-bottom: 36px; }
+.section h2 {
+  color: #8a93a3;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-weight: 600;
+  margin: 0 0 4px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #1f2530;
+}
+.section .section-blurb {
+  color: #6b7280;
+  font-size: 13px;
+  margin: 12px 0 18px;
+  line-height: 1.65;
+  max-width: 680px;
+}
+.section + .section { margin-top: 36px; }
 .card {
   background: #0e1014; border: 1px solid #1f2530; border-radius: 4px;
   padding: 20px 22px; transition: border-color .15s, transform .15s;

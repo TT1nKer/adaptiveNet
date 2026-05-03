@@ -1,0 +1,29 @@
+# Replace `family-names` with your real name before formal release / JOSS submission.
+# Add `orcid` once you have one (https://orcid.org). Both are required for academic-style citation.
+
+cff-version: 1.2.0
+message: "If you use adaptiveNet in academic, teaching, or published work, please cite it as below."
+title: adaptiveNet
+abstract: >-
+  An interactive browser-based playground for node-edge dynamical systems
+  where node states and connection topology coevolve. Includes Hopfield
+  memory, spiking neurons, Ising spins, reaction-diffusion, voter dynamics,
+  and self-organised criticality as instances of one substrate.
+authors:
+  - family-names: TT1nKer
+    alias: TT1nKer
+type: software
+repository-code: "https://github.com/TT1nKer/adaptiveNet"
+url: "https://tt1nker.github.io/adaptiveNet/"
+license: MIT
+keywords:
+  - agent-based modeling
+  - network dynamics
+  - adaptive networks
+  - reaction-diffusion
+  - Hopfield network
+  - spiking neurons
+  - self-organised criticality
+  - Ising model
+  - interactive simulation
+  - browser-based simulation

@@ -8,69 +8,85 @@
 <body class="gallery-page">
   <h1>adaptiveNet</h1>
   <p class="lead">
-    Interactive demos of <strong>node–edge dynamical systems</strong> — networks where node states and connection strengths coevolve. Spiking neurons, Hopfield memory, Ising spins, reaction–diffusion, voter dynamics, self-organised criticality: all instances of one abstract shape. Whether intelligence needs neurons specifically or a more general substrate is open; this is a place to play with candidates. <a href="https://github.com/TT1nKer/adaptiveNet/blob/main/SPEC.md">SPEC.md</a> · <a href="https://github.com/TT1nKer/adaptiveNet/blob/main/POSITIONING.md">POSITIONING.md</a>
+    Interactive demos of <strong>node–edge dynamical systems</strong> — networks where node states and connection strengths coevolve. Spiking neurons, Hopfield memory, Ising spins, reaction–diffusion, voter dynamics, self-organised criticality: all instances of one abstract shape. Whether intelligence needs neurons specifically or a more general substrate is open; this is a place to play with candidates. <a href="https://github.com/TT1nKer/adaptiveNet/blob/main/SPEC.md">SPEC.md</a> · <a href="https://github.com/TT1nKer/adaptiveNet/blob/main/POSITIONING.md">POSITIONING.md</a> · <a href="https://github.com/TT1nKer/adaptiveNet/blob/main/CITATION.cff">CITATION.cff</a>
   </p>
 
-  <div class="cards">
-    <a class="card" href="player.html?model=nakao-2010">
-      <div class="title">Network Turing Patterns</div>
-      <div class="short">Reaction–diffusion on a graph. When the inhibitor diffuses much faster than the activator, the network splits into high / low clusters. Hubs become pattern organizers.</div>
-      <div class="open">open →</div>
-    </a>
+  <section class="section">
+    <h2>Brain-inspired computation</h2>
+    <p class="section-blurb">Memory, spikes, criticality, phase transitions — the classical models behind neuromorphic computing and the 2024 Nobel Prize in Physics. Six demos sharing one substrate.</p>
+    <div class="cards">
+      <a class="card" href="player.html?model=hopfield">
+        <div class="title">Hopfield Retrieval</div>
+        <div class="short">Patterns encoded in dense edge weights via Hebbian learning. A noisy initial state converges to the nearest stored memory in 2–5 synchronous steps. Pick the cue, set the noise, watch the recall.</div>
+        <div class="open">open →</div>
+      </a>
 
-    <a class="card" href="player.html?model=holme-newman">
-      <div class="title">Adaptive Voter (Holme–Newman)</div>
-      <div class="short">Edges rewire when neighbors disagree; opinions copy when they don't. Echo chambers form above a critical rewire rate. The structure of the network co-evolves with the opinions on it.</div>
-      <div class="open">open →</div>
-    </a>
+      <a class="card" href="player.html?model=hopfield-capacity">
+        <div class="title">Hopfield Capacity (α_c Phase Transition)</div>
+        <div class="short">Same machinery as Hopfield, but with P random patterns. Walk the load α = P/N across the critical line at α_c ≈ 0.138 (Amit–Gutfreund–Sompolinsky 1985–87). Below: stored patterns are fixed points. Above: spin-glass phase, capacity broken.</div>
+        <div class="open">open →</div>
+      </a>
 
-    <a class="card" href="player.html?model=gray-scott">
-      <div class="title">Gray–Scott on a 2D Grid</div>
-      <div class="short">Reaction–diffusion on a square lattice. Spots, mazes, mitosis, worms — the same two equations produce wildly different patterns depending on (f, k).</div>
-      <div class="open">open →</div>
-    </a>
+      <a class="card" href="player.html?model=hopfield-modern">
+        <div class="title">Modern Hopfield (Attention-Equivalent)</div>
+        <div class="short">Replace classical Hopfield's quadratic energy with log-sum-exp. Capacity jumps from 0.138·N to <em>exponential in N</em>, and the resulting retrieval rule IS Transformer attention (Ramsauer et al. 2020). The bridge between Hopfield 1982 and ChatGPT.</div>
+        <div class="open">open →</div>
+      </a>
 
-    <a class="card" href="player.html?model=brusselator-grid">
-      <div class="title">Classical Turing (Brusselator)</div>
-      <div class="short">The original 1952 Turing mechanism on a 2D lattice. Two species, two diffusion rates; the homogeneous state goes unstable and stripes / spots appear from arbitrarily small noise. Same chemistry as the network Turing demo, different topology.</div>
-      <div class="open">open →</div>
-    </a>
+      <a class="card" href="player.html?model=lif">
+        <div class="title">Spiking Neurons (LIF Network)</div>
+        <div class="short">Leaky integrate-and-fire neurons on a 2D lattice — the simplest spiking model from Lapicque 1907, still the standard for modern neuromorphic chips. A drive at the centre triggers radial waves of synchronised spikes. Crank coupling for runaway "epilepsy", drop it for localised oscillation.</div>
+        <div class="open">open →</div>
+      </a>
 
-    <a class="card" href="player.html?model=hopfield">
-      <div class="title">Hopfield Retrieval</div>
-      <div class="short">Patterns encoded in dense edge weights via Hebbian learning. A noisy initial state converges to the nearest stored memory in 2–5 synchronous steps. Pick the cue, set the noise, watch the recall.</div>
-      <div class="open">open →</div>
-    </a>
+      <a class="card" href="player.html?model=avalanches">
+        <div class="title">Neural Avalanches (Self-Organised Criticality)</div>
+        <div class="short">Bak–Tang–Wiesenfeld sandpile on a 2D grid. Drive slowly: most events are tiny, occasional ones sweep across the grid. Avalanche sizes follow a power law — the same s^(−3/2) statistics Beggs &amp; Plenz 2003 found in cortical slices. The strongest evidence that brains operate near a critical point.</div>
+        <div class="open">open →</div>
+      </a>
 
-    <a class="card" href="player.html?model=hopfield-capacity">
-      <div class="title">Hopfield Capacity (α_c Phase Transition)</div>
-      <div class="short">Same machinery as Hopfield, but with P random patterns. Walk the load α = P/N across the critical line at α_c ≈ 0.138 (Amit–Gutfreund–Sompolinsky 1985–87). Below: stored patterns are fixed points. Above: spin-glass phase, capacity broken.</div>
-      <div class="open">open →</div>
-    </a>
+      <a class="card" href="player.html?model=ising">
+        <div class="title">Ising Model (2D Lattice)</div>
+        <div class="short">The classical statistical-mechanics model. Spins on a square lattice align with neighbours under thermal noise; second-order phase transition at T_c ≈ 2.269 (Onsager 1944). Drag the temperature slider live across the critical point.</div>
+        <div class="open">open →</div>
+      </a>
+    </div>
+  </section>
 
-    <a class="card" href="player.html?model=hopfield-modern">
-      <div class="title">Modern Hopfield (Attention-Equivalent)</div>
-      <div class="short">Replace classical Hopfield's quadratic energy with log-sum-exp. Capacity jumps from 0.138·N to <em>exponential in N</em>, and the resulting retrieval rule IS Transformer attention (Ramsauer et al. 2020). The bridge between Hopfield 1982 and ChatGPT.</div>
-      <div class="open">open →</div>
-    </a>
+  <section class="section">
+    <h2>Pattern formation</h2>
+    <p class="section-blurb">Reaction–diffusion: two interacting species, two diffusion rates, and an instability that produces stripes, spots, mitosis, gliders. The same chemistry on a graph, on a lattice, with different topology — different patterns.</p>
+    <div class="cards">
+      <a class="card" href="player.html?model=nakao-2010">
+        <div class="title">Network Turing Patterns</div>
+        <div class="short">Reaction–diffusion on a graph. When the inhibitor diffuses much faster than the activator, the network splits into high / low clusters. Hubs become pattern organizers.</div>
+        <div class="open">open →</div>
+      </a>
 
-    <a class="card" href="player.html?model=ising">
-      <div class="title">Ising Model (2D Lattice)</div>
-      <div class="short">The classical statistical-mechanics model. Spins on a square lattice align with neighbours under thermal noise; second-order phase transition at T_c ≈ 2.269 (Onsager 1944). Drag the temperature slider live across the critical point.</div>
-      <div class="open">open →</div>
-    </a>
+      <a class="card" href="player.html?model=brusselator-grid">
+        <div class="title">Classical Turing (Brusselator)</div>
+        <div class="short">The original 1952 Turing mechanism on a 2D lattice. Two species, two diffusion rates; the homogeneous state goes unstable and stripes / spots appear from arbitrarily small noise. Same chemistry as the network Turing demo, different topology.</div>
+        <div class="open">open →</div>
+      </a>
 
-    <a class="card" href="player.html?model=lif">
-      <div class="title">Spiking Neurons (LIF Network)</div>
-      <div class="short">Leaky integrate-and-fire neurons on a 2D lattice — the simplest spiking model from Lapicque 1907, still the standard for modern neuromorphic chips. A drive at the centre triggers radial waves of synchronised spikes. Crank coupling for runaway "epilepsy", drop it for localised oscillation.</div>
-      <div class="open">open →</div>
-    </a>
+      <a class="card" href="player.html?model=gray-scott">
+        <div class="title">Gray–Scott on a 2D Grid</div>
+        <div class="short">Reaction–diffusion on a square lattice. Spots, mazes, mitosis, worms — the same two equations produce wildly different patterns depending on (f, k).</div>
+        <div class="open">open →</div>
+      </a>
+    </div>
+  </section>
 
-    <a class="card" href="player.html?model=avalanches">
-      <div class="title">Neural Avalanches (Self-Organised Criticality)</div>
-      <div class="short">Bak–Tang–Wiesenfeld sandpile on a 2D grid. Drive slowly: most events are tiny, occasional ones sweep across the grid. Avalanche sizes follow a power law — the same s^(−3/2) statistics Beggs &amp; Plenz 2003 found in cortical slices. The strongest evidence that brains operate near a critical point.</div>
-      <div class="open">open →</div>
-    </a>
-  </div>
+  <section class="section">
+    <h2>Adaptive networks</h2>
+    <p class="section-blurb">Where the topology itself coevolves with the dynamics on it — edges rewire, weights shift, and the structure becomes a dependent variable. The smallest section so far; more demos welcome (<a href="https://github.com/TT1nKer/adaptiveNet/issues">issues</a> / <a href="https://github.com/TT1nKer/adaptiveNet/pulls">PRs</a>).</p>
+    <div class="cards">
+      <a class="card" href="player.html?model=holme-newman">
+        <div class="title">Adaptive Voter (Holme–Newman)</div>
+        <div class="short">Edges rewire when neighbors disagree; opinions copy when they don't. Echo chambers form above a critical rewire rate. The structure of the network co-evolves with the opinions on it.</div>
+        <div class="open">open →</div>
+      </a>
+    </div>
+  </section>
 </body>
 </html>
