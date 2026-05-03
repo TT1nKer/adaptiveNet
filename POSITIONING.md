@@ -67,6 +67,81 @@ These are concrete features to consider adding, that aren't speculative — they
 
 ---
 
+## What the SoftwareX paper itself reveals (Cardinot et al. 2019)
+
+Read the actual paper on 2026-05-03. Pulls out details the GitHub repo + summaries didn't show.
+
+### Their own diagnosis of why ABM tools fail
+
+In Section 1 the authors explicitly call out the failure mode that they themselves then fall into:
+
+> "many ABM projects start with the promising and challenging intention of developing powerful software to meet any requirement in the field... this promising approach usually results in making the code base very complex and hard to both optimize and maintain. In reality, given the small size of the development teams, there is no best strategy for all scenarios."
+
+Their conclusion: "**defining a clear and focused scope can help solve those issues**." They then chose scope = "agent-based models on networks". The discipline appears to have helped — the codebase is small, focused, well-tested. But the project still died, suggesting **focused scope is necessary but not sufficient** for survival.
+
+### The CSV-project-as-experiment-table is more central than I'd realised
+
+A "project" in Evoplex is a **CSV file** where rows are experiments and columns are parameter values:
+
+> "A project is a plain table (csv file) where the experiments are listed along the rows, and the inputs to each experiment are placed along the columns. An experiment is defined by a set of parameter settings (inputs) necessary to perform one trial (simulation) and (optionally) the required data outputs."
+
+This is a much more powerful organisational primitive than I initially thought:
+- Parameter sweeps are **the central workflow**, not an add-on feature
+- The CSV is **plain-text, version-controllable, portable**
+- "allows newcomers to interact with the models without requiring any programming skills"
+
+adaptiveNet currently has nothing comparable — a "session" is a single URL with one parameter set. The CSV-as-project pattern is **directly portable** and would meaningfully upgrade adaptiveNet for research use. Could be added without large architectural change.
+
+### They explicitly predicted a web frontend — and did not ship it
+
+Section 2.1, on architecture (kernel decoupled from GUI):
+
+> "Evoplex can be distributed with different user-interfaces but share the same engine. For instance, one may want to implement an EvoplexCLI application to perform simulations via command-line, or an **EvoplexWeb application to provide visualization tools on a web browser**."
+
+The authors literally predicted adaptiveNet's positioning, in 2019. They did not build it. Six years later nobody has filled that branch.
+
+This is the strongest argument that adaptiveNet's "web + zero install" angle is structurally distinguishing — not "I imagined a gap"; the **Evoplex authors themselves named it as the obvious-and-not-shipped variant of their own work**.
+
+### Their stated audience is narrower than "network science"
+
+Section 4 ("Impact"):
+
+> "Evoplex is intended to address research whose methodology comprises a simulation-based approach to evolve outcomes of populations of autonomous and interacting agents. It has been used to support research in a number of areas, including **spatial game theory and evolutionary game theory** [1, 23, 24]."
+
+The three citations of impact are **all by the lead author** (Cardinot, with the same supervisors). No external citations of Evoplex usage are mentioned in the paper.
+
+Implications:
+- Their target was **evolutionary game theory + spatial game theory**, not adaptive networks broadly
+- At publication, outside adoption appears to have been near-zero
+- "Network science" was the *substrate* but the *audience* was a specific game-theory community
+
+This narrows what adaptiveNet should learn:
+- Evoplex's failure is partly evidence that **even with academic backing, even with a Perc-tier collaborator, even with a 9-month focused build, the audience for "ABM on networks" did not materialise enough to sustain the tool**
+- Possible reasons: game theorists already have MATLAB/Mathematica scripts they prefer; they don't want a new tool; the C++ plugin barrier kept them out; word never reached them
+- adaptiveNet should ask: **is there a different audience** (spiking-net hobbyists? complex-systems teachers? science communicators? non-academic curious people?) where the web + low-friction story might land where Evoplex's couldn't
+
+### Their stated future work was never done
+
+Section 5: "future work will involve adding support for multilayer networks, as well as implementing more plugins, and developing more visualization widgets for the GUI."
+
+None of this happened — last commit July 2019. Multi-layer is still missing in 2026.
+
+---
+
+## Net update to recommendations
+
+Refined from the cloned-repo section above:
+
+1. **CSV-project-as-experiment-table** is now top of the steal-list. It's a small architectural addition (probably 200-500 lines) that would convert adaptiveNet from "interactive playground" to "research tool" in user perception. The Evoplex paper makes the case for this clearly.
+
+2. **The audience question is harder than I thought.** Evoplex aimed at game theorists with academic muscle behind it and still didn't catch. adaptiveNet should not assume "network dynamics researchers" is a uniform audience that will adopt a good tool. Concrete next move: **identify ONE specific person** who would use adaptiveNet weekly and design for them, rather than for an imagined community.
+
+3. **Web + zero install is now defensibly the right axis to lean on**, not because I imagined it but because the Evoplex authors named it as the obvious uncovered direction. This is the closest thing to external validation of adaptiveNet's pitch that I've found.
+
+Source: [Cardinot, Marcos, et al. "Evoplex: A platform for agent-based modeling on networks." *SoftwareX* 9 (2019): 199-204.](https://doi.org/10.1016/j.softx.2019.02.009) — read in full.
+
+---
+
 ## Other tools that overlap with parts of the niche
 
 Verified by search 2026-05-03 (sources at end). For each: what it is, where it differs from adaptiveNet.
