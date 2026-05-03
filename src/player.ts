@@ -22,6 +22,10 @@ const MODEL_REGISTRY: Record<string, () => Promise<{ default: Model<any> }>> = {
   'ising': () => import('./models/ising.ts'),
   'lif': () => import('./models/lif.ts'),
   'avalanches': () => import('./models/avalanches.ts'),
+  // ---- v2 prototype demos (built on the declarative composition API) ----
+  'nakao-v2': () => import('./models/nakao-v2.ts'),
+  'voter-v2': () => import('./models/voter-v2.ts'),
+  'avalanches-v2': () => import('./models/avalanches-v2.ts'),
 };
 
 // ---------- DOM helpers ----------

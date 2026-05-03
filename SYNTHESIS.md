@@ -216,6 +216,34 @@ These are the choices that make the abstraction either powerful or shallow. They
 
 ---
 
+## Lessons from the prototype
+
+The 5 design questions above are easier to answer once you've actually written code in the candidate language. Three v2 demos were prototyped (`src/models/nakao-v2.ts`, `voter-v2.ts`, `avalanches-v2.ts`) on top of the API in `src/v2/api.ts`. They cover three of the four scheduling regimes (sync, event-per-edge, drive-and-cascade). What this revealed:
+
+**What worked**:
+
+- **Boilerplate genuinely went away.** Each v2 demo is ~70 lines vs 150–250 for the originals. Graph construction, sub-step looping, buffer reuse, and (where applicable) cascade resolution all live in the runtime now.
+- **Topology / state / step / render / diagnostics as separable declarations** is the right top-level structure. Each demo cleanly declares one of each, and there's no awkwardness from forcing them together.
+- **The `ctx` helper bag for sync rules** (`ctx.s(i, field)`, `ctx.neighborDiffSum(i, field)`, etc.) makes the rule expression compact without losing clarity. The Nakao reaction reads almost like the math.
+- **Scheduling-regime as a tagged union** (`update.sync`, `update.eventPerEdge`, etc.) avoids the "choose a hard-coded scheduling on day one" problem. Adding a fifth regime later is just a new `update.xxx` factory + a new runner branch.
+
+**What didn't quite work / open issues**:
+
+- **Rule functions still feel imperative.** `(i, ctx, params) => [reactU, reactV]` is JS, not declarative composition. Real users would benefit from a "Mimura–Murray reaction" prefab they can pick from a dropdown, with sliders for (a, b, c, d). The next layer up is a **library of named reactions / kernels** (Mimura–Murray, Brusselator, Gray–Scott, Schnakenberg, FitzHugh–Nagumo) that compose the same way as topology / init / etc. Today's "reaction" is still bespoke per file.
+- **Drive-and-cascade hardcodes "field 0 is activity"**. The threshold is checked against `X[i*d + 0]`. This works for Avalanches but anticipates a more general "predicate / on-fire" pair. For now, OK; future demos that need different cascade conditions will force the generalisation.
+- **Speed slider** is read inside the runtime via `params.speed as number ?? 1`. This is fine but means every v2 model gets a free speed scaling whether it declares one or not — and gets it wrong if the user names the slider differently. Should probably be a runtime-level parameter, not a per-model one.
+- **Diagnostic `scalarFromState`** required casting state to a custom type (for Avalanches' `_smoothSize` field). The state-extension story works but isn't typed cleanly — same problem the original codebase has.
+- **Param schema is unchanged.** Still uses the original `ParamSchema` type. This is fine but means the v2 API doesn't yet help with params at all; that layer could shrink too.
+
+**What this changes for the v2 spec**:
+
+The substrate (X + W + sync update) survives as is. The eventual v2 surface is **two layers**:
+
+  1. **Composition** (this prototype): `define({ topology, state, step, render, ... })`. Models built by composing primitives.
+  2. **Library** (still missing): named prefabs for common reactions, init styles, render colour maps, diagnostics. The composition layer is the cake; the library is the icing — that's the layer that lets a non-programmer assemble a model from a dropdown.
+
+The prototype validates the composition layer. The library layer is the next session's work, when the project resumes.
+
 ## Recommendation
 
 The substrate (X + W + sync update) is **broadly right** — every demo fits in it. The v2 work is mostly **language + scheduling**, not substrate.

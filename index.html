@@ -72,5 +72,30 @@
       <div class="open">open →</div>
     </a>
   </div>
+
+  <h1 style="margin-top:48px">v2 prototype</h1>
+  <p class="lead">
+    Three demos re-implemented using a declarative composition API (<a href="https://github.com/TT1nKer/adaptiveNet/tree/main/src/v2"><code>src/v2/</code></a>). Same dynamics as the originals; the source files are 60–80 lines each instead of 150–250. See <a href="https://github.com/TT1nKer/adaptiveNet/blob/main/SYNTHESIS.md">SYNTHESIS.md</a> for the design notes — what was extracted, the four scheduling regimes, and the open questions.
+  </p>
+
+  <div class="cards">
+    <a class="card" href="player.html?model=nakao-v2">
+      <div class="title">Network Turing — v2</div>
+      <div class="short">Same as Network Turing, ~70 lines via <code>update.sync</code> + <code>render.divergingByField</code>. Demonstrates the synchronous Forward-Euler scheduling regime in the v2 API.</div>
+      <div class="open">open →</div>
+    </a>
+
+    <a class="card" href="player.html?model=voter-v2">
+      <div class="title">Adaptive Voter — v2</div>
+      <div class="short">Same as Adaptive Voter, ~70 lines via <code>update.eventPerEdge</code>. Demonstrates the event-driven-over-edges scheduling regime — including W mutation (rewiring) inside the rule.</div>
+      <div class="open">open →</div>
+    </a>
+
+    <a class="card" href="player.html?model=avalanches-v2">
+      <div class="title">Neural Avalanches — v2</div>
+      <div class="short">Same as Neural Avalanches, ~70 lines via <code>update.driveAndCascade</code>. Demonstrates the drive + cascade-resolution regime, with auto-aged "fire flash" field handled by the runtime.</div>
+      <div class="open">open →</div>
+    </a>
+  </div>
 </body>
 </html>
