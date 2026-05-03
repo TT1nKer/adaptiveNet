@@ -28,6 +28,7 @@ import type {
 } from '../types.ts';
 import type { RNG } from '../rng.ts';
 import { buildGrid, buildER, buildBA, buildWS, emptyGraphOf } from './lib.ts';
+import type { Reaction2 } from './reactions.ts';
 
 // ---------- Topology ----------
 
@@ -182,6 +183,41 @@ export const update = {
     rule: SyncRule;
   }): StepStrategy {
     return { kind: 'sync', ...opts };
+  },
+
+  /**
+   * High-level pattern: reaction-diffusion on whatever topology the model
+   * declared. Composes a named reaction kernel with graph-Laplacian diffusion
+   * and a Forward-Euler integrator. This is the "library layer" entry point —
+   * a model that uses this declares only kinetics + diffusion params, no rule
+   * function.
+   *
+   * `diffusion.D` names the params that control D for each state field
+   * (e.g. ['Du', 'Dv']). `reaction` is a 2-state reaction kernel from the
+   * `reactions` library. `dt` and `substeps` control the integrator.
+   */
+  reactionDiffusion(opts: {
+    reaction: Reaction2;
+    diffusion: { D: [string, string] };  // param names for D_u, D_v
+    dt: number;
+    substeps: number | ((p: ParamValues) => number);
+  }): StepStrategy {
+    return {
+      kind: 'sync',
+      dt: opts.dt,
+      substeps: opts.substeps,
+      rule: (i, ctx, params) => {
+        const u = ctx.s(i, 0);
+        const v = ctx.s(i, 1);
+        const [reactU, reactV] = opts.reaction(u, v, params);
+        const Du = params[opts.diffusion.D[0]] as number;
+        const Dv = params[opts.diffusion.D[1]] as number;
+        return [
+          reactU + Du * ctx.neighborDiffSum(i, 0),
+          reactV + Dv * ctx.neighborDiffSum(i, 1),
+        ];
+      },
+    };
   },
   asyncPerCell(opts: {
     updatesPerFrame: (p: ParamValues, N: number) => number;

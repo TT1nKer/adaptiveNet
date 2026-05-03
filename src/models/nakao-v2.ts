@@ -1,21 +1,25 @@
-// Nakao network Turing — re-implemented with the v2 declarative API.
-// Compare with src/models/nakao.ts (172 lines). This file is ~70 lines
-// of model-specific content; the rest is boilerplate the v2 runtime
-// absorbs.
+// Nakao network Turing — v2 with the library layer.
+// Compare with src/models/nakao.ts (172 lines, all hand-written) and the
+// earlier v2 prototype (~70 lines, declarative but inline kinetics). This
+// version uses the named reaction from the library so the model's source
+// no longer encodes any kinetics — it just composes existing parts.
 
 import { define, topology, init, update, render, diagnostics } from '../v2/api.ts';
+import * as reactions from '../v2/reactions.ts';
 
 const TOPO_OPTS = ['er', 'ba', 'ws'] as const;
 
 export default define({
   id: 'nakao-v2',
   name: 'Network Turing — v2 prototype',
-  short: 'Same as Network Turing, expressed in the v2 declarative API. ~70 lines of model-specific content vs 172 in the original.',
-  long: `Identical dynamics to the **Network Turing** demo (Nakao & Mikhailov 2010): Mimura–Murray reaction at each node + graph-Laplacian diffusion. The difference is the source code. This file declares only what is **specific** to Nakao — kinetics, parameter schema, presets — and lets the v2 runtime handle graph construction, sub-step looping, buffer reuse, and diagnostics.
+  short: 'Same as Network Turing, expressed via named reaction kernel + reactionDiffusion pattern. Source has zero hand-written kinetics or step logic.',
+  long: `Identical dynamics to the **Network Turing** demo. Source code shrinks at each abstraction level:
 
-Compare the two implementations side by side: \`src/models/nakao.ts\` (172 lines, all hand-written) vs \`src/models/nakao-v2.ts\` (~70 lines, declarative).
+— Original \`nakao.ts\`: 172 lines (all hand-written: graph ops + sub-step loop + reaction inline).
+— v2 declarative (earlier): ~70 lines (graph + step boilerplate gone, kinetics still inline).
+— v2 + library (this file): **~40 lines of model-specific content**, kinetics replaced with \`reactions.mimuraMurray()\` from the library and step replaced with \`update.reactionDiffusion()\` pattern.
 
-Reference: Nakao & Mikhailov, *Nature Physics* 6, 544–550 (2010).`,
+Reference: Nakao & Mikhailov, *Nature Physics* 6, 544–550 (2010). Mimura–Murray kinetics: Mimura & Murray (1978).`,
 
   view: 'graph',
 
@@ -28,34 +32,24 @@ Reference: Nakao & Mikhailov, *Nature Physics* 6, 544–550 (2010).`,
     speed:{ label: 'speed',           min: 0.1, max: 5, step: 0.1,    default: 1.0,   live: true },
   },
 
-  // Topology depends on params (size + topology choice are user-controlled)
   topology: (params) =>
     topology.randomGraph(params.topo as 'er' | 'ba' | 'ws', {
       N: Math.round(params.N as number),
       k: Math.round(params.k as number),
     }),
 
-  // Node state: 2-vector (u, v) initialised near the (5, 10) fixed point
   state: {
     d: 2,
     init: init.fpWithNoise([5, 10], 0.05),
   },
 
-  // Synchronous Forward Euler with sub-stepping. Rule expresses the Mimura–
-  // Murray reaction + graph-Laplacian diffusion using ctx helpers.
-  step: update.sync({
+  // Pure composition: pick a named reaction, declare which params control D,
+  // declare the integrator. No rule function written by hand.
+  step: update.reactionDiffusion({
+    reaction: reactions.mimuraMurray(),  // default (a,b,c,d) = (35, 16, 9, 0.4) — FP at (5, 10)
+    diffusion: { D: ['Du', 'Dv'] },
     dt: 0.002,
     substeps: 25,
-    rule: (i, ctx, params) => {
-      const u = ctx.s(i, 0);
-      const v = ctx.s(i, 1);
-      const A = 35, B = 16, C = 9, D = 0.4;
-      const reactU = ((A + B * u - u * u) / C - v) * u;
-      const reactV = (u - 1 - D * v) * v;
-      const diffU = (params.Du as number) * ctx.neighborDiffSum(i, 0);
-      const diffV = (params.Dv as number) * ctx.neighborDiffSum(i, 1);
-      return [reactU + diffU, reactV + diffV];
-    },
   }),
 
   render: render.divergingByField(0, 5, 4.5),

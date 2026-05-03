@@ -239,10 +239,26 @@ The 5 design questions above are easier to answer once you've actually written c
 
 The substrate (X + W + sync update) survives as is. The eventual v2 surface is **two layers**:
 
-  1. **Composition** (this prototype): `define({ topology, state, step, render, ... })`. Models built by composing primitives.
-  2. **Library** (still missing): named prefabs for common reactions, init styles, render colour maps, diagnostics. The composition layer is the cake; the library is the icing — that's the layer that lets a non-programmer assemble a model from a dropdown.
+  1. **Composition**: `define({ topology, state, step, render, ... })`. Models built by composing primitives. ✓ prototype shipped.
+  2. **Library**: named prefabs for common reactions, render colour maps, diagnostics. ✓ first cut shipped: `src/v2/reactions.ts` with 5 named kernels (Mimura–Murray, Brusselator, Gray–Scott, Schnakenberg, FitzHugh–Nagumo) and `update.reactionDiffusion` pattern in api.ts.
 
-The prototype validates the composition layer. The library layer is the next session's work, when the project resumes.
+## Library layer — what dropped after shipping
+
+The 3 v2 demos written before the library used inline rule functions (`(i, ctx, params) => [...]`). After the library was added, `nakao-v2` was rewritten to use `reactions.mimuraMurray()` + `update.reactionDiffusion()`. The result:
+
+  - `nakao.ts` (production):  172 lines, all hand-written
+  - `nakao-v2.ts` (composition only): ~70 lines, declarative + inline kinetics
+  - **`nakao-v2.ts` (with library): ~40 lines, no kinetics or step code at all**
+
+A new model (`brusselator-v2.ts`) added in the library style is also ~50 lines, and changing it from Brusselator to Mimura–Murray or Gray–Scott is a one-line swap of which factory is referenced. **This is what a non-programmer dropdown UI would compile down to.**
+
+What still hurts:
+
+- The init for grid-RD models (Brusselator-v2) needs to know the FP, but the FP depends on params. Currently hardcoded to defaults; a proper library `init.fpFromReaction(reactionFactory)` could compute it. Not done yet.
+- Voter and Avalanches still use inline rules (event-per-edge and drive-and-cascade rules are too varied to library-ise yet). They're ~70 lines each.
+- Hopfield variants would need a separate `update.hopfieldRecall(...)` pattern. Not done; another future library entry.
+
+The library is now extensible: each new family of dynamics gets a named pattern in api.ts and named primitives in a sibling library file. The third layer ("UI dropdown for non-programmers") is now a clean compile-down target rather than something to be designed.
 
 ## Recommendation
 

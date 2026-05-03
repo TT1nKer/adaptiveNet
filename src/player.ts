@@ -26,6 +26,7 @@ const MODEL_REGISTRY: Record<string, () => Promise<{ default: Model<any> }>> = {
   'nakao-v2': () => import('./models/nakao-v2.ts'),
   'voter-v2': () => import('./models/voter-v2.ts'),
   'avalanches-v2': () => import('./models/avalanches-v2.ts'),
+  'brusselator-v2': () => import('./models/brusselator-v2.ts'),
 };
 
 // ---------- DOM helpers ----------
