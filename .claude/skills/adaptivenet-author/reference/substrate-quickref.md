@@ -102,17 +102,100 @@ The timeSeries chart auto-scales to the max of both series. Avoid combining one 
 
 ## Graph generators (from `src/graph.ts`)
 
+The substrate ships topology in **four layers**:
+
+### Layer 1 — the Graph contract (always)
+
+Any `{ N, adj, edges, deg }` object with the right shape is a valid topology. Where it comes from is up to you.
+
+### Layer 2 — standard generators (use when one fits)
+
+The "canonical trinity" with uniform `(N, k, rng) => Graph` signature, exposed as a map (suitable for a dropdown):
+
 ```ts
 import { generators } from '../graph.ts';
 
 const graph = generators.er(N, k, rng);  // Erdős–Rényi, avg degree k
 const graph = generators.ba(N, k, rng);  // Barabási–Albert
 const graph = generators.ws(N, k, rng);  // Watts–Strogatz, β=0.15
-
-// For lattices, define a local buildGrid helper (see ising.ts / lif.ts /
-// gray-scott.ts). The substrate doesn't ship a lattice generator —
-// each lattice demo builds its own with the boundary condition it needs.
 ```
+
+Plus a wider set of generators with their natural signatures, exposed as named functions:
+
+```ts
+import {
+  buildLattice2d,      // (rows, cols, periodic=true) — the standard physics lattice
+  buildLattice3d,      // (d1, d2, d3, periodic=true)
+  buildSBM,            // (blockSizes, pIn, pOut, rng) — community structure
+  buildGeometric,      // (N, radius, rng) — random geometric graph (spatial)
+  buildKRegular,       // (N, k, rng) — every node has degree exactly k
+  buildComplete,       // (N) — fully connected K_N
+  buildConfiguration,  // (degSeq, rng) — exact degree sequence
+  buildFromEdgeList,   // (N, edges) — from explicit edge array
+  parseEdgeList,       // (str) → {N, edges} — load from CSV/whitespace text
+} from '../graph.ts';
+
+// Examples:
+const lattice = buildLattice2d(50, 50);                          // 50x50 periodic torus
+const social  = buildSBM([100, 100, 50], 0.15, 0.005, rng);     // 3 communities of size 100/100/50
+const spatial = buildGeometric(300, 0.1, rng);                   // 300 nodes within radius 0.1
+const regular = buildKRegular(200, 4, rng);                      // every node has 4 neighbours
+const dense   = buildComplete(50);                                // K_50 for fully-connected baseline
+const real    = buildFromEdgeList(34, karateClubEdges);           // Zachary's karate club
+```
+
+### Layer 3 — custom generators (write your own when no built-in fits)
+
+Any function returning a `Graph` is a valid generator. Define one in your model file:
+
+```ts
+function buildHexLattice(rows: number, cols: number): Graph {
+  const N = rows * cols;
+  const adj = Array.from({ length: N }, () => [] as number[]);
+  const edges: Array<[number, number]> = [];
+  // ...your hex-grid neighbour logic...
+  const deg = new Int32Array(N);
+  for (let i = 0; i < N; i++) deg[i] = adj[i]!.length;
+  return { N, adj, edges, deg };
+}
+```
+
+There's no exhaustive list of network types — network science doesn't have a periodic table. Trees, planar graphs, hyperbolic, fire-model, dual-lattices, kagome, ... are all valid; just write the generator your model needs. If it turns out to be reusable, lift it into `src/graph.ts` later.
+
+### Layer 4 — real-world data (load an edge list)
+
+For empirical networks (brain connectomes, social-media data, ecological food webs, etc.):
+
+```ts
+import { buildFromEdgeList, parseEdgeList } from '../graph.ts';
+
+// inline:
+const g1 = buildFromEdgeList(34, [[0, 1], [0, 2], [0, 3], /* ... */]);
+
+// from a string (e.g. fetched at runtime):
+const csvText = await fetch('./my-network.csv').then(r => r.text());
+const { N, edges } = parseEdgeList(csvText);
+const g2 = buildFromEdgeList(N, edges);
+```
+
+`parseEdgeList` accepts space-separated, tab-separated, comma-separated; comment lines (`#`) and blanks are ignored.
+
+### Choosing a generator — rough guidance
+
+| Want | Use |
+|---|---|
+| Random null model, control for ⟨k⟩ | `er` |
+| Heavy-tail degree, hubs | `ba` |
+| Small-world, high clustering | `ws` |
+| Standard 2D physics simulation | `buildLattice2d` |
+| 3D extension | `buildLattice3d` |
+| Communities (modularity) | `buildSBM` |
+| Spatial proximity matters | `buildGeometric` |
+| Control degree exactly (homogeneous) | `buildKRegular` |
+| Fully-connected mean-field baseline | `buildComplete` |
+| Match a real degree distribution | `buildConfiguration` |
+| Real dataset | `buildFromEdgeList` / `parseEdgeList` |
+| None of the above | Write your own (Layer 3) |
 
 ## RNG (from `src/rng.ts`)
 
