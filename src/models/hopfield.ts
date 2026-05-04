@@ -1,14 +1,27 @@
 // Hopfield (PNAS 79, 2554, 1982): a content-addressable memory built from
 // a recurrent network with Hebbian-learned symmetric weights.
 //
+// PAPER-VERIFIED 2026-05-04:
+//   - Hopfield, J. J. "Neural networks and physical systems with emergent
+//     collective computational abilities." Proc. Natl. Acad. Sci. USA 79,
+//     2554 (1982). Open access at https://www.pnas.org/doi/10.1073/pnas.79.8.2554.
+//     The original paper. Hebbian rule and sign-update dynamics are the
+//     canonical formulation, reproduced in essentially every neural-network
+//     textbook (e.g. Hertz-Krogh-Palmer, "Introduction to the Theory of
+//     Neural Computation").
+//
 // Each of the K stored patterns ξ_p ∈ {-1, +1}^N becomes a fixed point of
-// the synchronous dynamics X[t+1, i] = sign(Σ_j W[i, j] · X[t, j]) when the
-// weight matrix is set to the Hebbian rule
+// the dynamics X[t+1, i] = sign(Σ_j W[i, j] · X[t, j]) when the weight
+// matrix is set to the Hebbian rule
 //
 //     W[i, j] = (1 / N) Σ_p ξ_p[i] · ξ_p[j]   (with W[i, i] = 0)
 //
 // Starting from a noisy / partial cue, the dynamics flow downhill in the
 // associated energy landscape and converge to the nearest stored pattern.
+//
+// Acceptance test (tests/hopfield.test.ts): with low noise (e.g. 30%),
+// recall succeeds — final overlap with the cued pattern > 0.95.
+//
 // This is the simplest concrete realisation of the "fast weight programmer"
 // substrate idea — patterns live in W, retrieval is a sparse matvec on X.
 
