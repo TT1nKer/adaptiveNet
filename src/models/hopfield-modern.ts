@@ -1,32 +1,44 @@
 // Modern Hopfield Network (Ramsauer et al., 2020).
 //
+// PAPER-VERIFIED 2026-05-04 (paper cited but full PDF too large for direct
+// fetch; known rules verified against authoritative summaries and the
+// open-source companion code at https://github.com/ml-jku/hopfield-layers):
+//
+//   Ramsauer, H. et al. "Hopfield Networks Is All You Need."
+//   arXiv:2008.02217 (2020). https://arxiv.org/abs/2008.02217.
+//
 // Same substrate as the classical Hopfield demo — N binary nodes, P stored
 // patterns trained Hebbian-style — but with a different energy function:
 //
-//   E_modern(X) = -1/β · log Σ_p exp(β · ξ_p · X)
+//   E_modern(ξ) = -1/β · log Σ_p exp(β · ξ_p · ξ)   (+ regularising terms)
 //
 // Equivalently, the retrieval rule is
 //
-//   X_new = sign( Σ_p softmax(β · ξ_p · X) · ξ_p )
+//   ξ_new = sign( Σ_p softmax(β · ξ_p · ξ) · ξ_p )
 //
 // — compute overlap with each stored pattern, softmax with inverse
-// temperature β, then sum the patterns weighted by softmax. The new state
-// is the sign of that weighted sum.
+// temperature β, weight patterns by softmax values, sum, take signs.
+//
+// KNOWN-DEVIATION: this implementation normalises the overlap by N
+// (a_p = (1/N) Σ_i ξ_p[i] · ξ[i]) before applying β. This rescales β
+// effectively (this β corresponds to paper's β/N). It does not change
+// the retrieval dynamics qualitatively — only the meaning of the slider
+// numerical value. With our β=10 at N=1024, paper-β ≈ 0.01.
 //
 // Two consequences:
 //
-// 1. Storage capacity jumps from α_c ≈ 0.138·N (classical, see the
-//    Hopfield Capacity demo) to **exponential in N**. At sufficiently high
-//    β the softmax sharpens to nearly one-hot, so retrieval picks the
-//    single nearest pattern — and that works for exponentially many
-//    patterns as long as none lie pathologically close.
+// 1. Storage capacity jumps from α_c ≈ 0.138·N (classical AGS) to
+//    EXPONENTIAL in N. At sufficiently high β the softmax sharpens to
+//    near one-hot, so retrieval picks the single nearest pattern — works
+//    for exponentially many stored patterns.
 //
 // 2. The retrieval rule IS Transformer attention. Identify Ξ (matrix of
-//    stored patterns) with the keys/values, X with the query, β with
+//    stored patterns) with the keys/values, ξ with the query, β with
 //    1/√d_k. One step of Modern Hopfield = one attention layer.
 //
-// This is the math underneath why Transformer attention has the recall
-// power that classical neural nets can't reach.
+// Acceptance test (tests/hopfield-modern.test.ts): at α=0.20 (where
+// classical Hopfield fails per AGS), Modern Hopfield with β=10 retrieves
+// stored patterns successfully (overlap → 1).
 
 import type { Model, ModelState, ParamValues, Graph } from '../types.ts';
 import type { RNG } from '../rng.ts';
