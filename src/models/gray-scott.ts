@@ -96,6 +96,18 @@ This single reaction with two parameters produces an extraordinary range of self
 
 Drag the **f** and **k** sliders live to walk through the **Pearson map** of phenomena. Reset to start over from a small seeded perturbation in the centre of the grid.
 
+**For instructors — five Δ-experiments suitable for problem sets**
+
+**1. Walk Pearson's map.** Use the six provided presets (mitosis, worms, maze, ξ-spirals, β-wavefield, α-chaos, U-skate). For each, write down the (F, k) location and qualitatively describe the asymptotic behavior. Reproduce Pearson's 1993 phase diagram on paper from your observations. Which boundaries between regimes are sharp, which are gradual?
+
+**2. Find a glider.** In the U-skate region (around F ≈ 0.062, k ≈ 0.0609), small perturbations can produce localized self-propagating structures. Find one. Measure its propagation speed in cells per simulation step. Compare to Munafo's reported U-skate world data.
+
+**3. Diffusion ratio.** Hold F and k at a stripe-producing region (e.g. maze, F ≈ 0.029, k ≈ 0.057). Vary the ratio D_u / D_v from 0.1 to 1.0. At what ratio do patterns disappear? This isolates the activator-inhibitor diffusion contrast as the necessary ingredient — Turing's 1952 result.
+
+**4. Reproducibility of α-chaos.** In the α region (F ≈ 0.01, k ≈ 0.045), patterns never settle. Run twice with the same seed and same parameters — identical. Run twice with different seeds — divergent trajectories. Estimate the divergence rate; this is a positive Lyapunov exponent in disguise.
+
+**5. Pattern size scaling.** Vary the lattice size from 64×64 to 256×256 in mitosis (F ≈ 0.0367, k ≈ 0.0649). Does the typical spot size scale with the lattice (suggesting size is set by boundary or finite-size effects), or stay constant in physical units (suggesting size is set by the diffusion lengths)? Compare to the theoretical prediction λ ~ √(D_u / k_eff).
+
 Reference: Pearson, *Science* 261, 189 (1993). Original chemistry: Gray & Scott (1984).`,
 
   view: 'grid',

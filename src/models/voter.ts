@@ -28,6 +28,18 @@ The **fraction of discordant edges** (edges connecting opposite opinions) is the
 
 The transition at φ_c ≈ 0.46 is sharp. Try φ = 0.3 vs φ = 0.6 and watch the network dynamics differ qualitatively.
 
+**For instructors — five Δ-experiments suitable for problem sets**
+
+**1. Locate the transition.** Sweep φ from 0.1 to 0.9 in steps of 0.1. For each φ, run until the discordant-edge fraction stops changing (~5000 events for N=200 is usually enough). Plot final discordant fraction vs φ. Locate the transition point. Compare to the literature value φ_c ≈ 0.46 (Holme & Newman 2006). Why might your N=200 estimate differ from the paper's?
+
+**2. Finite-size scaling.** Hold φ = 0.4. Vary N from 100 to 1000. Does the transition sharpen as N grows? Sketch what you expect the transition to look like in the N → ∞ limit, and explain in 100 words why a sharper transition is expected at larger N.
+
+**3. Topology dependence.** Compare the transition under three initial topologies (ER, BA, WS) at φ = 0.4. Does φ_c shift? Is the transition sharper or softer when starting from a scale-free initial graph? Argue qualitatively why hub presence might affect the rewiring/copying balance.
+
+**4. Order parameter selection.** What is the *order parameter* of this transition? Identify two reasonable candidates (one based on opinion magnetization, one based on edge structure). Argue which one cleanly distinguishes the consensus phase from the fragmentation phase, and which is ambiguous. (No "right" answer — the argument is the assignment.)
+
+**5. Time-to-equilibrium.** At φ = 0.3 vs φ = 0.6, measure roughly how many simulation events are needed to reach the steady state (steady = order parameter changes < 1% per 100 events). Which converges faster, and why? Tie your answer to which process — copying or rewiring — is dominating in each regime.
+
 Reference: Holme & Newman, *Phys. Rev. E* 74, 056108 (2006).`,
 
   params: {

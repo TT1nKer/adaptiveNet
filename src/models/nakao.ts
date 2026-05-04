@@ -17,6 +17,18 @@ const nakao: Model = {
 
 Switch the topology to Barabási–Albert and the high-degree hubs act as pattern organizers.
 
+**For instructors — five Δ-experiments suitable for problem sets**
+
+**1. Find the Turing threshold.** Hold all reaction parameters fixed and the average degree fixed. Sweep D_v / D_u from 1 (no diffusion contrast) up to 50. For each ratio, observe whether spatial heterogeneity emerges and stabilizes. Locate the threshold ratio. The classical 1D Mimura-Murray analysis predicts a specific critical value — does the network version give the same threshold, or is it shifted?
+
+**2. Topology dependence.** Run at D_v / D_u just above threshold under three topologies (ER, BA, WS) at the same average degree. Does the spatial pattern look qualitatively different? On the BA graph, do the high-degree hubs become "high-u" or "low-u" nodes? Argue why hub centrality matters for which side of the bistability they fall on.
+
+**3. Hub role.** On a BA network, identify the top 10% highest-degree nodes. After patterns stabilize, what fraction of them are in the high-u state vs low-u? Compare to the same fraction for the bottom 10% (low-degree) nodes. The asymmetry quantifies how much the network's degree heterogeneity determines its pattern.
+
+**4. From network to grid.** Compare a Nakao pattern on a graph (this demo) to a classical Brusselator/Turing pattern on a 2D grid (the *Classical Turing* demo) at matched parameters. The grid version produces stripes / spots; the graph version produces hub-organized clusters. Argue what topological feature is responsible for the difference.
+
+**5. Order parameter.** What scalar quantity cleanly distinguishes the homogeneous (no-pattern) state from the patterned state? Try (a) variance of u across nodes, (b) gap between max-u and min-u, (c) bimodality coefficient of the u distribution. Which is the cleanest order parameter for this transition? Which is most numerically stable under finite N?
+
 Reference: Nakao & Mikhailov, *Nature Physics* 6, 544–550 (2010).`,
 
   params: {

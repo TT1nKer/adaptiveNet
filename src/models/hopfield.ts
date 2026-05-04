@@ -153,6 +153,18 @@ For the storage capacity / phase-transition story (the AGS α_c ≈ 0.138 result
 
 This is also the simplest concrete instance of the "fast-weight programmer" substrate framing: patterns are written into W, retrieval is a single sparse matvec on X.
 
+**For instructors — five Δ-experiments suitable for problem sets**
+
+**1. Recall accuracy vs noise.** Pick a stored pattern. Sweep the initial-noise fraction from 0% to 50%. For each, measure the final overlap with the stored pattern (post-convergence). Plot accuracy vs noise. Where is the basin-of-attraction boundary?
+
+**2. Capacity vs N.** Hold the noise level at zero (perfect cue). Add patterns one at a time and check whether the network still recalls each correctly from the cue. Find the point at which recall starts failing. Compare your empirical "capacity" to N × 0.138 (the AGS prediction). How well do they agree at N = 100? At N = 400?
+
+**3. Spurious states.** Set the network up with K = 3 stored patterns. Initialize from a state equal to (ξ_1 + ξ_2 + ξ_3) / 3 and binarized. The network may converge to a *spurious mixed state* that is not any of the originals. Verify, and argue why these states are local minima of the Hopfield energy.
+
+**4. Asymmetric vs symmetric updates.** Switch between synchronous (all neurons update at once) and asynchronous (one at a time) update modes. Does the network converge in both cases? Hopfield's energy-decrease argument relies on asynchronous update; what happens to convergence guarantees under synchronous?
+
+**5. Storage degradation.** Store K patterns. Then *corrupt* a single pattern by flipping 20% of its bits in storage (i.e., modify the W matrix as if you stored the corrupted version). Verify that recall of the corrupted pattern still works in the corrupted form, and that the other patterns are mostly preserved. This is the *graceful degradation* property of distributed memory.
+
 Reference: Hopfield, *PNAS* 79, 2554 (1982).`,
 
   view: 'grid',

@@ -73,6 +73,18 @@ A small disc of cells in the centre is driven by a constant current **I_drive** 
 
 Hopfield + Ising used **discrete ±1 spins** with sigmoid updates — the same substrate but with no time dynamics, no spikes. LIF adds **continuous voltage + threshold crossings + refractoriness** — the minimum needed to make it look like a real neuron. The wave propagation is the same kind of excitable-medium dynamics as Gray-Scott, but the "molecules" are now spikes and the "diffusion" is now synaptic transmission.
 
+**For instructors — five Δ-experiments suitable for problem sets**
+
+**1. Find the wave-speed scaling.** With a localized drive at the centre and moderate coupling, radial wave fronts propagate outward. Measure the wave speed in cells per simulation step at three coupling strengths. Does speed scale linearly with coupling, sublinearly, or saturate?
+
+**2. Coupling threshold for sustained activity.** Sweep the coupling strength from low (sub-threshold; activity dies) to high (super-threshold; runaway). Locate the critical coupling at which a localized perturbation just barely sustains itself. Below: activity decays. Above: activity propagates indefinitely. This is the *excitable medium* condition, foundational to cardiac modelling and reaction-diffusion theory.
+
+**3. Refractory period role.** Reduce the refractory period from default to near zero. Do the wave fronts still propagate cleanly, or do they break into chaos? Argue why the refractory period is responsible for the *unidirectionality* of waves (cells just behind the front can't fire because they're refractory).
+
+**4. Synchrony and bursting.** At very high coupling, synchronized bursts can emerge — large fractions of the network fire together, then the whole network becomes refractory, then fires again. This is the *epilepsy* regime mentioned in the description. Find the coupling at which synchronized bursting first appears. Compare to literature on epileptiform dynamics (Wendling et al., Buzsáki).
+
+**5. From grid to graph (concept).** This LIF demo runs on a 2D grid. Argue what would change qualitatively if it ran on a Barabási-Albert network instead. Specifically: would wave fronts still exist? Would synchronized bursting be easier or harder? (This is conceptual — adaptiveNet does not yet ship a graph-based LIF demo, but the question is the bridge between this lattice demo and the broader question of "what does spiking dynamics look like on real brain-like topologies".)
+
 Reference: Lapicque, *J. Physiol. Pathol. Gén.* 9, 620 (1907). The model is over a century old, predates Hodgkin-Huxley, and is **still the standard "neuron" used in modern spiking-neural-network simulations** — Loihi, SpiNNaker, BrainScaleS, all the neuromorphic hardware platforms run LIF or close variants at scale.`,
 
   view: 'grid',

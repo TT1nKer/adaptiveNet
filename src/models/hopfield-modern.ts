@@ -82,6 +82,18 @@ One step of Modern Hopfield = one attention layer. The strong recall capacity of
 
 **Lowering β** softens the softmax — retrieval becomes a weighted *mixture* of patterns rather than the closest one. This is what attention with low temperature does, and it's how classical Hopfield's spurious mixed states show up here in a controllable way.
 
+**For instructors — five Δ-experiments suitable for problem sets**
+
+**1. Capacity comparison: classical vs modern.** At N = 100, store as many patterns as you can in classical Hopfield (use the *Hopfield Capacity* demo) — capacity tops out near α_c × N ≈ 14 patterns. Repeat in modern Hopfield: how many patterns can you store before recall breaks? Argue why "exponential in N" is qualitatively different from "linear in N" for memory capacity.
+
+**2. Inverse temperature β.** Modern Hopfield's softmax has a temperature parameter β. At β → 0 the energy is uniform (no preference for any pattern); at β → ∞ the dynamics behave classically (sharp pattern boundaries). Sweep β. Find the regime where mixed-pattern retrieval (a "soft attention" state) appears. This regime is what transformers operate in.
+
+**3. Attention equivalence — verify.** Modern Hopfield retrieval (one update step) computes z_new = X · softmax(β · X^T · z). Compare term-by-term with transformer attention: query = z, keys = values = X. Confirm the two formulas are identical. This is the precise meaning of "attention IS Hopfield retrieval".
+
+**4. Stored-pattern superposition.** Initialize from the average of two stored patterns. In classical Hopfield, the network usually falls into a spurious mixed state. In modern Hopfield (high β), what happens? Does it pick one or stay in the mixture? This relates to Ramsauer's observation that modern Hopfield can act as either a sharp memory or a soft attention pool depending on β.
+
+**5. Why the transformer is not "just" Hopfield.** Modern Hopfield is one attention head with stored patterns as keys/values. A transformer has *learned* keys and values *and* multiple heads *and* feed-forward layers between attention. List three concrete capabilities of a full transformer that a single modern-Hopfield head cannot replicate. (This is meant to ground the hype: the equivalence is real, but it does not mean modern Hopfield = transformer.)
+
 Reference: Ramsauer et al., *Hopfield Networks Is All You Need*, [arXiv:2008.02217](https://arxiv.org/abs/2008.02217) (2020).`,
 
   view: 'grid',

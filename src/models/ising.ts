@@ -66,7 +66,21 @@ At **exactly T_c** the system is **scale-invariant**: domain clusters appear at 
 - T = 4.0 → disordered phase, looks like static.
 - T = 0.05 → deterministic. Dynamics often freeze in striped configurations rather than the all-aligned ground state — the **Ising coarsening problem**, related to grain growth in metallurgy.
 
-**Connection to Hopfield**: the substrate is the same — binary states on nodes, energy = − Σ W[i,j] s_i s_j, Glauber update. Hopfield is this model with **dense Hebbian-learned W**; classical Ising is the same model with **sparse uniform J**.`,
+**Connection to Hopfield**: the substrate is the same — binary states on nodes, energy = − Σ W[i,j] s_i s_j, Glauber update. Hopfield is this model with **dense Hebbian-learned W**; classical Ising is the same model with **sparse uniform J**.
+
+**For instructors — five Δ-experiments suitable for problem sets**
+
+**1. Locate T_c.** Sweep T from 1.5 to 3.0 in steps of 0.05 at fixed grid size. For each T, run until magnetization stabilizes (~5000 sweeps). Plot |⟨m⟩| vs T. Compare your numerical T_c to Onsager's exact value 2/ln(1+√2) ≈ 2.269. Why is the numerical curve smooth across T_c rather than discontinuous?
+
+**2. Finite-size scaling.** Hold T = 2.269. Run at grid sizes 32, 64, 128, 256. Measure the magnetization fluctuation σ(m). It should scale as L^(−1/8) with system size L (Onsager). Plot log σ vs log L and extract the slope. How close to −0.125 do you get?
+
+**3. Critical slowing down.** At T = 2.269 vs T = 1.0 vs T = 4.0, measure how long it takes the magnetization to decorrelate from its initial value. The critical regime should be dramatically slower (formally, infinitely slow in the L → ∞ limit). Quantify the difference.
+
+**4. Symmetry breaking.** Start from random initial conditions. Run at T = 1.0. Repeat 10 times. How often does the system end up positively magnetized vs negatively? This is the Z₂ symmetry of the Ising model — and the Mermin-Wagner-style argument for why it can break in 2D but not in 1D.
+
+**5. Coarsening dynamics.** Start at T well below T_c (e.g., T = 1.0) from random initial conditions. Watch how domains form and grow. Estimate the typical domain size as a function of time. The Lifshitz-Slyozov-Allen-Cahn theory predicts a power law L(t) ~ t^(1/2) for non-conserved order parameter. Does your data support this?
+
+Reference: Onsager, *Phys. Rev.* 65, 117 (1944).`,
 
   view: 'grid',
 

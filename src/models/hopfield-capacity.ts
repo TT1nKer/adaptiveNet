@@ -86,6 +86,18 @@ The transition at α_c ≈ 0.138 is **sharp**. It's the same kind of object as t
 
 — **Modern Hopfield Networks** (Ramsauer et al. 2020, [arXiv:2008.02217](https://arxiv.org/abs/2008.02217)) replace the quadratic energy with a log-sum-exp form. The capacity jumps from 0.138·N to **exponential in N**. That same modified network is mathematically equivalent to **Transformer attention** — the strong recall capacity of attention is the strong storage capacity of a modern Hopfield variant. The classical α_c phase transition we walk here is what attention is *not* limited by.
 
+**For instructors — five Δ-experiments suitable for problem sets**
+
+**1. Locate α_c.** At fixed N = 200, sweep α from 0.05 to 0.25 in steps of 0.01. For each α, measure the average overlap with the target pattern after convergence (over 10 random target choices). Plot overlap vs α. Locate the transition point. Compare to the AGS prediction α_c ≈ 0.138.
+
+**2. Finite-N effects.** Repeat the α sweep at N = 100, 200, 400, 800. Does α_c shift with N? Does the transition sharpen? Plot the transition width vs 1/N — this is the finite-size scaling for the Hopfield phase transition.
+
+**3. Two order parameters diverge.** Just above α_c, the network may fall into a wrong-but-stored state (target overlap drops, max overlap with any stored pattern stays high). Walk α from 0.10 to 0.20 and watch the two time-series. Identify the regime where they disagree. What does that regime correspond to in the AGS phase diagram?
+
+**4. Spin-glass phase.** At α = 0.2 (well above α_c), the system reaches a state that is uncorrelated with any stored pattern (max overlap ≈ 0). Run for 10 different seeds. Do all converge to the same final state, or different final states? Argue the relevance of *replica symmetry breaking* (Parisi 1979) to your observation.
+
+**5. Critical exponent estimation.** From your finite-size α sweep, fit the order parameter as |α − α_c|^β near the transition. Extract β. Compare to mean-field β = 1/2. Does the Hopfield transition match mean-field, or does it have its own universality class? (Hint: mean-field is essentially what AGS computed analytically.)
+
 References: Hopfield, *PNAS* 79, 2554 (1982); Amit, Gutfreund & Sompolinsky, *Phys. Rev. A* 32, 1007 (1985); *Annals of Physics* 173, 30 (1987).`,
 
   view: 'grid',

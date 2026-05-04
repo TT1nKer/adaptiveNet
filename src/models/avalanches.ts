@@ -67,7 +67,19 @@ In this demo, watch the σ time-series — it shows the size of the most recent 
 
 **Why this matters for the brain.** The brain's energy budget rules out very dense or very sparse activity — too dense and metabolic cost explodes; too sparse and information transmission breaks down. Self-organised criticality is the regime that maximises information transmission per unit of activity (Beggs 2008), and the s^(−3/2) statistics in cortex suggest the brain has been tuned by evolution to operate in this regime. **Mental disease may be small drift away from critical**: too much activity → seizure (super-critical, runaway avalanches), too little → loss of function (sub-critical). The same physics; different drift directions.
 
-References: Bak, Tang & Wiesenfeld, *Phys. Rev. Lett.* 59, 381 (1987). Beggs & Plenz, *J. Neurosci.* 23, 11167 (2003). Beggs, *Phil. Trans. R. Soc. A* 366, 329 (2008).`,
+**For instructors — five Δ-experiments suitable for problem sets**
+
+**1. Verify the power-law exponent.** Run for ~10⁵ avalanches (build up statistics). Plot the avalanche-size distribution on log-log axes. Fit the slope. The BTW prediction in 2D is τ ≈ 1.0 (not −3/2 — that −3/2 is the Beggs-Plenz neural value, which BTW only approaches under specific dimensions). Compare your slope to both. What does the discrepancy reveal about which model the demo actually implements?
+
+**2. Dissipation ε.** Vary the dissipation rate ε from 0 to 0.1. With ε = 0, the system never reaches steady state (avalanches grow unboundedly in expectation). With ε too large, criticality is destroyed. Find the qualitative regimes. The *self-organised* in SOC means the system tunes itself to the critical line for small ε > 0.
+
+**3. Methodological knob: bin size.** The Beggs-Plenz 2003 work computed avalanches by binning spike times into 4 ms windows. Bin size dramatically affects the apparent power-law slope (Touboul-Destexhe 2017 critique). Vary the time-bin width over 1-10 simulation steps. How much does the apparent τ change? This is the *core* of the Plenz-vs-Touboul methodological debate.
+
+**4. Subsampling effect.** Compute the avalanche distribution from observing only a fraction (10%, 50%, 100%) of cells. The Touboul-Destexhe critique argued that subsampling alone can produce apparent power laws even from non-critical dynamics. Test it: does subsampling artificially introduce a power law? (This experiment requires a custom export of cell activity; advanced.)
+
+**5. Compare Plenz exponent to Clauset-Shalizi-Newman 2009 KS test.** The standard practice for declaring "this is power-law" is the CSN 2009 procedure: fit power-law via maximum likelihood, then compute KS distance to lognormal and exponential alternatives. Apply this to your data. Does the power-law hypothesis actually win, or do lognormal / exponential fit comparably well? This is the gold-standard methodology that much of the brain-criticality literature still does not consistently apply.
+
+References: Bak, Tang & Wiesenfeld, *Phys. Rev. Lett.* 59, 381 (1987). Beggs & Plenz, *J. Neurosci.* 23, 11167 (2003). Beggs, *Phil. Trans. R. Soc. A* 366, 329 (2008). Touboul & Destexhe, *PLOS ONE* 12, e0181104 (2017). Clauset, Shalizi & Newman, *SIAM Review* 51, 661 (2009).`,
 
   view: 'grid',
 

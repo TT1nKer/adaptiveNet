@@ -95,6 +95,18 @@ Default parameters (a = 4.5, b = 7.5, D_v / D_u = 8) sit well inside the Turing-
 
 Compare with the **Network Turing** demo: same chemistry on a random graph instead of a lattice. The substrate (X + W + synchronous update) is identical; only the topology differs.
 
+**For instructors — five Δ-experiments suitable for problem sets**
+
+**1. Find the Turing instability boundary.** Hold A and B fixed in a parameter region known to support patterns (e.g. A=2, B=5). Sweep D_v / D_u from 1 up. Locate the threshold ratio at which the homogeneous state first becomes unstable to spatial perturbations. Compare to the analytic Turing condition: the inhibitor must diffuse sufficiently faster than the activator. How close is your numerical threshold to the textbook prediction?
+
+**2. Wavelength selection.** Above the Turing threshold, the system selects a characteristic spot/stripe wavelength λ. Measure λ from the resulting pattern. Vary D_u (keeping D_v/D_u fixed). Does λ scale as √D_u as the Turing analysis predicts?
+
+**3. Pattern morphology.** With A and B fixed, is the asymptotic pattern (spots, stripes, mixed) deterministic — or does it depend on the random initial condition? Run 10 trials with different seeds at the same (A, B). What fraction give which morphology? This is *pattern selection under degenerate Turing instability* — an active area in nonlinear dynamics.
+
+**4. From grid to graph.** Compare the asymptotic pattern here (Brusselator on a 2D lattice — stripes / spots) to the *Network Turing Patterns* demo (Brusselator-like reactions on a random graph — hub-organized clusters). What is the same? What is different? The chemistry is identical; only the topology changes. Argue what role spatial dimension plays in selecting morphology.
+
+**5. Hopf vs Turing.** At small B, the homogeneous state may oscillate in time without forming spatial patterns (Hopf bifurcation), distinct from the Turing instability (spatial patterns from a stable temporal state). Find the (A, B) region where each occurs. Argue why time-oscillation and space-pattern instabilities can be present in the same model.
+
 Reference: Turing, *Phil. Trans. R. Soc. B* 237, 37 (1952). Brusselator: Prigogine & Lefever (1968).`,
 
   view: 'grid',
