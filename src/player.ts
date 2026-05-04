@@ -723,6 +723,7 @@ async function boot(): Promise<void> {
 
     stage = 'set chrome';
     el('model-name').textContent = model.name;
+    el('description-short').innerHTML = renderDescription(model.short || '');
     el('description').innerHTML = renderDescription(model.long || model.short || '');
     document.title = `adaptiveNet — ${model.name}`;
     (el('seed') as HTMLInputElement).value = String(seed);
