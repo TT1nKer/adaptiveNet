@@ -1,7 +1,38 @@
-// Nakao & Mikhailov (Nature Physics 6, 544–550, 2010): Turing patterns on networks.
-// Per-node Mimura–Murray activator–inhibitor reaction; diffusion through the graph
-// Laplacian. With D_v ≫ D_u the homogeneous fixed point is unstable and the network
-// spontaneously splits into high-u / low-u clusters.
+// Nakao & Mikhailov (2010). "Turing patterns in network-organized
+// activator-inhibitor systems." Nature Physics 6, 544-550. arXiv: 1005.1986.
+//
+// PAPER-VERIFIED 2026-05-04 against arXiv 1005.1986 (PDF fetched + pdftotext).
+// Equations (2) of the paper:
+//
+//   du_i/dt = f(u_i, v_i) + ε Σ_j L_ij u_j
+//   dv_i/dt = g(u_i, v_i) + σε Σ_j L_ij v_j
+//
+// where L_ij = A_ij - k_i δ_ij is the (unnormalised) graph Laplacian, A_ij is
+// the adjacency matrix, and Σ_j L_ij u_j = Σ_j A_ij (u_j - u_i) is Fick's-law
+// diffusive flux into node i. ε = D_act = activator diffusion; σε = D_inh =
+// inhibitor diffusion; σ = D_inh/D_act is the ratio that controls Turing
+// instability.
+//
+// REACTION TERMS (Mimura-Murray, paper Methods section line 517):
+//
+//   f(u, v) = {(a + b·u - u²)/c - v}·u
+//   g(u, v) = {u - (1 + d·v)}·v
+//
+// PAPER PARAMETERS (Methods, line 518):
+//   a = 35, b = 16, c = 9, d = 2/5 = 0.4  → fixed point (ū, v̄) = (5, 10)
+//   ε = 0.12 (intermediate), σ = 15.6 (slightly above σ_c ≈ 15.5) — paper Fig 4.
+//
+// IMPLEMENTATION DEFAULTS (browser interactivity):
+//   Du = 0.05 (≈ paper's ε scaled), Dv = 3.0 (σ ≈ 60, well above critical for
+//   robust visible patterns rather than near-threshold marginal patterns).
+//   See preset 'paper-near-critical' for σ ≈ paper Fig 4.
+//
+// Acceptance test in tests/nakao.test.ts:
+//   - Below threshold (σ = 10): pattern doesn't form, σ(u) stays small (~0.5)
+//   - Above threshold (σ = 30): pattern forms, σ(u) grows large (~2+)
+//
+// The implementation already matched the paper before this audit — this audit
+// confirms the equations / parameters / diffusion form are paper-faithful.
 
 import { generators } from '../graph.ts';
 import type { Model, ModelState, ParamValues } from '../types.ts';
@@ -53,8 +84,15 @@ Reference: Nakao & Mikhailov, *Nature Physics* 6, 544–550 (2010).`,
     {
       id: 'ba-strong',
       name: 'BA · strong Turing (default)',
-      short: 'D_v / D_u = 60, well above the Turing threshold (~12 for these reaction params). Hubs lock to one branch and shape the pattern.',
+      short: 'D_v / D_u = 60, well above the Turing threshold σ_c ≈ 15.5 for Mimura-Murray. Hubs lock to one branch and shape the pattern.',
       params: { Du: 0.05, Dv: 3.0, N: 200, k: 6, topo: 'ba' },
+      seed: 1,
+    },
+    {
+      id: 'paper-near-critical',
+      name: 'paper Fig 4 (ε=0.12, σ ≈ 15.6, near σ_c)',
+      short: 'Paper\'s near-threshold parameters. Pattern develops slowly; outcome sensitive to initial perturbation. Demonstrates Turing instability onset.',
+      params: { Du: 0.12, Dv: 0.12 * 15.6, N: 200, k: 6, topo: 'ba' },
       seed: 1,
     },
     {
