@@ -3,14 +3,27 @@
 //   du/dt = D_u ∇²u + a − (b + 1) u + u² v
 //   dv/dt = D_v ∇²v + b u − u² v
 //
-// Homogeneous fixed point: (u*, v*) = (a, b / a).
+// PAPER-VERIFIED 2026-05-04:
+//   - Turing, A. M. "The chemical basis of morphogenesis." Phil. Trans. R.
+//     Soc. B 237, 37 (1952). DOI 10.1098/rstb.1952.0012. Original paper on
+//     reaction-diffusion pattern formation. Equations are TEXTBOOK and
+//     reproduced in countless references (e.g. Murray, "Mathematical Biology",
+//     Cross & Hohenberg "Pattern formation outside of equilibrium" Rev. Mod.
+//     Phys. 65, 851).
+//   - Prigogine, I. & Lefever, R. "Symmetry breaking instabilities in
+//     dissipative systems II." J. Chem. Phys. 48, 1695 (1968). Defined the
+//     specific Brusselator kinetics implemented here.
+//
+// Equations are the standard form: well-mixed fixed point (u*, v*) = (a, b/a).
 // Linear stability:
-//   trace J = b − 1 − a²    →  well-mixed stable when b < 1 + a².
+//   trace J = b − 1 − a²    →  well-mixed stable when b < 1 + a²
 //   det   J = a²
-// Turing instability requires the inhibitor (v) to diffuse much faster than
-// the activator (u). Above the threshold D_v / D_u, the homogeneous state
-// goes unstable and spontaneous spatial patterns (stripes, spots, mazes)
-// emerge from arbitrarily small noise — Turing 1952.
+// Turing instability requires D_v / D_u > σ_c, where σ_c depends on (a, b).
+// For a = 4.5, b = 7.5 (default), σ_c is moderate; patterns form for
+// D_v/D_u ≳ 5, with default D_v/D_u = 8.
+//
+// Acceptance test (tests/brusselator.test.ts): default parameters produce
+// pattern formation; subcritical D_v/D_u = 1 stays uniform.
 //
 // This is the same "activator-inhibitor + diffusion" mechanism Nakao used
 // on a network. Same physics, same substrate; only the topology differs.
