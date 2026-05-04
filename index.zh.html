@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>adaptiveNet — 节点-边动力系统的交互式 demo</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body class="gallery-page">
+  <a class="page-lang-toggle" href="index.html">EN</a>
+
+  <h1>adaptiveNet</h1>
+  <p class="lead">
+    <strong>节点-边动力系统</strong>的交互式 demo——节点状态与连接强度共同演化的网络。脉冲神经元、Hopfield 记忆、Ising 自旋、反应-扩散、投票者动力学、自组织临界：都是同一抽象结构的具体实例。智能是否必须建立在神经元之上、还是某个更广义的底层结构就够了——这是一个开放问题；这里是一个把候选项玩起来的地方。 <a href="https://github.com/TT1nKer/adaptiveNet/blob/main/SPEC.md">SPEC.md</a> · <a href="https://github.com/TT1nKer/adaptiveNet/blob/main/POSITIONING.md">POSITIONING.md</a> · <a href="https://github.com/TT1nKer/adaptiveNet/blob/main/CITATION.cff">CITATION.cff</a>
+  </p>
+
+  <section class="section">
+    <h2>脑启发计算</h2>
+    <p class="section-blurb">记忆、脉冲、临界、相变——神经形态计算与 2024 年诺贝尔物理学奖背后的经典模型。六个 demo 共享一套底层结构。</p>
+    <div class="cards">
+      <a class="card" href="player.html?model=hopfield&lang=zh">
+        <div class="title">Hopfield 检索</div>
+        <div class="short">图样通过 Hebb 学习写入稠密边权重。带噪初始状态在 2-5 步同步更新内收敛到最近的存储记忆。选择提示、设噪声、看检索过程。</div>
+        <div class="open">打开 →</div>
+      </a>
+
+      <a class="card" href="player.html?model=hopfield-capacity&lang=zh">
+        <div class="title">Hopfield 容量 (α_c 相变)</div>
+        <div class="short">和 Hopfield 一样的机器，但用 P 个随机图样。让载荷 α = P/N 穿过 α_c ≈ 0.138 临界线（Amit-Gutfreund-Sompolinsky 1985-87）。下方：存储图样是不动点。上方：自旋玻璃相，容量崩溃。</div>
+        <div class="open">打开 →</div>
+      </a>
+
+      <a class="card" href="player.html?model=hopfield-modern&lang=zh">
+        <div class="title">现代 Hopfield (注意力等价)</div>
+        <div class="short">把经典 Hopfield 的二次能量替换成 log-sum-exp。容量从 0.138·N 跳到<em>在 N 中指数级</em>，且检索规则<em>就是</em> Transformer 注意力（Ramsauer 等 2020）。从 Hopfield 1982 到 ChatGPT 的桥梁。</div>
+        <div class="open">打开 →</div>
+      </a>
+
+      <a class="card" href="player.html?model=lif&lang=zh">
+        <div class="title">脉冲神经元 (LIF 网络)</div>
+        <div class="short">2D 格子上的漏积分发放神经元——最简单的脉冲模型，源自 Lapicque 1907，至今仍是现代神经形态芯片的标配。中央驱动触发同步脉冲径向波。耦合大开变 "癫痫"，关小变局部振荡。</div>
+        <div class="open">打开 →</div>
+      </a>
+
+      <a class="card" href="player.html?model=avalanches&lang=zh">
+        <div class="title">神经雪崩 (自组织临界)</div>
+        <div class="short">2D 网格上的 Bak-Tang-Wiesenfeld 沙堆。慢驱动下大多数事件很小，偶尔扫过整个网格。雪崩大小服从幂律——和 Beggs &amp; Plenz 2003 在皮层切片中发现的 s^(−3/2) 统计相同。脑在临界点附近运行的最强证据。</div>
+        <div class="open">打开 →</div>
+      </a>
+
+      <a class="card" href="player.html?model=ising&lang=zh">
+        <div class="title">Ising 模型 (2D 格子)</div>
+        <div class="short">经典统计力学模型。2D 方格上的自旋在热噪声下与邻居对齐；二级相变在 T_c ≈ 2.269（Onsager 1944）。拖动温度滑块，实时穿越临界点。</div>
+        <div class="open">打开 →</div>
+      </a>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2>图样生成</h2>
+    <p class="section-blurb">反应-扩散：两种相互作用的物质、两个扩散速率，加上一个失稳过程——条纹、斑点、有丝分裂、滑翔子由此涌现。同一套化学反应在图上和格子上跑，拓扑不同，图样也不同。</p>
+    <div class="cards">
+      <a class="card" href="player.html?model=nakao-2010&lang=zh">
+        <div class="title">网络 Turing 图样</div>
+        <div class="short">图上的反应-扩散。当抑制剂扩散远快于活化剂时，网络分裂成高低两簇。Hub 节点成为图样组织者。</div>
+        <div class="open">打开 →</div>
+      </a>
+
+      <a class="card" href="player.html?model=brusselator-grid&lang=zh">
+        <div class="title">经典 Turing (Brusselator)</div>
+        <div class="short">1952 年 Turing 原始机制在 2D 格子上的实现。两种物质、两个扩散速率；均匀态失稳后从任意小的噪声涌现出条纹/斑点。和网络 Turing demo 化学反应相同，拓扑不同。</div>
+        <div class="open">打开 →</div>
+      </a>
+
+      <a class="card" href="player.html?model=gray-scott&lang=zh">
+        <div class="title">Gray-Scott (2D 网格)</div>
+        <div class="short">方形格子上的反应-扩散。斑点、迷宫、有丝分裂、虫——同一组方程在不同 (f, k) 下产生截然不同的图样。</div>
+        <div class="open">打开 →</div>
+      </a>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2>自适应网络</h2>
+    <p class="section-blurb">拓扑本身与其上的动力学共同演化——边重连、权重变化、结构成为因变量。当前最小的板块；欢迎更多 demo（<a href="https://github.com/TT1nKer/adaptiveNet/issues">issues</a> / <a href="https://github.com/TT1nKer/adaptiveNet/pulls">PRs</a>）。</p>
+    <div class="cards">
+      <a class="card" href="player.html?model=holme-newman&lang=zh">
+        <div class="title">自适应投票者 (Holme-Newman)</div>
+        <div class="short">邻居观点不同时，边以概率 φ 重连；观点相同时相互复制。重连率超过临界值后，网络分裂成回声室。结构与观点共同演化。</div>
+        <div class="open">打开 →</div>
+      </a>
+
+      <a class="card" href="player.html?model=adaptive-sis&lang=zh">
+        <div class="title">自适应 SIS 流行病 (Gross-D'Lima-Blasius)</div>
+        <div class="short">易感节点可以从感染邻居那里重连离开。拓扑与疾病共同演化——出现了在静态图上不存在的双稳态和滞回。看着网络在感染簇周围自我隔离。</div>
+        <div class="open">打开 →</div>
+      </a>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2>推荐学习路径</h2>
+    <p class="section-blurb">三条短小的 demo 序列，可以串成一周的教学或自学内容。每条路径都从一个熟悉的起点出发，走向一个前沿问题——选一条，按顺序跑完三个 demo，配合每个 player panel 里的 "教师向 prompts"。</p>
+
+    <div class="paths">
+      <div class="path">
+        <div class="path-title">1. 相变</div>
+        <p class="path-intro">相变指的是当某个控制参量变化时，系统的宏观行为发生定性变化。同一套数学结构（自旋上的能量最小化，加上温度或载荷驱动的竞争）会在截然不同的物理诠释下反复出现。</p>
+        <ol class="path-demos">
+          <li><a href="player.html?model=ising&lang=zh">Ising</a> <span class="step-note">— 温度驱动经典 2D 相变。T<sub>c</sub> ≈ 2.269 已被 Onsager 1944 精确求解：拿这个去校准你的直觉。</span></li>
+          <li><a href="player.html?model=hopfield-capacity&lang=zh">Hopfield 容量</a> <span class="step-note">— 图样载荷 α 驱动另一种相变（记忆 → 自旋玻璃）。底层一样，控制参量不同。</span></li>
+          <li><a href="player.html?model=avalanches&lang=zh">神经雪崩</a> <span class="step-note">— 没有外部控制参量；系统自我调节到临界线。幂律雪崩是这条线的标志。</span></li>
+        </ol>
+        <p class="path-arc">弧线：从教科书（精确解）到推导（解析）再到争议（活跃方法学辩论）。</p>
+      </div>
+
+      <div class="path">
+        <div class="path-title">2. 网络 ≠ 格子</div>
+        <p class="path-intro">现有的 ABM 工具大多默认空间格子，但真实系统（脑、社会、生态）跑在度分布非平凡的图上。同一套动力学在格子上和在图上跑，可以产生定性不同的宏观现象。</p>
+        <ol class="path-demos">
+          <li><a href="player.html?model=brusselator-grid&lang=zh">经典 Turing (Brusselator)</a> <span class="step-note">— 活化-抑制化学反应在 2D 格子上。条纹和斑点来自局部扩散。</span></li>
+          <li><a href="player.html?model=nakao-2010&lang=zh">网络 Turing 图样</a> <span class="step-note">— 同一套化学反应在随机图上。出现的是 hub 主导的聚类而不是条纹。直接看到拓扑确实重要。</span></li>
+          <li><a href="player.html?model=adaptive-sis&lang=zh">自适应 SIS 流行病</a> <span class="step-note">— 现在拓扑本身也跟着动力学共同演化。出现了在静态图上完全不存在的双稳态和滞回。</span></li>
+        </ol>
+        <p class="path-arc">弧线：格子 → 图 → 共演化的图。每一步都剥去一个关于"底层是什么"的假设。</p>
+      </div>
+
+      <div class="path">
+        <div class="path-title">3. 记忆与计算</div>
+        <p class="path-intro">从 Hopfield 1982 年的 PNAS 论文到现代 Hopfield 检索与 transformer 注意力的等价——38 年的弧线。三个 demo 压缩了当代 AI 一大块背后的数学。</p>
+        <ol class="path-demos">
+          <li><a href="player.html?model=hopfield&lang=zh">Hopfield 检索</a> <span class="step-note">— Hopfield 1982 原始模型：图样以 Hebb 权重稠密存储，通过能量下降进行检索。记忆作为动力学吸引子。</span></li>
+          <li><a href="player.html?model=hopfield-capacity&lang=zh">Hopfield 容量</a> <span class="step-note">— AGS 1985-87 的工作：容量 α<sub>c</sub> ≈ 0.138·N 是真正的二级相变。原始模型的第一个定量极限。</span></li>
+          <li><a href="player.html?model=hopfield-modern&lang=zh">现代 Hopfield</a> <span class="step-note">— Ramsauer 等 2020：把二次能量换成 log-sum-exp，容量变成 N 的指数函数，<strong>检索规则就是 transformer 注意力</strong>。从 1982 PNAS 到 ChatGPT 的桥梁。</span></li>
+        </ol>
+        <p class="path-arc">弧线：1982 → 1987 → 2020。同一套底层、三个里程碑、与注意力的等价重写了整段历史。</p>
+      </div>
+    </div>
+  </section>
+
+  <p class="zh-translation-note">
+    <em>[本中文版为初稿翻译。如有不妥之处，欢迎在 <a href="https://github.com/TT1nKer/adaptiveNet/issues">issues</a> 中反馈或直接修改 index.zh.html。除 Adaptive Voter 外，其它 demo 的 player panel 详细描述暂未翻译，会以英文显示并附说明。]</em>
+  </p>
+</body>
+</html>

@@ -135,6 +135,8 @@ const hopfield: Model<HopfieldState> = {
   id: 'hopfield',
   name: 'Hopfield Retrieval',
   short: 'Patterns encoded in dense edge weights via Hebbian learning. A noisy initial state converges to the nearest stored memory.',
+  name_zh: 'Hopfield 检索',
+  short_zh: '图样通过 Hebb 学习写入稠密边权重。带噪初始状态在几步同步更新内收敛到最近的存储记忆。',
   long: `A Hopfield network stores K patterns ξ_p ∈ {-1, +1}^N as fixed points of its dynamics by setting the symmetric weight matrix to the **Hebbian** rule:
 
 W[i, j] = (1 / N) Σ_p ξ_p[i] · ξ_p[j]    (W[i, i] = 0)

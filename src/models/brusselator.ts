@@ -80,6 +80,8 @@ const brusselator: Model = {
   id: 'brusselator-grid',
   name: 'Classical Turing (Brusselator)',
   short: 'Two species, two diffusion rates, a regular 2D lattice. The original 1952 Turing mechanism — stripes, spots, mazes from any small perturbation.',
+  name_zh: '经典 Turing (Brusselator)',
+  short_zh: '1952 年 Turing 原始机制在 2D 格子上的实现：均匀态失稳后从任意小的噪声涌现出条纹/斑点。和网络 Turing demo 化学反应相同，拓扑不同。',
   long: `Each cell holds two chemical concentrations *u* and *v*, governed by the Brusselator kinetics:
 
 — **u** is produced at constant rate *a*, decays at rate *b* + 1, and is autocatalytically promoted by reaction with *v* (rate u² v).

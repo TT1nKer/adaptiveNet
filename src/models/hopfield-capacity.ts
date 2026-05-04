@@ -64,6 +64,8 @@ const capacity: Model<CapacityState> = {
   id: 'hopfield-capacity',
   name: 'Hopfield Capacity (α_c Phase Transition)',
   short: 'Same machinery as the Hopfield demo but with random uncorrelated patterns. Slide the load P/N across 0.138 and watch capacity collapse — Amit–Gutfreund–Sompolinsky 1985.',
+  name_zh: 'Hopfield 容量 (α_c 相变)',
+  short_zh: '同样的机器，但用 P 个随机图样。让载荷 α = P/N 穿过 α_c ≈ 0.138 临界线（AGS 1985-87）。下方：存储图样是不动点。上方：自旋玻璃相，容量崩溃。',
   long: `The Hopfield network's storage capacity is a **true second-order phase transition** with a precise critical load. This demo stages it.
 
 **The setup.** Store P uncorrelated random binary patterns ξ_1, …, ξ_P in a Hopfield network of N neurons via the Hebbian rule W[i, j] = (1/N) Σ_p ξ_p[i] ξ_p[j]. Set the network's state to the first stored pattern (no noise — start *exactly* on the pattern). Run the dynamics. Watch the σ time-series, which tracks overlap with the target pattern.

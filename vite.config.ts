@@ -14,6 +14,7 @@ export default defineConfig({
     rollupOptions: {
       input: {
         main: resolve(__dirname, 'index.html'),
+        mainZh: resolve(__dirname, 'index.zh.html'),
         player: resolve(__dirname, 'player.html'),
       },
     },

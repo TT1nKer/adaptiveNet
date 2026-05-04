@@ -53,6 +53,8 @@ const lif: Model = {
   id: 'lif',
   name: 'Spiking Neurons (LIF Network)',
   short: 'Leaky integrate-and-fire neurons on a 2D lattice. Drive a few cells, watch waves of spikes propagate. The simplest spiking-neuron model — Lapicque 1907.',
+  name_zh: '脉冲神经元 (LIF 网络)',
+  short_zh: '2D 格子上的漏积分发放神经元——最简单的脉冲模型，源自 Lapicque 1907，至今仍是现代神经形态芯片的标配。中央驱动触发同步脉冲径向波。耦合大开变 "癫痫"，关小变局部振荡。',
   long: `Each cell on the 32×32 (or larger) grid is a **leaky integrate-and-fire neuron** with membrane voltage V evolving as
 
 dV/dt = −V/τ + Σ_neighbours (synaptic kicks) + I_drive

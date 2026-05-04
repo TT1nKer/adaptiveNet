@@ -80,6 +80,8 @@ const grayScott: Model = {
   id: 'gray-scott',
   name: 'Gray–Scott on a 2D Grid',
   short: 'Reaction–diffusion on a square lattice. Spots, mazes, mitosis — different (f, k) give wildly different patterns.',
+  name_zh: 'Gray-Scott (2D 网格)',
+  short_zh: '方格上的反应-扩散：斑点、迷宫、有丝分裂、虫——同一组方程在不同 (f, k) 下涌现出截然不同的图样。',
   long: `Two chemical species *u* and *v* live on every cell of a 2D square lattice. They react and diffuse:
 
 — **u** is fed in from the outside at rate **f** (1 − u).

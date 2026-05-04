@@ -13,6 +13,8 @@ const nakao: Model = {
   id: 'nakao-2010',
   name: 'Network Turing Patterns',
   short: 'Reaction–diffusion on a graph; D_v ≫ D_u creates spontaneous high/low clusters.',
+  name_zh: '网络 Turing 图样',
+  short_zh: '图上的反应-扩散；D_v ≫ D_u 时自发出现高/低浓度簇。',
   long: `On each node, a Mimura–Murray activator–inhibitor reaction. Diffusion happens through the graph Laplacian — each node's concentration moves toward its neighbors'. When the inhibitor diffuses much faster than the activator (D_v ≫ D_u), the homogeneous state is unstable and the network spontaneously splits into high-u / low-u clusters.
 
 Switch the topology to Barabási–Albert and the high-degree hubs act as pattern organizers.

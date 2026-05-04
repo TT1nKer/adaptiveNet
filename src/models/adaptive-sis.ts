@@ -20,6 +20,8 @@ const adaptiveSIS: Model = {
   id: 'adaptive-sis',
   name: 'Adaptive SIS Epidemic (Gross–D\'Lima–Blasius)',
   short: 'Susceptible nodes can rewire away from infected neighbours. The network topology coevolves with the disease — bistability and hysteresis appear that don\'t exist in static SIS.',
+  name_zh: '自适应 SIS 流行病 (Gross–D\'Lima–Blasius)',
+  short_zh: '易感节点可以从感染邻居那里重连离开。拓扑与疾病共同演化——出现了在静态图上不存在的双稳态和滞回。看着网络在感染簇周围自我隔离。',
   long: `Each node is **Susceptible** (blue) or **Infected** (red). Three concurrent processes run at the rates shown:
 
 — **Infection** along an SI edge: the S node catches the disease at rate **p**.

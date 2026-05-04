@@ -52,6 +52,8 @@ const avalanches: Model<AvalancheState> = {
   id: 'avalanches',
   name: 'Neural Avalanches (SOC)',
   short: 'Bak–Tang–Wiesenfeld sandpile dynamics on a 2D grid. Drive slowly — most events are tiny, occasional ones are enormous. Avalanche sizes follow a power law: same statistics Beggs & Plenz 2003 found in cortical slices.',
+  name_zh: '神经雪崩 (自组织临界)',
+  short_zh: '2D 网格上的 Bak-Tang-Wiesenfeld 沙堆。慢驱动下大多数事件很小，偶尔扫过整个网格。雪崩大小服从幂律——和 Beggs & Plenz 2003 在皮层切片中发现的 s^(−3/2) 统计相同。脑在临界点附近运行的最强证据。',
   long: `Each cell of the 2D grid has an activity X. Once per drive event, a random cell receives a kick: X[i] += dose. If the activity exceeds threshold (set to 1), the cell **fires**: its activity dumps to zero and is redistributed to its 4 neighbours, each gaining a fraction (1−ε) / 4 of the threshold. With a small dissipation ε > 0, some activity leaves the system; the steady state is finite.
 
 Crucially, **a fire can push neighbours past threshold** — and they fire too. The cascade triggered by a single drive event is the **avalanche**. Most are tiny (just the original fire). Some are enormous, sweeping across thousands of cells before activity falls back below threshold everywhere.

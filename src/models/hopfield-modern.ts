@@ -56,6 +56,8 @@ const modernHopfield: Model<ModernState> = {
   id: 'hopfield-modern',
   name: 'Modern Hopfield (Attention-Equivalent)',
   short: 'Replace classical Hopfield\'s quadratic energy with log-sum-exp. Capacity jumps from 0.138·N to exponential, and the retrieval rule becomes Transformer attention.',
+  name_zh: '现代 Hopfield (注意力等价)',
+  short_zh: '把经典 Hopfield 的二次能量替换成 log-sum-exp。容量从 0.138·N 跳到 N 中指数级，且检索规则就是 Transformer 注意力（Ramsauer 等 2020）。从 1982 PNAS 到 ChatGPT 的桥梁。',
   long: `**Classical Hopfield** (the recall and capacity demos) stores patterns by Hebbian outer products and retrieves by sign(W·X). Capacity tops out at α_c ≈ 0.138·N — try to store more, the spin-glass phase wipes the memory.
 
 **Modern Hopfield** (Ramsauer et al. 2020) keeps the same substrate but uses

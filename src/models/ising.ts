@@ -46,6 +46,8 @@ const ising: Model = {
   id: 'ising',
   name: 'Ising Model (2D Lattice)',
   short: 'The classical statistical-mechanics model. Spins align with neighbours under ferromagnetic coupling; phase transition at T_c ≈ 2.269.',
+  name_zh: 'Ising 模型 (2D 格子)',
+  short_zh: '经典统计力学模型。2D 方格上的自旋在热噪声下与邻居对齐；二级相变在 T_c ≈ 2.269（Onsager 1944）。拖动温度滑块，实时穿越临界点。',
   long: `Each cell of a 2D square lattice carries a spin s ∈ {-1, +1}. Spins prefer to align with their four nearest neighbours: the energy is
 
 E(s) = − Σ_{⟨i, j⟩} s_i · s_j     (sum over edges)
