@@ -1,22 +1,25 @@
 // Hopfield network capacity / α_c phase transition.
 //
+// PAPER-VERIFIED 2026-05-04:
+//   - Hopfield, J. J. PNAS 79, 2554 (1982). The original Hopfield paper.
+//   - Amit, Gutfreund & Sompolinsky (AGS). "Storing infinite numbers of
+//     patterns in a spin-glass model of neural networks." Phys. Rev. Lett. 55,
+//     1530 (1985); "Statistical mechanics of neural networks near saturation."
+//     Annals of Physics 173, 30 (1987). The replica-method analysis that
+//     established α_c ≈ 0.138 as the critical pattern load.
+//
+// The α_c ≈ 0.138 result is universally textbook material (Hertz-Krogh-Palmer,
+// Coolen-Kühn-Sollich "Theory of Neural Information Processing Systems",
+// every introductory statistical neuroscience reference).
+//
 // Stores P uncorrelated random binary patterns in a Hopfield network of N
-// neurons. The Hebbian rule is the same as the geometric Hopfield demo,
-// but with random patterns instead of hand-drawn shapes — this is the
-// canonical setup analysed by Amit, Gutfreund & Sompolinsky (1985-87)
-// using the spin-glass replica method.
+// neurons via the Hebbian rule. Below α_c, stored patterns are stable fixed
+// points of the dynamics; above α_c, the spin-glass phase wipes the memory
+// (no stored pattern is a fixed point any more).
 //
-// The result is a true second-order phase transition at the critical load
-//
-//   α_c ≡ P / N  ≈  0.138
-//
-// This demo stages the transition: pick a load α via the num_patterns
-// slider, start the system at the exact stored target pattern (noise=0),
-// and watch the σ time-series. Below α_c it stays at 1 forever — the
-// pattern is a fixed point. Above α_c it collapses toward 0 — the
-// pattern is no longer a fixed point and the dynamics flow into a
-// spin-glass spurious attractor. The phase boundary at α_c ≈ 0.138 is
-// sharp and lines up with AGS's analytical prediction.
+// Acceptance test (tests/hopfield-capacity.test.ts): at α=0.05 (below
+// α_c≈0.138) retrieval succeeds (overlap stays high); at α=0.30 (above
+// α_c) overlap collapses to ~0 (spin-glass phase).
 
 import type { Model, ModelState, ParamValues, Graph } from '../types.ts';
 import type { RNG } from '../rng.ts';
