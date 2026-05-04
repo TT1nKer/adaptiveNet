@@ -35,9 +35,15 @@
 //     in principle. We let the C endpoint be the active rewirer (it suffered
 //     the −c). This is the standard simplification and matches most
 //     follow-up work in the active-linking literature.
-//   - New partner is chosen uniformly at random from non-neighbours. The
-//     paper explores variants where new partners are selected preferentially
-//     toward C; we keep the simplest version.
+//   - Homophily preference: when the active rewirer reconnects, it tries
+//     same-type partners first (with a 30-attempt budget, falling back to
+//     random non-neighbour if none found). Pacheco's analytical "active
+//     linking" framework specifies asymmetric formation rates α_CC > α_CD
+//     > α_DD; in the discrete-event implementation here, that asymmetry is
+//     produced by the type-preferential rewiring. Without this preference
+//     (which the first version of this file lacked), the linking dynamics
+//     cannot rescue cooperation against Fermi-driven D-bias regardless of
+//     q — defectors win at all parameter values.
 //   - Payoff is degree-normalised (average payoff per game, not accumulated).
 //     With unnormalised payoffs, BA hubs dominate Fermi imitation purely on
 //     degree — the network collapses to the hub's initial strategy in the
@@ -49,7 +55,12 @@ import { generators } from '../graph.ts';
 import type { Model, ModelState, ParamValues } from '../types.ts';
 import type { RNG } from '../rng.ts';
 
-const TOPO_OPTS = ['ba', 'er', 'complete'] as const;
+// Pacheco's standard setups use BA (preferential-attachment scale-free) or ER
+// (Erdős–Rényi random) as initial topology. K_N (complete graph) is a useful
+// "well-mixed" baseline conceptually but force-directed layouts collapse all
+// nodes into one pile because every pair pulls every other; left out of this
+// demo for that reason. Add via a separate model file if needed.
+const TOPO_OPTS = ['ba', 'er'] as const;
 
 const pacheco: Model = {
   id: 'pacheco-2006',
@@ -122,10 +133,10 @@ Reference: Pacheco, Traulsen & Nowak, *Coevolution of strategy and structure in 
     b:        { label: 'b (benefit)',        min: 1,    max: 10,   step: 0.1,   default: 5.0,  live: true },
     c:        { label: 'c (cost)',           min: 0.1,  max: 5,    step: 0.1,   default: 1.0,  live: true },
     beta:     { label: 'β (selection)',      min: 0.01, max: 5,    step: 0.01,  default: 0.5,  live: true },
-    q:        { label: 'q (linking rate)',   min: 0,    max: 1,    step: 0.01,  default: 0.30, live: true },
+    q:        { label: 'q (linking rate)',   min: 0,    max: 1,    step: 0.01,  default: 0.50, live: true },
     alpha_CC: { label: 'α_CC (CC break)',    min: 0,    max: 0.5,  step: 0.005, default: 0.02, live: true },
-    alpha_CD: { label: 'α_CD (CD break)',    min: 0,    max: 1,    step: 0.01,  default: 0.20, live: true },
-    alpha_DD: { label: 'α_DD (DD break)',    min: 0,    max: 1,    step: 0.01,  default: 0.50, live: true },
+    alpha_CD: { label: 'α_CD (CD break)',    min: 0,    max: 1,    step: 0.01,  default: 0.50, live: true },
+    alpha_DD: { label: 'α_DD (DD break)',    min: 0,    max: 1,    step: 0.01,  default: 0.95, live: true },
     init_C:   { label: 'initial C fraction', min: 0.05, max: 0.95, step: 0.05,  default: 0.50, live: false },
     N:        { label: 'nodes',              min: 50,   max: 1000, step: 10,    default: 200,  live: false },
     k:        { label: 'avg degree',         min: 2,    max: 14,   step: 1,     default: 6,    live: false },
@@ -142,27 +153,27 @@ Reference: Pacheco, Traulsen & Nowak, *Coevolution of strategy and structure in 
     },
     {
       id: 'active-linking',
-      name: 'active linking (q = 0.3, default)',
-      short: 'Standard Pacheco regime. Cooperators cluster, CC-edge fraction climbs, defectors get isolated.',
-      params: { q: 0.30, b: 5, c: 1, beta: 0.5, init_C: 0.50 },
+      name: 'active linking (q = 0.5, default)',
+      short: 'Balanced linking and strategy events. With homophily rewiring, cooperators cluster and CC-edge fraction climbs.',
+      params: { q: 0.50, b: 5, c: 1, beta: 0.5, init_C: 0.50 },
     },
     {
       id: 'linking-dominant',
-      name: 'linking dominant (q = 0.7)',
-      short: 'Network restructures faster than strategies. Cooperator communities consolidate quickly.',
-      params: { q: 0.70, b: 5, c: 1, beta: 0.5, init_C: 0.50 },
+      name: 'linking dominant (q = 0.85)',
+      short: 'Network restructures much faster than strategies. Cooperator communities consolidate quickly into a stable C-core + isolated Ds.',
+      params: { q: 0.85, b: 5, c: 1, beta: 0.5, init_C: 0.50 },
     },
     {
       id: 'weak-selection',
       name: 'weak selection (β = 0.05)',
-      short: 'Strategy updates are mostly random. Linking dynamics dominate. Drift-like behaviour.',
-      params: { q: 0.30, b: 5, c: 1, beta: 0.05, init_C: 0.50 },
+      short: 'Strategy updates are mostly random. Linking dynamics dominate. Drift-like behaviour with cooperation-favouring linking equilibrium.',
+      params: { q: 0.50, b: 5, c: 1, beta: 0.05, init_C: 0.50 },
     },
     {
       id: 'strong-selection',
       name: 'strong selection (β = 2.0)',
-      short: 'Strategy updates are near-deterministic copy-better. Linking gets less time to act between sweeps.',
-      params: { q: 0.30, b: 5, c: 1, beta: 2.0, init_C: 0.50 },
+      short: 'Strategy updates are near-deterministic copy-better. Imitation outpaces linking; defectors usually win.',
+      params: { q: 0.50, b: 5, c: 1, beta: 2.0, init_C: 0.50 },
     },
   ],
 
@@ -172,26 +183,9 @@ Reference: Pacheco, Traulsen & Nowak, *Coevolution of strategy and structure in 
     const topo = params.topo as string;
     const initC = params.init_C as number;
 
-    let graph;
-    if (topo === 'complete') {
-      // Build complete graph K_N (every pair connected)
-      const adj: number[][] = Array.from({ length: N }, () => []);
-      const edges: Array<[number, number]> = [];
-      for (let i = 0; i < N; i++) {
-        for (let j = i + 1; j < N; j++) {
-          adj[i]!.push(j);
-          adj[j]!.push(i);
-          edges.push([i, j]);
-        }
-      }
-      const deg = new Int32Array(N);
-      for (let i = 0; i < N; i++) deg[i] = adj[i]!.length;
-      graph = { N, adj, edges, deg };
-    } else {
-      const generator = generators[topo];
-      if (!generator) throw new Error(`unknown topology: ${topo}`);
-      graph = generator(N, k, rng);
-    }
+    const generator = generators[topo];
+    if (!generator) throw new Error(`unknown topology: ${topo}`);
+    const graph = generator(N, k, rng);
 
     // 0 = D, 1 = C
     const X = new Float64Array(N);
@@ -252,14 +246,34 @@ Reference: Pacheco, Traulsen & Nowak, *Coevolution of strategy and structure in 
           edges[eIdx] = last;
           edges.pop();
 
-          // activeRewirer picks a uniformly random non-neighbour
+          // activeRewirer picks a non-neighbour. Homophily preference: try
+          // for a same-type partner first (this is the missing piece in the
+          // first version of this model — without homophily, the active-linking
+          // mechanism cannot rescue cooperation against Fermi-driven D-bias).
+          // Pacheco-Traulsen-Nowak's "active linking" framework with asymmetric
+          // formation rates (α_CC > α_CD > α_DD) is captured here as
+          // type-preferential rewiring with random fallback.
+          const preferredType = X[activeRewirer]!;
           let kk = -1;
           for (let attempts = 0; attempts < 30; attempts++) {
             const cand = rng.int(N);
             if (cand === activeRewirer) continue;
+            if (X[cand] !== preferredType) continue;
             if (adj[activeRewirer]!.includes(cand)) continue;
             kk = cand;
             break;
+          }
+          // Fallback: if no same-type partner found in 30 tries, accept any
+          // non-neighbour. Prevents the rewirer from getting stuck when its
+          // preferred type is rare.
+          if (kk < 0) {
+            for (let attempts = 0; attempts < 30; attempts++) {
+              const cand = rng.int(N);
+              if (cand === activeRewirer) continue;
+              if (adj[activeRewirer]!.includes(cand)) continue;
+              kk = cand;
+              break;
+            }
           }
           if (kk >= 0) {
             adj[activeRewirer]!.push(kk);
