@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>adaptiveNet — sandbox</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body class="sandbox-page">
+  <header>
+    <a href="index.html" class="back">← gallery</a>
+    <span id="model-name" class="title">sandbox</span>
+    <span id="model-status" class="ref">— edit code, click Run</span>
+    <span class="actions">
+      <button id="run" title="evaluate the editor code and start the simulation">▶ Run</button>
+      <button id="restart" title="re-init the current model with a new seed">restart</button>
+      <button id="pause">pause</button>
+      <button id="share" title="copy a permalink with your code embedded">copy link</button>
+      <a id="lang-toggle" href="#" title="switch language">中文</a>
+    </span>
+  </header>
+
+  <div id="editor-pane">
+    <div id="editor"></div>
+    <div id="editor-status" class="editor-status">Ready. Click ▶ Run.</div>
+  </div>
+
+  <div id="netbox">
+    <canvas id="netcv"></canvas>
+    <div id="netinfo" class="overlay-bottom">·</div>
+  </div>
+
+  <aside id="panel">
+    <h4 data-i18n="panel.params">parameters</h4>
+    <div id="params"><div class="muted">— click Run to populate —</div></div>
+
+    <h4 data-i18n="panel.seed">seed</h4>
+    <div id="seed-row" class="row">
+      <input id="seed" type="number" min="1" step="1" value="1">
+      <button id="seed-rand" title="pick a random seed">🎲</button>
+    </div>
+
+    <h4 data-i18n="panel.state">state</h4>
+    <div id="stats" class="stats">
+      <span data-i18n="state.t">t = </span><b id="t-val">0.00</b><br>
+      <span data-i18n="state.steps">steps = </span><b id="step-val">0</b>
+    </div>
+  </aside>
+
+  <footer id="diag">
+    <div class="diag-cell">
+      <div class="ttl" id="ts-ttl">time series</div>
+      <canvas id="tscv"></canvas>
+    </div>
+  </footer>
+
+  <!-- Monaco editor via CDN — no install needed -->
+  <script>
+    var require = { paths: { vs: 'https://cdn.jsdelivr.net/npm/monaco-editor@0.52.0/min/vs' } };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.52.0/min/vs/loader.js"></script>
+  <script>
+    require(['vs/editor/editor.main'], function() {
+      window.dispatchEvent(new CustomEvent('monaco-ready'));
+    });
+  </script>
+
+  <script type="module" src="/src/sandbox.ts"></script>
+</body>
+</html>
