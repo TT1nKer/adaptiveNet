@@ -2,6 +2,8 @@
 
 Thanks for considering a contribution. The most common contribution shape is **adding a new model**, and this guide walks through it. For other kinds of changes (UI, docs, infrastructure) — open an issue first so we can talk through scope.
 
+> **Using Claude Code (or another agentic LLM)?** This repo ships a [skill at `.claude/skills/adaptivenet-author/SKILL.md`](.claude/skills/adaptivenet-author/SKILL.md) that walks you (and your agent) through the design questions, then writes the model files in the right places. If you have Claude Code, just clone the repo, open it, and say "I want to design a model of [your dynamics]" — the skill activates automatically. The walkthrough below is the manual equivalent.
+
 ## Adding a new model — step by step
 
 The codebase ships a fully-commented template at [`src/models/_template.ts`](src/models/_template.ts). This file is the recommended starting point.
