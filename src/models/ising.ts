@@ -70,17 +70,11 @@ T_c = 2 / ln(1 + √2) ≈ 2.269
 
 **与 Hopfield 的关联**：底层相同——节点上的二元态、能量 = − Σ W[i,j] s_i s_j、Glauber 更新。Hopfield 是这个模型加**稠密 Hebb 学习的 W**；经典 Ising 是同一模型加**稀疏均匀 J**。
 
-**教师向 — 五道 Δ 实验适合作为习题**
+**尝试**
 
-**1. 定位 T_c。** 固定格子大小，在 1.5 到 3.0 之间以 0.05 步长扫描 T。对每个 T 运行至磁化稳定 (~5000 sweeps)。绘制 |⟨m⟩| vs T。把你的数值 T_c 与 Onsager 精确值 2/ln(1+√2) ≈ 2.269 比较。为何数值曲线在 T_c 处平滑而不是不连续？
-
-**2. 有限尺寸标度。** 固定 T = 2.269。在格子大小 32, 64, 128, 256 下跑。测量磁化涨落 σ(m)。它应该按 L^(−1/8) 标度 (Onsager)。绘制 log σ vs log L 并提取斜率。你得到多接近 −0.125？
-
-**3. 临界减速。** 在 T = 2.269 vs T = 1.0 vs T = 4.0 下，测量磁化与初始值去关联所需时间。临界区应该戏剧性地慢 (在 L → ∞ 极限下形式上无限慢)。量化差异。
-
-**4. 对称性破缺。** 从随机初始条件出发。在 T = 1.0 下跑。重复 10 次。系统多大比例最终正向磁化 vs 负向？这是 Ising 模型的 Z₂ 对称性——以及 Mermin-Wagner 风格论证为何这能在 2D 破缺却不能在 1D 破缺。
-
-**5. 粗化动力学。** 从 T_c 之下 (例如 T = 1.0) 的随机初始条件出发。看畴如何形成和增长。估计典型畴大小作为时间的函数。Lifshitz-Slyozov-Allen-Cahn 理论预测非守恒序参量 L(t) ~ t^(1/2) 幂律。你的数据支持这点吗？
+— 在 2.27 附近拖动 T。下方：畴锁定。上方：热噪声获胜。
+— 在 T = 0.05 时，格子常常冻结在条纹构型而非全对齐基态——Ising 粗化问题。
+— 在 T = 2.27 下试 32 vs 256 的格子大小。更大的格子给出更尖锐的临界行为。
 
 参考文献：Onsager, *Phys. Rev.* 65, 117 (1944).
 
@@ -107,17 +101,11 @@ At **exactly T_c** the system is **scale-invariant**: domain clusters appear at 
 
 **Connection to Hopfield**: the substrate is the same — binary states on nodes, energy = − Σ W[i,j] s_i s_j, Glauber update. Hopfield is this model with **dense Hebbian-learned W**; classical Ising is the same model with **sparse uniform J**.
 
-**For instructors — five Δ-experiments suitable for problem sets**
+**Things to try**
 
-**1. Locate T_c.** Sweep T from 1.5 to 3.0 in steps of 0.05 at fixed grid size. For each T, run until magnetization stabilizes (~5000 sweeps). Plot |⟨m⟩| vs T. Compare your numerical T_c to Onsager's exact value 2/ln(1+√2) ≈ 2.269. Why is the numerical curve smooth across T_c rather than discontinuous?
-
-**2. Finite-size scaling.** Hold T = 2.269. Run at grid sizes 32, 64, 128, 256. Measure the magnetization fluctuation σ(m). It should scale as L^(−1/8) with system size L (Onsager). Plot log σ vs log L and extract the slope. How close to −0.125 do you get?
-
-**3. Critical slowing down.** At T = 2.269 vs T = 1.0 vs T = 4.0, measure how long it takes the magnetization to decorrelate from its initial value. The critical regime should be dramatically slower (formally, infinitely slow in the L → ∞ limit). Quantify the difference.
-
-**4. Symmetry breaking.** Start from random initial conditions. Run at T = 1.0. Repeat 10 times. How often does the system end up positively magnetized vs negatively? This is the Z₂ symmetry of the Ising model — and the Mermin-Wagner-style argument for why it can break in 2D but not in 1D.
-
-**5. Coarsening dynamics.** Start at T well below T_c (e.g., T = 1.0) from random initial conditions. Watch how domains form and grow. Estimate the typical domain size as a function of time. The Lifshitz-Slyozov-Allen-Cahn theory predicts a power law L(t) ~ t^(1/2) for non-conserved order parameter. Does your data support this?
+— Drag T across 2.27. Below: domains lock in. Above: thermal noise wins.
+— At T = 0.05, the lattice often freezes in stripes rather than reaching the aligned ground state — the Ising coarsening problem.
+— Try grid sizes 32 vs 256 at T = 2.27. Larger lattices give sharper critical behaviour.
 
 Reference: Onsager, *Phys. Rev.* 65, 117 (1944).`,
 

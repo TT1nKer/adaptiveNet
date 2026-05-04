@@ -25,8 +25,11 @@
 //   6. Optionally add a card to index.html (and index.zh.html) for the gallery
 //   7. Run `bun run dev` and open `http://localhost:8000/player.html?model=YOUR_ID`
 //
-// See CONTRIBUTING.md for the full walkthrough including style conventions,
-// what makes a good demo, and how to write the "For instructors" prompts.
+// See CONTRIBUTING.md for the full walkthrough including style conventions
+// and what makes a good demo. For heavier course material (5-prompt Δ-style
+// problem sets), see teaching/problem-sets/ — those live separately from the
+// demo's `long` description, which intentionally stays NetLogo-light
+// ("Things to try" hints, not assignments).
 // =============================================================================
 
 import { generators } from '../graph.ts';

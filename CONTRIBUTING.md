@@ -112,8 +112,9 @@ Drag sliders, hit play, see if the dynamics are visible and reasonable. Check th
 ### Documentation
 
 - The `long` field should explain *what* the model does (1-2 paragraphs), name the *order parameter*, and link to the canonical reference paper.
-- Add a "**For instructors — Δ-experiments suitable for problem sets**" section at the end of `long`. Five prompts of the form *"vary X from a to b, observe Y, compare to literature value Z, explain in 200 words"*. See any existing demo for the format.
+- Add a "**Things to try**" section at the end of `long` — 2-4 short, open-ended prompts of the NetLogo style: *"try parameter X at value Y, watch what happens"*. Keep these light and inviting; they should fit on screen without scrolling. See any existing demo for the format.
 - Translate `long_zh` to match. If you can't translate, omit `long_zh` and the player will fall back to English with a small "translation pending" note.
+- **Heavy problem-set material** — five Δ-style experiments with literature comparisons, suitable for course assignments — belongs in `teaching/problem-sets/MODEL.md`, not in the demo description. Embedding heavy material in the demo turns the panel into a wall of text and pre-commits the platform to one specific assignment when an instructor may want a different one. The `teaching/` directory is the seed of external course material and is meant to be lifted into instructor blogs / syllabi.
 
 ### Choosing what to model
 
