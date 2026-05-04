@@ -210,16 +210,27 @@ Reference: Pacheco, Traulsen & Nowak, *Coevolution of strategy and structure in 
     const { N, X, graph } = state;
     const { adj, edges, deg } = graph;
 
-    // Per tick choose: AL event (prob W/(W+1)) or strategy event (prob 1/(W+1)).
-    // Number of ticks per frame scales with speed; linking-event rate scales with N²
-    // (could-be pairs); strategy with 1; we set ticks ≈ N² × 0.001 × speed for visible
-    // dynamics on default N=100.
-    const ticksPerFrame = Math.max(1, Math.floor(N * N * 0.001 * speed));
-    const linkProb = W / (W + 1);
+    // The paper's W = T_s / T_a is the ratio of strategy timescale to AL
+    // timescale. T_a ≪ T_s means AL fully relaxes to equilibrium link
+    // densities φ_ij = α_iα_j/(α_iα_j + γ_ij) BETWEEN strategy events.
+    //
+    // To capture this in discrete events, we INTERLEAVE: per strategy
+    // event, run W · N(N-1)/2 AL events first. That's enough for each
+    // pair to be sampled ~W times — sufficient for link densities to
+    // approach equilibrium before strategy fires. Without this nesting,
+    // strategy events on a not-yet-equilibrated graph see a fitness
+    // gradient still close to the original PD (where defectors win),
+    // and convert cooperators faster than AL can isolate them.
+    //
+    // Number of strategy events per frame ~ N (one per individual,
+    // Moran-style time scaling) × speed.
+    const numStrategy = Math.max(1, Math.floor(N * speed));
+    const ALPerStrategy = Math.max(1, Math.floor(W * N * (N - 1) * 0.5));
 
-    for (let t = 0; t < ticksPerFrame; t++) {
-      if (rng.next() < linkProb) {
-        // ===== AL event: pick a random ordered pair (i, j) ≠ self =====
+    for (let s2 = 0; s2 < numStrategy; s2++) {
+      // ===== Run W·N(N-1)/2 AL events to (approximately) equilibrate =====
+      for (let t = 0; t < ALPerStrategy; t++) {
+        // pick random ordered pair (i, j) ≠ self =====
         const i = rng.int(N);
         let j = rng.int(N);
         if (j === i) j = (j + 1) % N;
@@ -267,26 +278,21 @@ Reference: Pacheco, Traulsen & Nowak, *Coevolution of strategy and structure in 
             edges.push(i < j ? [i, j] : [j, i]);
           }
         }
-      } else {
-        // ===== Strategy event: pick two random members of the population =====
-        // Paper: A and B are *random*, not necessarily adjacent. B adopts A's
-        // strategy with Fermi probability based on relative fitness.
-        const A = rng.int(N);
-        let B = rng.int(N);
-        if (B === A) B = (B + 1) % N;
-        if (X[A] === X[B]) continue;  // same strategy, no observable change
-
-        // Fitness: average payoff per neighbour (degree-normalised).
+      }
+      // ===== End AL inner loop — now do 1 strategy event =====
+      // Paper's Fermi rule: pick two random members A, B; B adopts A's
+      // strategy with probability 1 / (1 + exp(−β(f_A − f_B))).
+      const A = rng.int(N);
+      let B = rng.int(N);
+      if (B === A) B = (B + 1) % N;
+      if (X[A] !== X[B]) {
         const f_A = fitness(A, X, adj, b, c);
         const f_B = fitness(B, X, adj, b, c);
-
-        // p = 1 / (1 + exp(-β · (f_A − f_B)))  — paper's Fermi rule
         const p = 1 / (1 + Math.exp(-beta * (f_A - f_B)));
         if (rng.next() < p) {
           X[B] = X[A]!;
         }
       }
-
       state.step_count++;
     }
     state.t = state.step_count;
@@ -328,10 +334,20 @@ Reference: Pacheco, Traulsen & Nowak, *Coevolution of strategy and structure in 
   },
 };
 
-// Average payoff per neighbour — degree-normalised to keep β·Δf bounded
-// independent of degree heterogeneity.
-//   f_C(per game) = (#C neighbours · b − deg · c) / deg = (#C/deg)·b − c
-//   f_D(per game) = (#C neighbours · b) / deg            = (#C/deg)·b
+// Total accumulated payoff across neighbours — matches the paper's formula
+//   f_i = Σ_j M_ij φ_ij (N_j - δ_ij)
+// (in mean field). For each individual, this is the SUM of payoffs from games
+// with each neighbour. We do NOT degree-normalise: Pacheco's cooperation
+// rescue mechanism depends on cooperators having higher TOTAL fitness than
+// defectors in AL equilibrium (driven by C having more neighbours than D
+// because φ_CC > φ_CD in equilibrium). Degree-normalising removes this and
+// breaks the paper's mechanism.
+//
+//   π_C = #C neighbours · (b − c) + #D neighbours · (−c) = #C · b − deg · c
+//   π_D = #C neighbours · b + #D neighbours · 0           = #C · b
+//
+// With paper's β = 0.1 (weak selection) and N=100, β·Δf stays in a regime
+// where Fermi imitation is meaningful but not deterministic.
 function fitness(i: number, X: Float64Array, adj: number[][], b: number, c: number): number {
   const ai = adj[i]!;
   const di = ai.length;
@@ -339,9 +355,9 @@ function fitness(i: number, X: Float64Array, adj: number[][], b: number, c: numb
   let cN = 0;
   for (let p = 0; p < ai.length; p++) if (X[ai[p]!] === 1) cN++;
   if (X[i] === 1) {
-    return (cN * b) / di - c;
+    return cN * b - di * c;  // Σ_j M_Cj over neighbours
   } else {
-    return (cN * b) / di;
+    return cN * b;             // Σ_j M_Dj over neighbours
   }
 }
 
