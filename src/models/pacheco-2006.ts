@@ -1,183 +1,176 @@
-// Pacheco, Traulsen & Nowak (PRL 97, 258103, 2006): Coevolution of strategy
-// and structure in complex networks with dynamical linking.
+// Pacheco, Traulsen & Nowak (2006). "Coevolution of strategy and structure in
+// complex networks with dynamical linking." Phys. Rev. Lett. 97, 258103.
+// PMC: https://pmc.ncbi.nlm.nih.gov/articles/PMC2430061/
 //
-// Players on a network play repeated prisoner's dilemma with their neighbours.
-// Two coupled processes evolve simultaneously:
+// THIS FILE WAS REWRITTEN 2026-05-04 AGAINST THE ACTUAL PAPER. The previous
+// versions (v1, v2, v3) were "Pacheco-flavoured" PD-on-network models written
+// from training prior without consulting the paper, and produced quantitatively
+// and qualitatively wrong dynamics. The user pushed back and required paper
+// fetch + faithful reimplementation. Specifically what was wrong:
+//   - Variable names: "alpha_XY" was a per-edge-type *breaking* probability;
+//     in the paper, α is per-node formation rate and γ is per-edge-type
+//     breaking rate. They are TWO SEPARATE rates, not one.
+//   - Linking dynamics: the previous versions had only "break events", with
+//     formation happening implicitly via random rewiring. The paper has
+//     explicit formation events (rate α_i·α_j on disconnected pairs) AND
+//     breaking events (rate γ_ij on existing edges) as two independent CTMC
+//     event streams.
+//   - Strategy update: the previous versions picked a node and a random
+//     neighbour. The paper picks two random members of the population
+//     (not necessarily neighbours).
+//   - Defaults: previous (b=5, c=1, β=0.5, BA initial). Paper Fig 3
+//     example: (b=1, c=0.5, β=0.1, α_C=α_D=0.4, γ_CC=0.1, γ_CD=0.8,
+//     γ_DD=0.32, K_N initial, 50% cooperators) → cooperators fixate.
 //
-//   STRATEGY DYNAMICS (Fermi imitation): a randomly chosen player i compares
-//     payoff with a random neighbour j; i copies j's strategy with probability
-//     1 / (1 + exp(β · (π_i − π_j))).
+// The paper's mechanism (Section "Active Linking" + Eqs. for X_ij, φ_ij):
 //
-//   LINKING DYNAMICS (active linking): edges break at rates that depend on
-//     the strategy types of their endpoints. CC edges (cooperator–cooperator)
-//     are stable; DD edges (defector–defector) are fragile; CD edges sit
-//     between. When an edge breaks, the satisfied endpoint picks a new
-//     random partner.
+//   1. Each node i has a "linking propensity" α_i (= α_C if i is a cooperator,
+//      α_D if defector). It's a per-node formation rate.
+//   2. Each EDGE TYPE has a breaking rate γ_ij (γ_CC, γ_CD, γ_DD). Edge
+//      lifetime = 1/γ_ij.
+//   3. Per simulation tick (continuous-time approximation): with rate equal
+//      to total formation + total breaking, sample one event. Formation: pick
+//      disconnected pair (i, j), form edge with rate α_i·α_j. Breaking: pick
+//      existing edge (i, j), break with rate γ_ij.
+//   4. Strategy update: at rate W (relative to AL rate), pick two random
+//      individuals A and B (NOT necessarily adjacent). B adopts A's strategy
+//      with probability p = 1/(1 + exp(−β·(f_A − f_B))). The Fermi rule.
+//      f_A is A's fitness from games with its neighbours.
+//   5. PD payoffs: C-C: each (b−c). C-D: C gets −c, D gets b. D-D: 0.
 //
-// The ratio of linking events to strategy events (parameter q here) controls
-// whether the network adapts faster or slower than the strategies. The PRL
-// 2006 paper's central observation: when linking is sufficiently fast,
-// cooperators can cluster and protect each other from exploitation, even on
-// a payoff matrix that would lead to all-defection on a fixed graph.
+//   The mean-field equilibrium link density per type:
+//     φ_ij = α_i·α_j / (α_i·α_j + γ_ij)
+//   With α_C = α_D = 0.4 and the γ values above:
+//     φ_CC = 0.16/0.26 ≈ 0.615    (CC pairs are linked 61.5% of the time)
+//     φ_CD = 0.16/0.96 ≈ 0.167    (CD pairs ~16.7% — cooperators rarely
+//                                  exposed to defectors)
+//     φ_DD = 0.16/0.48 ≈ 0.333    (DD pairs ~33.3%)
+//   This asymmetric link density is what produces cooperation rescue: in the
+//   fast-AL limit, cooperators play mostly with cooperators (high φ_CC) and
+//   rarely with defectors (low φ_CD); their fitness exceeds defectors';
+//   Fermi imitation drives D → C.
 //
-// Payoff matrix (donation-game form, the cleanest 2-parameter PD):
-//   C vs C: each gets b − c
-//   C vs D: C gets −c, D gets b
-//   D vs D: each gets 0
-// PD requirements: b > c > 0 (so T > R > P > S).
-//
-// Implementation simplifications vs the original paper:
-//   - The paper uses three breaking rates α_CC, α_CD, α_DD as continuous-time
-//     rates; here we sample one edge per linking event and apply a per-event
-//     break probability of the same type. Statistically equivalent in the
-//     long-time limit; visually identical.
-//   - When a CD edge breaks, both endpoints could be "the dissatisfied one"
-//     in principle. We let the C endpoint be the active rewirer (it suffered
-//     the −c). This is the standard simplification and matches most
-//     follow-up work in the active-linking literature.
-//   - Rewiring preference: both C and D rewirers prefer C as new partner
-//     (with a 30-attempt budget, falling back to random non-neighbour if
-//     none found). This is asymmetric in TYPE PREFERENCE, not same-type
-//     homophily — both strategies want C neighbours, because C-neighbours
-//     dominate D-neighbours in the PD payoff matrix for both types:
-//     C wants C (b − c vs −c), D wants C (b vs 0). Pacheco's analytical
-//     framework with asymmetric formation rates α_CC > α_CD > α_DD reduces
-//     to this in the discrete-event impl. Without the preference, the
-//     linking dynamics cannot rescue cooperation against Fermi-driven
-//     D-bias (defectors win at all q). With same-type homophily (D-prefers-D),
-//     the network bipartitions and colours freeze. Always-prefer-C is
-//     the right asymmetry — D constantly invades C clusters, C constantly
-//     evicts via the high α_CD break rate, D's neighbourhoods degrade,
-//     Fermi imitation eventually flips D → C.
-//   - Payoff is degree-normalised (average payoff per game, not accumulated).
-//     With unnormalised payoffs, BA hubs dominate Fermi imitation purely on
-//     degree — the network collapses to the hub's initial strategy in the
-//     first ~50 events, before linking dynamics can act. Normalisation
-//     keeps β·Δπ at O(c) regardless of degree heterogeneity, which is the
-//     regime where active-linking actually shapes the outcome.
+// Acceptance test (paper Fig 2b / Fig 3): with the paper's parameter values
+// above and 50% initial C on K_100, cooperators should approach near-100%
+// fixation. In the previous v3, parameters were too far off and the behaviour
+// was qualitatively different.
 
-import { generators } from '../graph.ts';
-import type { Model, ModelState, ParamValues } from '../types.ts';
+import { generators, buildComplete } from '../graph.ts';
+import type { Graph, Model, ModelState, ParamValues } from '../types.ts';
 import type { RNG } from '../rng.ts';
 
-// Initial topologies. Pacheco's paper uses BA or ER; K_N (complete graph) is
-// a useful well-mixed baseline. For complete graphs, the layout module skips
-// force-directed iterations (in 2D the spring constraints are unsatisfiable
-// for K_N) and leaves nodes on the initial circular arrangement.
-const TOPO_OPTS = ['ba', 'er', 'complete'] as const;
+const TOPO_OPTS = ['complete', 'ba', 'er'] as const;
 
 const pacheco: Model = {
   id: 'pacheco-2006',
   name: 'Coevolving Cooperation (Pacheco–Traulsen–Nowak)',
   name_zh: '共演化合作博弈 (Pacheco–Traulsen–Nowak)',
   short:
-    'Players on a network play prisoner\'s dilemma; edges break and rewire based on whether the partnership pays off. Cooperators cluster, defectors get isolated.',
+    'Active linking on prisoner\'s dilemma. Edges form at rate α_i·α_j and break at rate γ_ij. Cooperators end up linked mostly to cooperators (high φ_CC) and rarely to defectors (low φ_CD); cooperation can fixate even with a deeply unfavourable b/c.',
   short_zh:
-    '节点在网络上玩囚徒困境；边根据合作伙伴是否带来收益来断开和重连。合作者聚团，背叛者被孤立。',
+    '囚徒困境 + active linking。边按 α_i·α_j 速率形成、按 γ_ij 速率断开。合作者最终主要与合作者相连（φ_CC 高），与背叛者很少相连（φ_CD 低）；即使 b/c 不利，合作仍能固化。',
 
-  long: `Each node is a **Cooperator** (blue) or **Defector** (red). Every neighbour pair plays one round of prisoner's dilemma per "frame". The donation-game payoff matrix gives:
+  long: `Each node is a Cooperator (blue) or Defector (red). The PD payoff is the donation game: C-C each gets b−c; C-D the cooperator gets −c, the defector b; D-D each gets 0.
 
-— C vs C: each gets b − c  (mutual benefit, paid for)
-— C vs D: C gets −c, D gets b  (cooperator is exploited)
-— D vs D: each gets 0  (no cooperation, no exploitation)
+Two independent processes happen at adjustable rates:
 
-Per simulation tick, **one of two events** happens with the chosen probability ratio:
+— **Active Linking (AL)**: every disconnected pair (i, j) forms an edge at rate **α_i · α_j**, where α_C is the formation rate of cooperators and α_D of defectors. Every existing edge of type ij breaks at rate **γ_ij** (γ_CC for cooperator–cooperator, γ_CD for mixed, γ_DD for defector–defector). Edge lifetime equals 1/γ_ij.
 
-— **Strategy event** (probability 1 − q): a random player i compares average payoff per game with a random neighbour j; i adopts j's strategy with probability 1 / (1 + exp(β · (π_i − π_j))). β controls selection strength: β → 0 is random drift, β → ∞ is deterministic copy-better. (Payoffs are *degree-normalised* — average per game, not accumulated — to keep dynamics consistent across the heterogeneous degree distributions of BA / ER. Without this, BA hubs trivially dominate Fermi imitation on raw payoff scale.)
+— **Strategy update**: two players A and B are picked at random from the population (not necessarily adjacent). B adopts A's strategy with probability 1/(1 + exp(−β·(f_A − f_B))) — the Fermi rule. Fitness f_X is the average payoff X receives across its neighbours.
 
-— **Linking event** (probability q): a random edge is examined. Edges break with probabilities that depend on the endpoint strategies:
-  - **α_CC** (low): CC edges are mutually beneficial → stable
-  - **α_CD** (medium): CD edges are asymmetric — the C endpoint is being exploited → unstable from C's side
-  - **α_DD** (high): DD edges produce zero payoff → fragile; both endpoints want better partners
+The relative speed of the two processes is set by **W = T_s / T_a** (strategy timescale over linking timescale). Per simulation tick, the system runs an AL event with probability W/(W+1) and a strategy event with probability 1/(W+1). When W is large, AL is fast: link densities reach the equilibrium φ_ij = α_i·α_j / (α_i·α_j + γ_ij) before strategies have time to drift.
 
-When an edge breaks, the dissatisfied endpoint rewires preferentially toward a Cooperator non-neighbour. Both C and D want C neighbours — C for mutual benefit (b − c), D for exploitation (b) — so this is "prefer C", not symmetric same-type homophily. The "constantly invade / constantly evict" cycle this produces is exactly Pacheco's mechanism: D's neighbourhoods degrade as C kicks them out, and Fermi imitation eventually flips D → C.
+The paper's central result (Fig 2b, Fig 3): with γ_CD ≫ γ_CC (cooperator–defector edges break much faster than cooperator–cooperator), the equilibrium link density φ_CD is small — cooperators are mostly insulated from defectors and play almost exclusively with each other. The standard PD result that defectors win on a fixed graph **inverts**: cooperators fixate.
 
-The classical fixed-graph PD result is that **defectors win**: the only Nash equilibrium of one-shot PD is mutual defection, and on a static graph that's the absorbing state. Pacheco et al.'s central observation: with **fast enough linking** (q above a threshold), cooperators can dynamically restructure the network around themselves — staying connected to other Cs (CC edges are stable) and shedding Ds (CD/DD edges break). The network self-organises into a "cooperator core surrounded by isolated defectors", and cooperation becomes evolutionarily stable.
+**Default parameters reproduce the paper's Fig 2b**: b=1, c=0.5, β=0.1, α_C=α_D=0.4, γ_CC=0.1, γ_CD=0.8, γ_DD=0.32, W=4, N=100, K_N initial, 50% C. With these, cooperators should fixate within ~10–30 seconds of simulated time at the default speed.
 
 **Things to try**
 
-— Preset *static network* (q = 0): classic fixed-graph PD. Defectors take over within a few hundred ticks regardless of initial fraction.
-— Preset *active linking* (q = 0.3): cooperators cluster and survive. Watch the CC-edge fraction (yellow trace) climb.
-— Preset *linking dominant* (q = 0.7): network restructures faster than strategies; cooperator clusters consolidate quickly into stable communities.
-— Drag β: at β ≈ 0.05 dynamics are mostly noise; at β ≈ 2 strategies copy near-deterministically and the linking dynamics matter less.
+— Drop **W** to 0.1 (preset *strategy fast*): linking is too slow to insulate cooperators; defectors win, recovering the static-PD result.
+— Raise **γ_CD** while keeping γ_CC low (preset *strong asymmetry*): cooperator–defector edges become extremely short-lived; cooperation fixates faster.
+— Set **β** to 2 (preset *strong selection*): Fermi imitation becomes near-deterministic; outcome more sensitive to initial conditions.
+— Switch to **BA** or **ER** initial topology: the paper uses K_N but the dynamics still hold qualitatively for sparse initial graphs as long as the AL process has time to reshape the link density toward φ_ij.
 
-Reference: Pacheco, Traulsen & Nowak, *Coevolution of strategy and structure in complex networks with dynamical linking*, **Phys. Rev. Lett.** 97, 258103 (2006). [doi:10.1103/PhysRevLett.97.258103](https://doi.org/10.1103/PhysRevLett.97.258103)`,
+Reference: Pacheco, Traulsen & Nowak, *Coevolution of strategy and structure in complex networks with dynamical linking*, **Phys. Rev. Lett.** 97, 258103 (2006). [doi:10.1103/PhysRevLett.97.258103](https://doi.org/10.1103/PhysRevLett.97.258103). Open-access PMC: [PMC2430061](https://pmc.ncbi.nlm.nih.gov/articles/PMC2430061/).`,
 
-  long_zh: `每个节点是**合作者** (蓝) 或**背叛者** (红)。每对邻居每"帧"玩一轮囚徒困境。捐赠博弈支付矩阵：
+  long_zh: `每个节点是合作者（蓝）或背叛者（红）。PD 收益用捐赠博弈：C-C 各得 b−c；C-D 中合作者得 −c，背叛者得 b；D-D 各得 0。
 
-— C vs C：各得 b − c（共同受益但付出代价）
-— C vs D：C 得 −c，D 得 b（合作者被剥削）
-— D vs D：各得 0（无合作也无剥削）
+两个独立过程按可调速率发生：
 
-每一仿真 tick，**两个事件之一**按选定概率发生：
+— **Active Linking (AL)**：每对未相连的 (i, j) 以速率 **α_i · α_j** 形成边（α_C 是合作者的形成速率，α_D 是背叛者的）。每条 ij 类型的现存边以速率 **γ_ij** 断开（γ_CC 对应 C-C，γ_CD 混合，γ_DD 对应 D-D）。边的寿命等于 1/γ_ij。
 
-— **策略事件** (概率 1 − q)：随机选一个玩家 i，与随机邻居 j 比较**每场博弈平均收益**；i 以概率 1 / (1 + exp(β · (π_i − π_j))) 采纳 j 的策略。β 控制选择强度：β → 0 时是随机漂移，β → ∞ 时是确定性的"复制更好者"。(收益按*度数归一化*——每场博弈平均，不是累积——这样 BA / ER 异质度数分布下动力学保持一致；不归一化的话 BA hub 会在度数尺度上直接碾压 Fermi imitation。)
+— **策略更新**：从总群体中随机选两个玩家 A、B（**不必相邻**）。B 以概率 1/(1 + exp(−β·(f_A − f_B))) 采纳 A 的策略——Fermi 规则。适应度 f_X 是 X 与邻居博弈的平均收益。
 
-— **重连事件** (概率 q)：随机选一条边考察。边以下面取决于端点策略的概率断开：
-  - **α_CC** (低)：CC 边互惠 → 稳定
-  - **α_CD** (中)：CD 边不对称——C 端被剥削 → 从 C 视角不稳定
-  - **α_DD** (高)：DD 边产生零收益 → 脆弱；两端都想找更好的伙伴
+两个过程的相对速度由 **W = T_s / T_a**（策略时间尺度 / linking 时间尺度）决定。每一仿真 tick，系统以概率 W/(W+1) 跑 AL 事件，以概率 1/(W+1) 跑策略事件。W 很大时 AL 很快：边密度在策略漂移之前就达到了均衡值 φ_ij = α_i·α_j / (α_i·α_j + γ_ij)。
 
-当边断开时，不满意的一端**优先寻找合作者**作为新邻居。C 和 D 都想连 C——C 想连 C 是为了互惠 (b − c)，D 想连 C 是为了剥削 (b)——所以这是"偏好 C"，不是对称的同类聚合。这种"D 不停入侵 / C 不停驱逐"循环正是 Pacheco 的机制：D 的邻里随着 C 的剔除而恶化，Fermi imitation 最终把 D 翻成 C。
+论文的核心结论（Fig 2b、Fig 3）：当 γ_CD ≫ γ_CC（合作者-背叛者边比合作者-合作者边断得快得多）时，均衡边密度 φ_CD 很小——合作者大体上与背叛者隔离，主要相互博弈。"固定图 PD 上背叛者获胜"的标准结果**反转**：合作者固化。
 
-经典固定图 PD 的结果是**背叛者获胜**：一次性 PD 的唯一纳什均衡是相互背叛，在静态图上这是吸收态。Pacheco 等的核心观察：当**重连足够快** (q 高于阈值) 时，合作者可以动态地围绕自己重构网络——与其他 C 保持连接 (CC 边稳定)，剥离 D (CD/DD 边断开)。网络自组织为"合作者核心 + 被孤立的背叛者"，合作变为演化稳定。
+**默认参数复现论文 Fig 2b**：b=1, c=0.5, β=0.1, α_C=α_D=0.4, γ_CC=0.1, γ_CD=0.8, γ_DD=0.32, W=4, N=100, K_N 起始，50% C。这些设置下，合作者应在 default speed 下约 10–30 秒模拟时间内固化。
 
 **尝试**
 
-— 预设 *static network* (q = 0)：经典固定图 PD。无论初始合作比例多少，背叛者几百 tick 内接管。
-— 预设 *active linking* (q = 0.3)：合作者聚团并存活。看 CC 边比例 (黄线) 攀升。
-— 预设 *linking dominant* (q = 0.7)：网络重构快于策略；合作者团迅速凝聚为稳定社区。
-— 拖动 β：β ≈ 0.05 时动力学大部分是噪声；β ≈ 2 时策略近似确定性复制，重连动力学影响减弱。
+— 把 **W** 降到 0.1（预设 *strategy fast*）：linking 太慢无法隔离合作者；背叛者获胜，回到静态 PD 结果。
+— 在 γ_CC 低的情况下提高 **γ_CD**（预设 *strong asymmetry*）：C-D 边极短命；合作更快固化。
+— 把 **β** 设到 2（预设 *strong selection*）：Fermi imitation 接近确定性；结果对初始条件更敏感。
+— 切换到 **BA** 或 **ER** 初始拓扑：论文用 K_N，但只要 AL 过程有时间把边密度重塑到 φ_ij，稀疏初始图上动力学仍定性成立。
 
-参考文献：Pacheco, Traulsen & Nowak, *Coevolution of strategy and structure in complex networks with dynamical linking*, **Phys. Rev. Lett.** 97, 258103 (2006). [doi:10.1103/PhysRevLett.97.258103](https://doi.org/10.1103/PhysRevLett.97.258103)
+参考文献：Pacheco, Traulsen & Nowak, *Coevolution of strategy and structure in complex networks with dynamical linking*, **Phys. Rev. Lett.** 97, 258103 (2006). [doi:10.1103/PhysRevLett.97.258103](https://doi.org/10.1103/PhysRevLett.97.258103)。开放获取 PMC: [PMC2430061](https://pmc.ncbi.nlm.nih.gov/articles/PMC2430061/)。
 
-*[本中文版为初稿翻译。如有不妥之处，欢迎在 [issues](https://github.com/TT1nKer/adaptiveNet/issues) 中反馈或直接修改 src/models/pacheco-2006.ts 中的 long_zh 字段。]*`,
+*[本中文版为初稿翻译。如有不妥之处，欢迎在 [issues](https://github.com/TT1nKer/issues) 中反馈或直接修改 src/models/pacheco-2006.ts 中的 long_zh 字段。]*`,
 
   params: {
-    b:        { label: 'b (benefit)',        min: 1,    max: 10,   step: 0.1,   default: 5.0,  live: true },
-    c:        { label: 'c (cost)',           min: 0.1,  max: 5,    step: 0.1,   default: 1.0,  live: true },
-    beta:     { label: 'β (selection)',      min: 0.01, max: 5,    step: 0.01,  default: 0.5,  live: true },
-    q:        { label: 'q (linking rate)',   min: 0,    max: 1,    step: 0.01,  default: 0.50, live: true },
-    alpha_CC: { label: 'α_CC (CC break)',    min: 0,    max: 0.5,  step: 0.005, default: 0.02, live: true },
-    alpha_CD: { label: 'α_CD (CD break)',    min: 0,    max: 1,    step: 0.01,  default: 0.50, live: true },
-    alpha_DD: { label: 'α_DD (DD break)',    min: 0,    max: 1,    step: 0.01,  default: 0.95, live: true },
-    init_C:   { label: 'initial C fraction', min: 0.05, max: 0.95, step: 0.05,  default: 0.50, live: false },
-    N:        { label: 'nodes',              min: 50,   max: 1000, step: 10,    default: 200,  live: false },
-    k:        { label: 'avg degree',         min: 2,    max: 14,   step: 1,     default: 6,    live: false },
-    topo:     { label: 'initial topology',   options: TOPO_OPTS,   default: 'ba',              live: false },
-    speed:    { label: 'speed',              min: 0.1,  max: 5,    step: 0.1,   default: 1.0,  live: true },
+    // PD payoffs (paper Fig 2b defaults)
+    b:        { label: 'b (benefit)',         min: 0.1,  max: 5,    step: 0.05, default: 1.0,  live: true },
+    c:        { label: 'c (cost)',            min: 0.05, max: 4,    step: 0.05, default: 0.5,  live: true },
+    // Selection strength (paper: β = 0.1, weak selection)
+    beta:     { label: 'β (selection)',       min: 0.01, max: 5,    step: 0.01, default: 0.1,  live: true },
+    // AL parameters — separate formation rate α (per-node) and breaking rate γ (per-edge-type).
+    // Paper's example: α_C = α_D = 0.4 (per-node linking propensity; can differ between strategies).
+    alpha_C:  { label: 'α_C (C linking rate)', min: 0,    max: 1,    step: 0.01, default: 0.4,  live: true },
+    alpha_D:  { label: 'α_D (D linking rate)', min: 0,    max: 1,    step: 0.01, default: 0.4,  live: true },
+    // Edge breaking rates (per edge type, paper's γ_ij).
+    gamma_CC: { label: 'γ_CC (CC break)',     min: 0,    max: 2,    step: 0.01, default: 0.1,  live: true },
+    gamma_CD: { label: 'γ_CD (CD break)',     min: 0,    max: 5,    step: 0.01, default: 0.8,  live: true },
+    gamma_DD: { label: 'γ_DD (DD break)',     min: 0,    max: 2,    step: 0.01, default: 0.32, live: true },
+    // Timescale ratio W = T_s / T_a. W large = linking fast = link density approaches φ_ij quickly.
+    W:        { label: 'W = T_s / T_a',       min: 0.01, max: 100,  step: 0.01, default: 4.0,  live: true },
+    init_C:   { label: 'initial C fraction',  min: 0.05, max: 0.95, step: 0.01, default: 0.5,  live: false },
+    N:        { label: 'nodes',               min: 50,   max: 500,  step: 10,   default: 100,  live: false },
+    k:        { label: 'avg degree (BA/ER only)', min: 2,  max: 14, step: 1,    default: 6,    live: false },
+    topo:     { label: 'initial topology',    options: TOPO_OPTS,   default: 'complete',       live: false },
+    speed:    { label: 'speed',               min: 0.1,  max: 10,   step: 0.1,  default: 1.0,  live: true },
   },
 
   presets: [
     {
-      id: 'static-network',
-      name: 'static network (q = 0)',
-      short: 'No rewiring. Classical fixed-graph PD: defectors take over within a few hundred ticks.',
-      params: { q: 0, b: 5, c: 1, beta: 0.5, init_C: 0.50 },
+      id: 'paper-fig2b',
+      name: 'paper Fig 2b (default)',
+      short: 'Exactly the parameters from PRL 97 258103 Fig 2b. Cooperators fixate within ~30s simulated.',
+      params: { b: 1, c: 0.5, beta: 0.1, alpha_C: 0.4, alpha_D: 0.4, gamma_CC: 0.1, gamma_CD: 0.8, gamma_DD: 0.32, W: 4, init_C: 0.5, N: 100, topo: 'complete' },
     },
     {
-      id: 'active-linking',
-      name: 'active linking (q = 0.5, default)',
-      short: 'Balanced linking and strategy events. With homophily rewiring, cooperators cluster and CC-edge fraction climbs.',
-      params: { q: 0.50, b: 5, c: 1, beta: 0.5, init_C: 0.50 },
+      id: 'strategy-fast',
+      name: 'strategy fast (W = 0.1)',
+      short: 'Linking is much slower than strategy update. Cooperators have no time to insulate via AL — defectors win, recovering the static-PD result.',
+      params: { W: 0.1 },
     },
     {
-      id: 'linking-dominant',
-      name: 'linking dominant (q = 0.85)',
-      short: 'Network restructures much faster than strategies. Cooperator communities consolidate quickly into a stable C-core + isolated Ds.',
-      params: { q: 0.85, b: 5, c: 1, beta: 0.5, init_C: 0.50 },
-    },
-    {
-      id: 'weak-selection',
-      name: 'weak selection (β = 0.05)',
-      short: 'Strategy updates are mostly random. Linking dynamics dominate. Drift-like behaviour with cooperation-favouring linking equilibrium.',
-      params: { q: 0.50, b: 5, c: 1, beta: 0.05, init_C: 0.50 },
+      id: 'strong-asymmetry',
+      name: 'strong asymmetry (γ_CD = 2.0)',
+      short: 'CD edges break extremely fast. Cooperators almost never coexist with defectors as neighbours; cooperation fixates rapidly.',
+      params: { gamma_CD: 2.0, W: 4 },
     },
     {
       id: 'strong-selection',
       name: 'strong selection (β = 2.0)',
-      short: 'Strategy updates are near-deterministic copy-better. Imitation outpaces linking; defectors usually win.',
-      params: { q: 0.50, b: 5, c: 1, beta: 2.0, init_C: 0.50 },
+      short: 'Fermi imitation near-deterministic copy-better. Outcome highly sensitive to initial fitness gradient.',
+      params: { beta: 2.0 },
+    },
+    {
+      id: 'symmetric-gamma',
+      name: 'no AL asymmetry (γ_CC = γ_CD = γ_DD)',
+      short: 'All breaking rates equal — equivalent to a static random graph. Defectors win as in classical PD.',
+      params: { gamma_CC: 0.4, gamma_CD: 0.4, gamma_DD: 0.4 },
     },
   ],
 
@@ -187,23 +180,9 @@ Reference: Pacheco, Traulsen & Nowak, *Coevolution of strategy and structure in 
     const topo = params.topo as string;
     const initC = params.init_C as number;
 
-    let graph;
+    let graph: Graph;
     if (topo === 'complete') {
-      // Build complete graph K_N. Layout module detects density > 0.4 and
-      // skips force-directed iterations, so nodes stay on the initial
-      // circular arrangement — visible and not piled at the centroid.
-      const adj: number[][] = Array.from({ length: N }, () => []);
-      const edges: Array<[number, number]> = [];
-      for (let i = 0; i < N; i++) {
-        for (let j = i + 1; j < N; j++) {
-          adj[i]!.push(j);
-          adj[j]!.push(i);
-          edges.push([i, j]);
-        }
-      }
-      const deg = new Int32Array(N);
-      for (let i = 0; i < N; i++) deg[i] = adj[i]!.length;
-      graph = { N, adj, edges, deg };
+      graph = buildComplete(N);
     } else {
       const generator = generators[topo];
       if (!generator) throw new Error(`unknown topology: ${topo}`);
@@ -221,149 +200,90 @@ Reference: Pacheco, Traulsen & Nowak, *Coevolution of strategy and structure in 
     const b = params.b as number;
     const c = params.c as number;
     const beta = params.beta as number;
-    const q = params.q as number;
-    const aCC = params.alpha_CC as number;
-    const aCD = params.alpha_CD as number;
-    const aDD = params.alpha_DD as number;
+    const alphaC = params.alpha_C as number;
+    const alphaD = params.alpha_D as number;
+    const gammaCC = params.gamma_CC as number;
+    const gammaCD = params.gamma_CD as number;
+    const gammaDD = params.gamma_DD as number;
+    const W = params.W as number;
     const speed = params.speed as number;
     const { N, X, graph } = state;
     const { adj, edges, deg } = graph;
 
-    // ~5% of edges per frame at speed=1×: visible motion without overwhelming.
-    const ticks = Math.max(1, Math.floor(edges.length * 0.05 * speed));
+    // Per tick choose: AL event (prob W/(W+1)) or strategy event (prob 1/(W+1)).
+    // Number of ticks per frame scales with speed; linking-event rate scales with N²
+    // (could-be pairs); strategy with 1; we set ticks ≈ N² × 0.001 × speed for visible
+    // dynamics on default N=100.
+    const ticksPerFrame = Math.max(1, Math.floor(N * N * 0.001 * speed));
+    const linkProb = W / (W + 1);
 
-    for (let t = 0; t < ticks; t++) {
-      if (rng.next() < q) {
-        // ============ LINKING EVENT ============
-        if (edges.length === 0) continue;
-        const eIdx = rng.int(edges.length);
-        const [i, j] = edges[eIdx]!;
+    for (let t = 0; t < ticksPerFrame; t++) {
+      if (rng.next() < linkProb) {
+        // ===== AL event: pick a random ordered pair (i, j) ≠ self =====
+        const i = rng.int(N);
+        let j = rng.int(N);
+        if (j === i) j = (j + 1) % N;
         const xi = X[i]!;
         const xj = X[j]!;
 
-        // Determine break probability by edge type
-        let breakProb: number;
-        let activeRewirer: number;  // who picks the new partner if edge breaks
+        // Test connectivity. O(deg) — acceptable for moderate N. For larger N
+        // a Set or a bitmap would be needed.
+        const connected = adj[i]!.includes(j);
 
-        if (xi === 1 && xj === 1) {
-          // CC edge — stable, both happy
-          breakProb = aCC;
-          activeRewirer = rng.next() < 0.5 ? i : j;
-        } else if (xi === 0 && xj === 0) {
-          // DD edge — fragile, both want better
-          breakProb = aDD;
-          activeRewirer = rng.next() < 0.5 ? i : j;
-        } else {
-          // CD edge — C is the dissatisfied party (suffers −c)
-          breakProb = aCD;
-          activeRewirer = xi === 1 ? i : j;
-        }
-
-        if (rng.next() < breakProb) {
-          // Remove the edge
-          adj[i] = adj[i]!.filter((x) => x !== j);
-          adj[j] = adj[j]!.filter((x) => x !== i);
-          deg[i]!--;
-          deg[j]!--;
-          const last = edges[edges.length - 1]!;
-          edges[eIdx] = last;
-          edges.pop();
-
-          // activeRewirer picks a non-neighbour. Both strategies prefer a
-          // *cooperator* as new partner — not symmetric same-type homophily.
-          // Reasoning: in the donation-game payoff matrix, C-neighbours
-          // dominate D-neighbours for both types:
-          //   C wants C: gets b − c   (vs −c with D)
-          //   D wants C: gets b       (vs 0  with D)
-          // Pacheco's analytical "active linking" framework uses asymmetric
-          // formation rates α_CC > α_CD > α_DD; the discrete-event analogue
-          // is "everyone prefers C as new partner". This is the asymmetry
-          // that drives cooperation rescue: D constantly attempts to invade
-          // C-clusters, C constantly evicts D (high α_CD break rate), so D
-          // ends up with degraded neighbourhoods and lower π — at which
-          // point Fermi imitation flips D to C.
-          //
-          // The earlier symmetric "same-type homophily" (D prefers D) was
-          // wrong: it created a stable bipartition with no CD edges, freezing
-          // the color distribution at whatever the initial 50/50 split was
-          // (degrees still rewired within each component, but no Fermi
-          // events fired because C and D were never neighbours).
-          const preferredType = 1;  // always C
-          let kk = -1;
-          for (let attempts = 0; attempts < 30; attempts++) {
-            const cand = rng.int(N);
-            if (cand === activeRewirer) continue;
-            if (X[cand] !== preferredType) continue;
-            if (adj[activeRewirer]!.includes(cand)) continue;
-            kk = cand;
-            break;
-          }
-          // Fallback: if no same-type partner found in 30 tries, accept any
-          // non-neighbour. Prevents the rewirer from getting stuck when its
-          // preferred type is rare.
-          if (kk < 0) {
-            for (let attempts = 0; attempts < 30; attempts++) {
-              const cand = rng.int(N);
-              if (cand === activeRewirer) continue;
-              if (adj[activeRewirer]!.includes(cand)) continue;
-              kk = cand;
-              break;
+        if (connected) {
+          // Try breaking with rate γ_ij. Per-tick probability is γ_ij (clamped
+          // to ≤ 1; faster events would need finer time discretisation).
+          const gamma = (xi === xj)
+            ? (xi === 1 ? gammaCC : gammaDD)
+            : gammaCD;
+          if (rng.next() < gamma) {
+            // remove edge (i, j)
+            adj[i] = adj[i]!.filter((x) => x !== j);
+            adj[j] = adj[j]!.filter((x) => x !== i);
+            deg[i]!--;
+            deg[j]!--;
+            // swap-pop on edges array
+            const ii = i < j ? i : j;
+            const jj = i < j ? j : i;
+            for (let e = 0; e < edges.length; e++) {
+              const [a, bb] = edges[e]!;
+              if (a === ii && bb === jj) {
+                edges[e] = edges[edges.length - 1]!;
+                edges.pop();
+                break;
+              }
             }
           }
-          if (kk >= 0) {
-            adj[activeRewirer]!.push(kk);
-            adj[kk]!.push(activeRewirer);
-            deg[activeRewirer]!++;
-            deg[kk]!++;
-            edges.push(activeRewirer < kk ? [activeRewirer, kk] : [kk, activeRewirer]);
+        } else {
+          // Try forming with rate α_i · α_j.
+          const ai = xi === 1 ? alphaC : alphaD;
+          const aj = xj === 1 ? alphaC : alphaD;
+          if (rng.next() < ai * aj) {
+            // add edge (i, j)
+            adj[i]!.push(j);
+            adj[j]!.push(i);
+            deg[i]!++;
+            deg[j]!++;
+            edges.push(i < j ? [i, j] : [j, i]);
           }
         }
       } else {
-        // ============ STRATEGY EVENT ============
-        // Pick random player i with at least one neighbour
-        const ii = rng.int(N);
-        const ai = adj[ii]!;
-        if (ai.length === 0) continue;
-        const jj = ai[rng.int(ai.length)]!;
+        // ===== Strategy event: pick two random members of the population =====
+        // Paper: A and B are *random*, not necessarily adjacent. B adopts A's
+        // strategy with Fermi probability based on relative fitness.
+        const A = rng.int(N);
+        let B = rng.int(N);
+        if (B === A) B = (B + 1) % N;
+        if (X[A] === X[B]) continue;  // same strategy, no observable change
 
-        // If they already have the same strategy, nothing to copy
-        if (X[ii] === X[jj]) {
-          state.step_count++;
-          continue;
-        }
+        // Fitness: average payoff per neighbour (degree-normalised).
+        const f_A = fitness(A, X, adj, b, c);
+        const f_B = fitness(B, X, adj, b, c);
 
-        // Compute average payoff per game (degree-normalised).
-        // Without normalisation, BA hubs accumulate payoff ~ deg, which makes
-        // β·(π_i − π_j) ≫ 1 even for moderate β. Fermi imitation becomes
-        // near-deterministic and finishes propagating the hub's initial
-        // strategy across the whole network in the first ~50 events — long
-        // before linking dynamics can act. Normalising by degree keeps β·Δπ
-        // at O(c) regardless of where in the degree distribution the players
-        // sit, which is the regime where the active-linking effects Pacheco
-        // 2006 describes are actually visible.
-        //
-        //   π_C(per game) = (#C neighbours · b − deg · c) / deg = (#C/deg)·b − c
-        //   π_D(per game) = #C neighbours · b / deg            = (#C/deg)·b
-        //
-        // Equivalent to the donation-game payoff with neighbours sampled
-        // uniformly: cooperators pay c per game, defectors pay nothing,
-        // both gain b per C-neighbour interaction.
-        let cN_i = 0;
-        for (let p = 0; p < ai.length; p++) if (X[ai[p]!] === 1) cN_i++;
-        const aj = adj[jj]!;
-        let cN_j = 0;
-        for (let p = 0; p < aj.length; p++) if (X[aj[p]!] === 1) cN_j++;
-
-        const di = ai.length;
-        const dj = aj.length;
-        const pi_i = di === 0 ? 0 : (X[ii] === 1 ? (cN_i * b) / di - c : (cN_i * b) / di);
-        const pi_j = dj === 0 ? 0 : (X[jj] === 1 ? (cN_j * b) / dj - c : (cN_j * b) / dj);
-
-        // Fermi imitation: i adopts j's strategy with probability
-        //   1 / (1 + exp(β · (π_i − π_j)))
-        const pAdopt = 1 / (1 + Math.exp(beta * (pi_i - pi_j)));
-        if (rng.next() < pAdopt) {
-          X[ii] = X[jj]!;
+        // p = 1 / (1 + exp(-β · (f_A − f_B)))  — paper's Fermi rule
+        const p = 1 / (1 + Math.exp(-beta * (f_A - f_B)));
+        if (rng.next() < p) {
+          X[B] = X[A]!;
         }
       }
 
@@ -374,7 +294,6 @@ Reference: Pacheco, Traulsen & Nowak, *Coevolution of strategy and structure in 
 
   render: {
     nodeColor(state: ModelState, i: number): string {
-      // C = blue, D = red — matches the project's voter / adaptive-SIS convention
       return state.X[i] === 1 ? '#2c5fbf' : '#e63946';
     },
     nodeSize(state: ModelState, i: number): number {
@@ -408,5 +327,22 @@ Reference: Pacheco, Traulsen & Nowak, *Coevolution of strategy and structure in 
     },
   },
 };
+
+// Average payoff per neighbour — degree-normalised to keep β·Δf bounded
+// independent of degree heterogeneity.
+//   f_C(per game) = (#C neighbours · b − deg · c) / deg = (#C/deg)·b − c
+//   f_D(per game) = (#C neighbours · b) / deg            = (#C/deg)·b
+function fitness(i: number, X: Float64Array, adj: number[][], b: number, c: number): number {
+  const ai = adj[i]!;
+  const di = ai.length;
+  if (di === 0) return 0;
+  let cN = 0;
+  for (let p = 0; p < ai.length; p++) if (X[ai[p]!] === 1) cN++;
+  if (X[i] === 1) {
+    return (cN * b) / di - c;
+  } else {
+    return (cN * b) / di;
+  }
+}
 
 export default pacheco;
