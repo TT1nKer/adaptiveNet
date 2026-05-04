@@ -111,8 +111,17 @@ input[type=range] { width: 100%; accent-color: #e63946; }
 .player-page header .back:hover { color: #e8edf4; }
 .player-page header .title { color: #e8edf4; font-weight: 600; font-size: 14px; letter-spacing: 0.04em; }
 .player-page header .ref { color: #6b7280; font-size: 12px; }
-.player-page header .actions { margin-left: auto; display: flex; gap: 8px; }
+.player-page header .actions { margin-left: auto; display: flex; gap: 8px; align-items: center; }
 .player-page header .actions button { padding: 5px 12px; font-size: 13px; }
+.player-page header .actions #lang-toggle {
+  color: #6b7280;
+  font-size: 12px;
+  padding: 0 4px 0 10px;
+  border-left: 1px solid #232a36;
+  margin-left: 4px;
+  text-decoration: none;
+}
+.player-page header .actions #lang-toggle:hover { color: #cbd2dc; text-decoration: none; }
 
 #netbox { grid-area: net; background: #0e1014; position: relative; }
 #netcv { width: 100%; height: 100%; display: block; }

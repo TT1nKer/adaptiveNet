@@ -15,6 +15,7 @@
       <button id="reseed" title="new random seed, same params">reseed</button>
       <button id="pause">pause</button>
       <button id="share" title="copy a permalink to this exact configuration">copy link</button>
+      <a id="lang-toggle" href="#" title="switch language">中文</a>
     </span>
   </header>
 
@@ -27,30 +28,30 @@
     <div id="description-short"></div>
 
     <div id="preset-section" style="display:none">
-      <h4>preset</h4>
+      <h4 data-i18n="panel.preset">preset</h4>
       <div class="row">
         <select id="preset-select" class="full"></select>
       </div>
       <div id="preset-note" class="preset-note"></div>
     </div>
 
-    <h4>parameters</h4>
+    <h4 data-i18n="panel.params">parameters</h4>
     <div id="params"></div>
 
-    <h4>seed</h4>
+    <h4 data-i18n="panel.seed">seed</h4>
     <div id="seed-row" class="row">
       <input id="seed" type="number" min="1" step="1" value="1">
       <button id="seed-rand" title="pick a random seed">🎲</button>
     </div>
 
-    <h4>state</h4>
+    <h4 data-i18n="panel.state">state</h4>
     <div id="stats" class="stats">
-      t = <b id="t-val">0.00</b><br>
-      steps = <b id="step-val">0</b>
+      <span data-i18n="state.t">t = </span><b id="t-val">0.00</b><br>
+      <span data-i18n="state.steps">steps = </span><b id="step-val">0</b>
     </div>
 
     <details id="description-details">
-      <summary>about this model &amp; instructor prompts</summary>
+      <summary data-i18n="panel.about">about this model &amp; instructor prompts</summary>
       <div id="description"></div>
     </details>
   </aside>

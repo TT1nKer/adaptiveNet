@@ -15,7 +15,36 @@ const TOPO_OPTS = ['er', 'ba', 'ws'] as const;
 const voter: Model = {
   id: 'holme-newman',
   name: 'Adaptive Voter (Holme–Newman)',
+  name_zh: '自适应投票者模型 (Holme–Newman)',
   short: 'Edges rewire when neighbors disagree; opinions copy when they don\'t. Echo chambers form below a critical rewire rate.',
+  short_zh: '邻居观点不同时，边以概率 φ 重连；观点相同时相互复制。重连率超过临界值后，网络分裂成回声室。',
+  long_zh: `每个节点持有二元观点（红或蓝）。每一步随机选一条边 (i, j)：
+
+— 若两端点观点相同，不发生任何变化。
+— 否则，以概率 **φ** 进行*重连*：j 切断与 i 的连接，重新连到一个与 j 观点相同的随机节点。以概率 1 − φ，发生*复制*：其中一端采纳另一端的观点。
+
+**异质边比例**（连接相反观点的边占总边数的比例）是这个模型的序参量。它最终总会衰减到零，但有两种定性不同的方式：
+
+— **低 φ**：复制主导 → 观点同质化 → *共识*。
+— **高 φ**：重连主导 → 网络分裂 → *碎片化*（回声室）。
+
+φ_c ≈ 0.46 处的相变是尖锐的。试试 φ = 0.3 vs φ = 0.6，观察网络动力学的定性差异。
+
+**教师向 — 五道 Δ 实验适合作为习题**
+
+**1. 定位相变点。** 在 0.1 到 0.9 之间以步长 0.1 扫描 φ。每个 φ 值下运行直至异质边比例稳定（N=200 时通常 5000 事件足够）。绘制最终异质边比例 vs φ。定位相变点。与文献值 φ_c ≈ 0.46（Holme & Newman 2006）比较。你 N=200 的估计为何偏离论文？
+
+**2. 有限尺寸标度。** 固定 φ = 0.4。让 N 从 100 变化到 1000。相变是否随 N 增大而变得更锐利？画出你期望 N → ∞ 极限下相变的形态，用 100 字解释为何更大的 N 应该给出更尖锐的相变。
+
+**3. 拓扑依赖性。** 在 φ = 0.4 下比较三种初始拓扑（ER、BA、WS）。φ_c 是否发生漂移？从无标度网络（BA）出发时相变是更尖锐还是更平缓？定性论证 hub 节点的存在为何会影响重连/复制平衡。
+
+**4. 序参量的选择。** 这个相变的*序参量*是什么？提出两个合理的候选（一个基于观点磁化强度，一个基于边结构）。论证哪一个能干净地区分共识相与碎片化相，哪一个含糊不清。（没有"标准答案"——论证本身就是作业。）
+
+**5. 收敛时间。** 在 φ = 0.3 vs φ = 0.6 下，分别估计序参量达到稳态（每 100 事件变化 < 1%）所需的事件数。哪一个收敛更快？为什么？把你的解释关联到各自区域中**复制**与**重连**两个进程的相对主导地位。
+
+参考文献：Holme & Newman, *Phys. Rev. E* 74, 056108 (2006).
+
+*[本中文版为初稿翻译。如有不妥之处，欢迎在 [issues](https://github.com/TT1nKer/adaptiveNet/issues) 中反馈或直接修改 src/models/voter.ts 中的 long_zh 字段。]*`,
   long: `Each node holds a binary opinion (red or blue). Repeatedly, a random edge (i, j) is selected:
 
 — if the two endpoints share an opinion, nothing happens.

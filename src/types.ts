@@ -120,6 +120,11 @@ export interface Model<S extends ModelState = ModelState> {
   short: string;
   /** Multi-paragraph description for the player panel. Optional. */
   long?: string;
+  /** Optional Chinese (zh) translations. If absent and lang=zh, the player
+   *  falls back to the English text and shows a "translation pending" note. */
+  name_zh?: string;
+  short_zh?: string;
+  long_zh?: string;
   params: ParamSchema;
   /** Named parameter scenarios. Optional. */
   presets?: Preset[];

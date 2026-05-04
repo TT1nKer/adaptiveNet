@@ -53,6 +53,78 @@ function fitAll(): void {
   fitCanvas(tscv);
 }
 
+// ---------- i18n ----------
+type Lang = 'en' | 'zh';
+
+const I18N: Record<Lang, Record<string, string>> = {
+  en: {
+    'panel.preset': 'preset',
+    'panel.params': 'parameters',
+    'panel.seed': 'seed',
+    'panel.state': 'state',
+    'panel.about': 'about this model & instructor prompts',
+    'state.t': 't = ',
+    'state.steps': 'steps = ',
+    'lang.toggle': '中文',
+    'fallback.note': '(English — a Chinese translation is in progress)',
+  },
+  zh: {
+    'panel.preset': '预设',
+    'panel.params': '参数',
+    'panel.seed': '随机种子',
+    'panel.state': '状态',
+    'panel.about': '关于此模型 / 教师向 prompts',
+    'state.t': 't = ',
+    'state.steps': '步数 = ',
+    'lang.toggle': 'EN',
+    'fallback.note': '（此 demo 暂未中文化，先以英文显示）',
+  },
+};
+
+function detectLang(): Lang {
+  const u = new URL(location.href);
+  return u.searchParams.get('lang') === 'zh' ? 'zh' : 'en';
+}
+
+const lang: Lang = detectLang();
+
+function tr(key: string): string {
+  return I18N[lang][key] ?? I18N['en'][key] ?? key;
+}
+
+function applyI18n(): void {
+  document.querySelectorAll<HTMLElement>('[data-i18n]').forEach((el) => {
+    const key = el.getAttribute('data-i18n');
+    if (key) el.textContent = tr(key);
+  });
+  document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en';
+}
+
+function getModelShort(m: Model<any>): string {
+  if (lang === 'zh' && m.short_zh) return m.short_zh;
+  return m.short;
+}
+
+function getModelLong(m: Model<any>): string {
+  if (lang === 'zh') {
+    if (m.long_zh) return m.long_zh;
+    return `*${tr('fallback.note')}*\n\n${m.long || m.short}`;
+  }
+  return m.long || m.short || '';
+}
+
+function getModelName(m: Model<any>): string {
+  if (lang === 'zh' && m.name_zh) return m.name_zh;
+  return m.name;
+}
+
+function langToggleHref(): string {
+  const u = new URL(location.href);
+  if (lang === 'zh') u.searchParams.delete('lang');
+  else u.searchParams.set('lang', 'zh');
+  return u.pathname + u.search + u.hash;
+}
+
 // ---------- URL state ----------
 function parseURL(): {
   id: string;
@@ -722,10 +794,14 @@ async function boot(): Promise<void> {
     console.log('[adaptiveNet] params:', params);
 
     stage = 'set chrome';
-    el('model-name').textContent = model.name;
-    el('description-short').innerHTML = renderDescription(model.short || '');
-    el('description').innerHTML = renderDescription(model.long || model.short || '');
-    document.title = `adaptiveNet — ${model.name}`;
+    el('model-name').textContent = getModelName(model);
+    el('description-short').innerHTML = renderDescription(getModelShort(model));
+    el('description').innerHTML = renderDescription(getModelLong(model));
+    document.title = `adaptiveNet — ${getModelName(model)}`;
+    const langToggle = el('lang-toggle') as HTMLAnchorElement;
+    langToggle.textContent = tr('lang.toggle');
+    langToggle.href = langToggleHref();
+    applyI18n();
     (el('seed') as HTMLInputElement).value = String(seed);
 
     stage = 'buildParamsUI';
