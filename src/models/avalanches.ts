@@ -20,8 +20,26 @@ import type { Model, ModelState, ParamValues, Graph } from '../types.ts';
 import type { RNG } from '../rng.ts';
 
 interface AvalancheState extends ModelState {
-  _lastSize: number;            // size of most recent avalanche
+  _lastSize: number;            // size of most recent avalanche (after binning + subsampling)
   _smoothSize: number;          // exponentially smoothed avalanche size
+  // ---- methodology knobs (Plenz / Touboul-Destexhe debate) ----
+  _binAccum: number;            // accumulator within current bin
+  _binCounter: number;          // drives counted within current bin
+  _observed: Uint8Array;        // 1 if cell is in the observed subsample, 0 if hidden
+  _subsampleFrac: number;       // cached so we know when to rebuild _observed
+}
+
+// Deterministic observation mask. Cells are masked by a hash of their index
+// so that increasing subsample_frac strictly adds cells (never reshuffles)
+// — gives consistent visual + statistical behaviour across slider drags.
+function makeObservedMask(N: number, frac: number): Uint8Array {
+  const out = new Uint8Array(N);
+  for (let i = 0; i < N; i++) {
+    // golden-ratio hash → uniform [0, 1)
+    const h = ((i * 2654435761) >>> 0) / 4294967296;
+    out[i] = h < frac ? 1 : 0;
+  }
+  return out;
 }
 
 function buildGrid(cols: number, rows: number): Graph {
@@ -75,9 +93,9 @@ const avalanches: Model<AvalancheState> = {
 
 **2. 耗散 ε。** 在 0 到 0.1 之间变化耗散率 ε。ε = 0 时系统永不到达稳态 (期望意义上雪崩无界增长)。ε 太大临界被破坏。找出定性区域。SOC 中的*自组织*意味着系统在小 ε > 0 下自调到临界线。
 
-**3. 方法学旋钮：bin 大小。** Beggs-Plenz 2003 通过把脉冲时刻分到 4 ms 窗口里计算雪崩。Bin 大小戏剧性地影响表观幂律斜率 (Touboul-Destexhe 2017 的批评)。在 1-10 仿真步之间变化时间 bin 宽度。表观 τ 变化多大？这是 Plenz vs Touboul 方法学辩论的*核心*。
+**3. 方法学旋钮：bin 大小。** Beggs-Plenz 2003 通过把脉冲时刻分到 4 ms 窗口里计算雪崩。Bin 宽度戏剧性地影响表观幂律斜率 (Touboul-Destexhe 2017 的批评)。拖动 **avalanche bin width** 滑块从 1 到 20——bin 宽时多个物理级联合并成一个"观察到的"雪崩，大小分布上移，表观 τ 可能发生显著变化。这是 Plenz vs Touboul 方法学辩论的*核心*，作为可实时调节的旋钮暴露在这里。
 
-**4. 子采样效应。** 仅观察一定比例的 cell (10%、50%、100%) 计算雪崩分布。Touboul-Destexhe 批评论证了仅子采样就能从非临界动力学中产生表观幂律。测试它：子采样是否人为引入幂律？(这个实验需要 cell 活性的自定义导出；进阶。)
+**4. 子采样效应。** 把 **observed cell fraction** 滑块从 1.0 拉到 0.1。显示的雪崩大小现在只统计观察子集中的发放 (基于哈希的确定性 cell 掩码，滑块严格添加/移除观察 cell 而不重新洗牌)。Touboul-Destexhe 的批评论证了仅子采样就能从非临界动力学中产生表观幂律——大小分布的表观形状随子采样的变化是否定性改变？在 *critical* 和 *subcritical* 两个预设里都试一下。
 
 **5. 对比 Plenz 指数与 Clauset-Shalizi-Newman 2009 KS 检验。** 宣称"这是幂律"的标准做法是 CSN 2009 程序：通过最大似然拟合幂律，然后计算与对数正态和指数候选的 KS 距离。把这套用到你的数据上。幂律假设真的赢了，还是对数正态/指数拟合得相当好？这是脑临界文献至今没一致应用的金标准方法学。
 
@@ -105,9 +123,9 @@ In this demo, watch the σ time-series — it shows the size of the most recent 
 
 **2. Dissipation ε.** Vary the dissipation rate ε from 0 to 0.1. With ε = 0, the system never reaches steady state (avalanches grow unboundedly in expectation). With ε too large, criticality is destroyed. Find the qualitative regimes. The *self-organised* in SOC means the system tunes itself to the critical line for small ε > 0.
 
-**3. Methodological knob: bin size.** The Beggs-Plenz 2003 work computed avalanches by binning spike times into 4 ms windows. Bin size dramatically affects the apparent power-law slope (Touboul-Destexhe 2017 critique). Vary the time-bin width over 1-10 simulation steps. How much does the apparent τ change? This is the *core* of the Plenz-vs-Touboul methodological debate.
+**3. Methodological knob: bin size.** The Beggs-Plenz 2003 work computed avalanches by binning spike times into 4 ms windows. Bin width dramatically affects the apparent power-law slope (Touboul-Destexhe 2017 critique). Drag the **avalanche bin width** slider from 1 to 20 — at higher values, multiple physical cascades merge into one "observed" avalanche, the size distribution shifts upward, and the apparent τ can change substantially. This is the *core* of the Plenz-vs-Touboul methodological debate, exposed as a live knob.
 
-**4. Subsampling effect.** Compute the avalanche distribution from observing only a fraction (10%, 50%, 100%) of cells. The Touboul-Destexhe critique argued that subsampling alone can produce apparent power laws even from non-critical dynamics. Test it: does subsampling artificially introduce a power law? (This experiment requires a custom export of cell activity; advanced.)
+**4. Subsampling effect.** Drag the **observed cell fraction** slider down from 1.0 to 0.1. The displayed avalanche sizes now count only fires in the observed subset (a deterministic mask of cells, hash-based so the slider strictly adds/removes observed cells without reshuffling). The Touboul-Destexhe critique argued that subsampling alone can produce apparent power laws even from non-critical dynamics — does the apparent shape of the size distribution change qualitatively as you vary subsampling? Try this in both the *critical* and *subcritical* presets.
 
 **5. Compare Plenz exponent to Clauset-Shalizi-Newman 2009 KS test.** The standard practice for declaring "this is power-law" is the CSN 2009 procedure: fit power-law via maximum likelihood, then compute KS distance to lognormal and exponential alternatives. Apply this to your data. Does the power-law hypothesis actually win, or do lognormal / exponential fit comparably well? This is the gold-standard methodology that much of the brain-criticality literature still does not consistently apply.
 
@@ -119,6 +137,8 @@ References: Bak, Tang & Wiesenfeld, *Phys. Rev. Lett.* 59, 381 (1987). Beggs & P
     dose:        { label: 'drive dose',           min: 0.05, max: 1.0, step: 0.01, default: 0.10, live: true },
     dissipation: { label: 'dissipation ε',        min: 0,    max: 0.3, step: 0.005, default: 0.04, live: true },
     drives_per_frame: { label: 'drive events / frame', min: 1, max: 200, step: 1, default: 30,   live: true },
+    bin_steps:   { label: 'avalanche bin width (drives)', min: 1, max: 20, step: 1, default: 1, live: true },
+    subsample_frac: { label: 'observed cell fraction', min: 0.05, max: 1.0, step: 0.05, default: 1.0, live: true },
     size:        { label: 'grid size',            min: 32,   max: 200, step: 8,    default: 96,   live: false },
     speed:       { label: 'speed',                min: 0.1,  max: 5,   step: 0.1,  default: 1.0,  live: true },
   },
@@ -168,6 +188,7 @@ References: Bak, Tang & Wiesenfeld, *Phys. Rev. Lett.* 59, 381 (1987). Beggs & P
       X[i * 2 + 1] = 1000;              // not recently fired
     }
 
+    const subFrac = (params.subsample_frac as number) ?? 1.0;
     return {
       N,
       d: 2,
@@ -179,6 +200,10 @@ References: Bak, Tang & Wiesenfeld, *Phys. Rev. Lett.* 59, 381 (1987). Beggs & P
       rows: size,
       _lastSize: 0,
       _smoothSize: 0,
+      _binAccum: 0,
+      _binCounter: 0,
+      _observed: makeObservedMask(N, subFrac),
+      _subsampleFrac: subFrac,
     };
   },
 
@@ -189,14 +214,26 @@ References: Bak, Tang & Wiesenfeld, *Phys. Rev. Lett.* 59, 381 (1987). Beggs & P
     const eps = params.dissipation as number;
     const drivesPerFrame = Math.max(1, Math.round((params.drives_per_frame as number) * (params.speed as number)));
 
+    // ---- Plenz / Touboul-Destexhe methodology knobs ----
+    const binSteps = Math.max(1, Math.round((params.bin_steps as number) ?? 1));
+    const subFrac = (params.subsample_frac as number) ?? 1.0;
+    // Live rebuild of the observation mask if subsample_frac changed.
+    if (Math.abs(subFrac - state._subsampleFrac) > 0.001) {
+      state._observed = makeObservedMask(N, subFrac);
+      state._subsampleFrac = subFrac;
+      // Also reset bin accumulator so we don't carry mixed statistics across the change.
+      state._binAccum = 0;
+      state._binCounter = 0;
+    }
+    const observed = state._observed;
+
     const threshold = 1.0;
     const transferFraction = (1 - eps) / 4;  // fraction of threshold passed to each of 4 neighbours
 
     // Resolve cascades using a stack (DFS-like), reused across drives
-    const aux = state as AvalancheState & { _stack?: Int32Array; _stackTop?: { v: number } };
+    const aux = state as AvalancheState & { _stack?: Int32Array };
     if (!aux._stack || aux._stack.length < N) aux._stack = new Int32Array(N);
     const stack = aux._stack;
-    let totalFires = 0;
 
     // age all cells (for visual flash decay)
     for (let i = 0; i < N; i++) {
@@ -208,8 +245,10 @@ References: Bak, Tang & Wiesenfeld, *Phys. Rev. Lett.* 59, 381 (1987). Beggs & P
       const seed_i = rng.int(N);
       X[seed_i * 2] = X[seed_i * 2]! + dose;
 
-      // resolve any cascades triggered
+      // resolve any cascades triggered, counting fires that fall in the
+      // observed subsample (Touboul-Destexhe-style observation noise).
       let top = 0;
+      let driveFires = 0;
       if (X[seed_i * 2]! >= threshold) {
         stack[top++] = seed_i;
       }
@@ -220,7 +259,7 @@ References: Bak, Tang & Wiesenfeld, *Phys. Rev. Lett.* 59, 381 (1987). Beggs & P
         // fire: dump activity to threshold floor, transfer to neighbours
         X[i * 2] = X[i * 2]! - threshold;     // keep any excess (over threshold)
         X[i * 2 + 1] = 0;                      // mark as just-fired
-        totalFires++;
+        if (observed[i]) driveFires++;
 
         const ai = adj[i]!;
         for (let p = 0; p < ai.length; p++) {
@@ -236,11 +275,20 @@ References: Bak, Tang & Wiesenfeld, *Phys. Rev. Lett.* 59, 381 (1987). Beggs & P
           break;
         }
       }
-    }
 
-    state._lastSize = totalFires;
-    // Exponential moving average for smoother time-series visualisation
-    state._smoothSize = state._smoothSize * 0.85 + totalFires * 0.15;
+      // Bin aggregation (Plenz-style time-window binning). When binSteps > 1,
+      // multiple consecutive avalanches merge into a single observed
+      // "avalanche" — exactly the Touboul-Destexhe critique that bin width
+      // dramatically affects the apparent power-law exponent.
+      state._binAccum += driveFires;
+      state._binCounter++;
+      if (state._binCounter >= binSteps) {
+        state._lastSize = state._binAccum;
+        state._smoothSize = state._smoothSize * 0.85 + state._binAccum * 0.15;
+        state._binAccum = 0;
+        state._binCounter = 0;
+      }
+    }
 
     state.step_count++;
     state.t = state.step_count;
