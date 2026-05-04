@@ -1,0 +1,19 @@
+[package]
+name = "adaptivenet-rust"
+version = "0.1.0"
+edition = "2021"
+description = "adaptiveNet substrate, Rust + WGPU implementation"
+license = "MIT"
+
+[[bin]]
+name = "ising"
+path = "src/bin/ising.rs"
+
+[dependencies]
+wgpu = "23"
+pollster = "0.4"
+bytemuck = { version = "1.20", features = ["derive"] }
+
+[profile.release]
+lto = "thin"
+codegen-units = 1
