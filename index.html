@@ -94,5 +94,45 @@
       </a>
     </div>
   </section>
+
+  <section class="section">
+    <h2>Curated reading paths</h2>
+    <p class="section-blurb">Three short sequences of demos for a coherent week of teaching or self-study. Each path moves from a familiar starting point to a frontier question — pick one, work through the three demos in order with the "For instructors" prompts in each player panel.</p>
+
+    <div class="paths">
+      <div class="path">
+        <div class="path-title">1. Phase transitions</div>
+        <p class="path-intro">A phase transition is when a system undergoes a qualitative change in macroscopic behaviour as one control parameter is varied. The same mathematical structure (energy minimisation on spins, with thermal or load-driven competition) reappears under very different physical interpretations.</p>
+        <ol class="path-demos">
+          <li><a href="player.html?model=ising">Ising</a> <span class="step-note">— temperature drives the canonical 2D transition. T<sub>c</sub> ≈ 2.269 known exactly (Onsager 1944): calibrate intuition against ground truth.</span></li>
+          <li><a href="player.html?model=hopfield-capacity">Hopfield Capacity</a> <span class="step-note">— pattern load α drives a different transition (memory → spin glass). Same substrate, different control parameter.</span></li>
+          <li><a href="player.html?model=avalanches">Neural Avalanches</a> <span class="step-note">— no external control parameter; the system self-tunes to a critical line. Power-law avalanches are the signature.</span></li>
+        </ol>
+        <p class="path-arc">Arc: from textbook (exact answer) to derived (analytic) to contested (active methodological debate).</p>
+      </div>
+
+      <div class="path">
+        <div class="path-title">2. Network ≠ grid</div>
+        <p class="path-intro">ABM tools default to spatial lattices, but real systems (brain, social, ecological) live on graphs with non-trivial degree distributions. The same dynamics on a grid versus a graph can produce qualitatively different macroscopic phenomena.</p>
+        <ol class="path-demos">
+          <li><a href="player.html?model=brusselator-grid">Classical Turing (Brusselator)</a> <span class="step-note">— activator-inhibitor chemistry on a 2D lattice. Stripes and spots from local diffusion.</span></li>
+          <li><a href="player.html?model=nakao-2010">Network Turing Patterns</a> <span class="step-note">— the same chemistry on a random graph. Hub-organised clusters instead of stripes. Direct visual evidence that topology matters.</span></li>
+          <li><a href="player.html?model=adaptive-sis">Adaptive SIS Epidemic</a> <span class="step-note">— now the topology itself coevolves with the dynamics. Bistability and hysteresis appear that do not exist on a static graph.</span></li>
+        </ol>
+        <p class="path-arc">Arc: lattice → graph → coevolving graph. Each step removes one assumption about what the substrate is.</p>
+      </div>
+
+      <div class="path">
+        <div class="path-title">3. Memory &amp; computation</div>
+        <p class="path-intro">A 38-year arc from Hopfield's 1982 PNAS paper to the modern equivalence between Hopfield retrieval and transformer attention. Three demos compress the math behind a substantial chunk of contemporary AI.</p>
+        <ol class="path-demos">
+          <li><a href="player.html?model=hopfield">Hopfield Retrieval</a> <span class="step-note">— Hopfield 1982: patterns stored in dense Hebbian weights, recall by energy descent. Memory as a dynamical attractor.</span></li>
+          <li><a href="player.html?model=hopfield-capacity">Hopfield Capacity</a> <span class="step-note">— AGS 1985-87: capacity α<sub>c</sub> ≈ 0.138·N is a true second-order phase transition. The first quantitative limit on the original model.</span></li>
+          <li><a href="player.html?model=hopfield-modern">Modern Hopfield</a> <span class="step-note">— Ramsauer et al. 2020: log-sum-exp energy gives exponential capacity, and the retrieval rule IS transformer attention. The bridge from 1982 PNAS to ChatGPT.</span></li>
+        </ol>
+        <p class="path-arc">Arc: 1982 → 1987 → 2020. The same substrate, three milestones, the connection to attention reframes the entire history.</p>
+      </div>
+    </div>
+  </section>
 </body>
 </html>

@@ -43,6 +43,45 @@ input[type=range] { width: 100%; accent-color: #e63946; }
   max-width: 680px;
 }
 .section + .section { margin-top: 36px; }
+
+.paths { display: grid; gap: 22px; }
+.path {
+  padding: 18px 22px;
+  background: #0e1014;
+  border-left: 2px solid #2a3140;
+  border-radius: 0 4px 4px 0;
+}
+.path:hover { border-left-color: #e63946; }
+.path .path-title {
+  color: #e8edf4;
+  font-weight: 600;
+  font-size: 15px;
+  margin: 0 0 8px;
+}
+.path .path-intro {
+  color: #8a93a3;
+  font-size: 13px;
+  line-height: 1.65;
+  margin: 0 0 14px;
+  max-width: 680px;
+}
+.path .path-demos {
+  margin: 0;
+  padding-left: 22px;
+  color: #8a93a3;
+  font-size: 13px;
+  line-height: 1.75;
+}
+.path .path-demos li { margin-bottom: 6px; }
+.path .path-demos li:last-child { margin-bottom: 0; }
+.path .path-demos a { color: #e63946; font-weight: 600; }
+.path .path-demos .step-note { color: #6b7280; }
+.path .path-arc {
+  color: #6b7280;
+  font-size: 12px;
+  margin: 12px 0 0;
+  font-style: italic;
+}
 .card {
   background: #0e1014; border: 1px solid #1f2530; border-radius: 4px;
   padding: 20px 22px; transition: border-color .15s, transform .15s;
