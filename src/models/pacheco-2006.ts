@@ -35,15 +35,20 @@
 //     in principle. We let the C endpoint be the active rewirer (it suffered
 //     the −c). This is the standard simplification and matches most
 //     follow-up work in the active-linking literature.
-//   - Homophily preference: when the active rewirer reconnects, it tries
-//     same-type partners first (with a 30-attempt budget, falling back to
-//     random non-neighbour if none found). Pacheco's analytical "active
-//     linking" framework specifies asymmetric formation rates α_CC > α_CD
-//     > α_DD; in the discrete-event implementation here, that asymmetry is
-//     produced by the type-preferential rewiring. Without this preference
-//     (which the first version of this file lacked), the linking dynamics
-//     cannot rescue cooperation against Fermi-driven D-bias regardless of
-//     q — defectors win at all parameter values.
+//   - Rewiring preference: both C and D rewirers prefer C as new partner
+//     (with a 30-attempt budget, falling back to random non-neighbour if
+//     none found). This is asymmetric in TYPE PREFERENCE, not same-type
+//     homophily — both strategies want C neighbours, because C-neighbours
+//     dominate D-neighbours in the PD payoff matrix for both types:
+//     C wants C (b − c vs −c), D wants C (b vs 0). Pacheco's analytical
+//     framework with asymmetric formation rates α_CC > α_CD > α_DD reduces
+//     to this in the discrete-event impl. Without the preference, the
+//     linking dynamics cannot rescue cooperation against Fermi-driven
+//     D-bias (defectors win at all q). With same-type homophily (D-prefers-D),
+//     the network bipartitions and colours freeze. Always-prefer-C is
+//     the right asymmetry — D constantly invades C clusters, C constantly
+//     evicts via the high α_CD break rate, D's neighbourhoods degrade,
+//     Fermi imitation eventually flips D → C.
 //   - Payoff is degree-normalised (average payoff per game, not accumulated).
 //     With unnormalised payoffs, BA hubs dominate Fermi imitation purely on
 //     degree — the network collapses to the hub's initial strategy in the
@@ -85,7 +90,7 @@ Per simulation tick, **one of two events** happens with the chosen probability r
   - **α_CD** (medium): CD edges are asymmetric — the C endpoint is being exploited → unstable from C's side
   - **α_DD** (high): DD edges produce zero payoff → fragile; both endpoints want better partners
 
-When an edge breaks, the dissatisfied endpoint rewires to a uniformly random non-neighbour.
+When an edge breaks, the dissatisfied endpoint rewires preferentially toward a Cooperator non-neighbour. Both C and D want C neighbours — C for mutual benefit (b − c), D for exploitation (b) — so this is "prefer C", not symmetric same-type homophily. The "constantly invade / constantly evict" cycle this produces is exactly Pacheco's mechanism: D's neighbourhoods degrade as C kicks them out, and Fermi imitation eventually flips D → C.
 
 The classical fixed-graph PD result is that **defectors win**: the only Nash equilibrium of one-shot PD is mutual defection, and on a static graph that's the absorbing state. Pacheco et al.'s central observation: with **fast enough linking** (q above a threshold), cooperators can dynamically restructure the network around themselves — staying connected to other Cs (CC edges are stable) and shedding Ds (CD/DD edges break). The network self-organises into a "cooperator core surrounded by isolated defectors", and cooperation becomes evolutionarily stable.
 
@@ -113,7 +118,7 @@ Reference: Pacheco, Traulsen & Nowak, *Coevolution of strategy and structure in 
   - **α_CD** (中)：CD 边不对称——C 端被剥削 → 从 C 视角不稳定
   - **α_DD** (高)：DD 边产生零收益 → 脆弱；两端都想找更好的伙伴
 
-当边断开时，不满意的一端重连到一个随机非邻居。
+当边断开时，不满意的一端**优先寻找合作者**作为新邻居。C 和 D 都想连 C——C 想连 C 是为了互惠 (b − c)，D 想连 C 是为了剥削 (b)——所以这是"偏好 C"，不是对称的同类聚合。这种"D 不停入侵 / C 不停驱逐"循环正是 Pacheco 的机制：D 的邻里随着 C 的剔除而恶化，Fermi imitation 最终把 D 翻成 C。
 
 经典固定图 PD 的结果是**背叛者获胜**：一次性 PD 的唯一纳什均衡是相互背叛，在静态图上这是吸收态。Pacheco 等的核心观察：当**重连足够快** (q 高于阈值) 时，合作者可以动态地围绕自己重构网络——与其他 C 保持连接 (CC 边稳定)，剥离 D (CD/DD 边断开)。网络自组织为"合作者核心 + 被孤立的背叛者"，合作变为演化稳定。
 
@@ -264,14 +269,26 @@ Reference: Pacheco, Traulsen & Nowak, *Coevolution of strategy and structure in 
           edges[eIdx] = last;
           edges.pop();
 
-          // activeRewirer picks a non-neighbour. Homophily preference: try
-          // for a same-type partner first (this is the missing piece in the
-          // first version of this model — without homophily, the active-linking
-          // mechanism cannot rescue cooperation against Fermi-driven D-bias).
-          // Pacheco-Traulsen-Nowak's "active linking" framework with asymmetric
-          // formation rates (α_CC > α_CD > α_DD) is captured here as
-          // type-preferential rewiring with random fallback.
-          const preferredType = X[activeRewirer]!;
+          // activeRewirer picks a non-neighbour. Both strategies prefer a
+          // *cooperator* as new partner — not symmetric same-type homophily.
+          // Reasoning: in the donation-game payoff matrix, C-neighbours
+          // dominate D-neighbours for both types:
+          //   C wants C: gets b − c   (vs −c with D)
+          //   D wants C: gets b       (vs 0  with D)
+          // Pacheco's analytical "active linking" framework uses asymmetric
+          // formation rates α_CC > α_CD > α_DD; the discrete-event analogue
+          // is "everyone prefers C as new partner". This is the asymmetry
+          // that drives cooperation rescue: D constantly attempts to invade
+          // C-clusters, C constantly evicts D (high α_CD break rate), so D
+          // ends up with degraded neighbourhoods and lower π — at which
+          // point Fermi imitation flips D to C.
+          //
+          // The earlier symmetric "same-type homophily" (D prefers D) was
+          // wrong: it created a stable bipartition with no CD edges, freezing
+          // the color distribution at whatever the initial 50/50 split was
+          // (degrees still rewired within each component, but no Fermi
+          // events fired because C and D were never neighbours).
+          const preferredType = 1;  // always C
           let kk = -1;
           for (let attempts = 0; attempts < 30; attempts++) {
             const cand = rng.int(N);
