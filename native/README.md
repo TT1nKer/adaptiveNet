@@ -35,9 +35,11 @@ substrate spec ambiguity that must be resolved.
 
 ## Model coverage status
 
-| Model | Web (TS) | Rust + WGPU | C++ + CUDA |
-|---|---|---|---|
-| Ising            | ✓ | ✓ | ✓ |
+✓ = implemented + tested · ✓✓ = cross-validated bit-for-bit between native runtimes
+
+| Model | Web (TS) | Rust + WGPU | C++ + CUDA | Cross-validated |
+|---|---|---|---|---|
+| Ising            | ✓ | ✓ | ✓ | ✓✓ (2026-05-04, GTX 1660: trajectory matches bit-for-bit; perf 14,990 vs 63,296 sweeps/sec) |
 | Hopfield         | ✓ | — | — |
 | Hopfield Capacity | ✓ | — | — |
 | Hopfield Modern  | ✓ | — | — |
@@ -76,3 +78,16 @@ See each subdirectory's README:
 
 - [rust-wgpu/README.md](rust-wgpu/README.md) — `rustup` + `cargo run`
 - [cpp-cuda/README.md](cpp-cuda/README.md) — `cmake` + `make`
+
+## Cross-validate
+
+After building both runtimes, run:
+
+```sh
+./cross-validate.sh ising --size 256 --temp 2.27 --steps 1000 --seed 1
+```
+
+The script runs the model in both runtimes with the same args, then diffs
+the output trajectories. Exits 0 on match, 1 on divergence. **First-try
+result for Ising on a GTX 1660 (2026-05-04): bit-for-bit identical between
+Rust+WGPU and C++/CUDA across all sampled steps.**
