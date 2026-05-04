@@ -258,6 +258,7 @@ This is critical for grid models with N ≥ 10⁴.
 - **Forgetting `state.t = state.step_count`**: the t-val display in the panel shows `state.t`. If you don't update it, time looks frozen.
 - **Adaptive edge add without dedup**: when rewiring, check `adj[i].includes(j)` before pushing. Otherwise you get multi-edges that break degree counts.
 - **Categorical param with non-string default**: `default` must match one of the `options` strings exactly.
+- **Unnormalised payoff with Fermi imitation on heterogeneous-degree graphs**: if your model uses Fermi-Dirac imitation `P(adopt) = 1/(1+exp(β·Δπ))` AND the topology has heavy-tailed degree (BA, scale-free, real social/biological data), accumulate-payoff `π_i = Σ_neighbours game(...)` makes hubs dominate purely on degree — `β·Δπ` becomes O(β·deg) which saturates `exp` at ±∞ and makes adoption near-deterministic. Always **degree-normalise** payoffs (`π / deg`, average per game) for Fermi-on-heterogeneous setups. This caught the Pacheco-Traulsen-Nowak model the first time around (2026-05-04 bug fix). Standard alternative: keep accumulated payoff but use *weak selection* β ≪ 1/⟨k⟩.
 
 ## What's already in the gallery — don't duplicate
 
