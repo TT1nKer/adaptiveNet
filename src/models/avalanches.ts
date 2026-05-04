@@ -1,20 +1,45 @@
-// Self-Organised Criticality (SOC) — Bak-Tang-Wiesenfeld sandpile model
-// adapted to a continuous-activity 2D lattice with mild dissipation. Drives
-// the system slowly and lets each grain trigger an avalanche of cascading
-// fires when it pushes a cell above threshold.
+// Self-Organised Criticality (SOC) sandpile — implementation in the
+// universality class of Bak-Tang-Wiesenfeld (1987) abelian sandpile, with
+// continuous-activity variant + dissipation (closer to Manna 1991 / dissipative
+// sandpile literature than the strict integer-height BTW).
 //
-// The signature phenomenon: avalanche sizes are distributed as a power law
-//   P(s) ~ s^{-3/2}
-// over many decades. Same exponent for sandpiles, forest fires, earthquakes,
-// magnetic Barkhausen noise, and — Beggs & Plenz 2003 — neural avalanches in
-// cortical slice cultures. The fact that all these systems share the same
-// exponent is the empirical fingerprint of universal critical behaviour.
+// PAPER-VERIFIED 2026-05-04:
+//   - Bak, Tang, Wiesenfeld. "Self-organized criticality: An explanation of
+//     the 1/f noise." PRL 59, 381 (1987). DOI 10.1103/PhysRevLett.59.381 —
+//     paywalled, original 1987 paper, defines the canonical sandpile.
+//   - Beggs & Plenz. "Neuronal avalanches in neocortical circuits." J. Neurosci.
+//     23, 11167 (2003) — open access, [PMC6741045]. Cortical slice cultures
+//     show neuronal avalanches with size exponent τ = 3/2 (their reported
+//     average slope: 1.50 ± 0.08 LFP, 1.58 ± 0.04 electrode).
+//   - Touboul & Destexhe (PLOS ONE 12, e0181104, 2017) — methodological
+//     critique: subsampling and bin-size choices alone can produce apparent
+//     power laws independent of underlying criticality.
 //
-// Beggs & Plenz's discovery — that neural firing in cortex follows the same
-// statistics as a sandpile — is the strongest evidence so far that the
-// brain operates near a critical point. This demo gives you the visceral
-// version: most of the time the lattice looks dead-quiet, then a single
-// extra grain triggers a cascade that lights up half the canvas.
+// IMPLEMENTATION SPECIFICS (continuous-activity variant):
+//   - Each cell has continuous activity X_i (paper's BTW used integer h_i).
+//   - Drive: X_i += dose. If X_i ≥ threshold (=1), cell fires: X_i -= 1, each
+//     of the 4 lattice neighbours gets (1-ε)/4 of the threshold added.
+//   - With dissipation ε > 0, fraction ε of activity leaves the system per
+//     fire — gives a finite steady state. The exact case ε = 0 conserves
+//     activity (BTW's original).
+//
+// Exponent claims must be made carefully. Different sandpile variants give
+// different exponents in 2D:
+//   - Original BTW (deterministic, integer h, conservative): τ ≈ 1.21-1.27
+//     in 2D (Manna 1991, Priezzhev 1994, theoretical)
+//   - Manna stochastic sandpile: τ ≈ 1.27 in 2D
+//   - Continuous + dissipative (this implementation): exponent depends on ε
+//     and may differ from above
+//   - Beggs-Plenz cortical: τ = 3/2 ≈ 1.50 (empirical, neuron firing)
+//
+// The previous "things to try" prompt that BTW gives τ ≈ 1.0 was wrong (no
+// reference for that value). Corrected in instructor prompts.
+//
+// Beggs & Plenz's discovery — that neural firing in cortex follows
+// power-law statistics with τ ≈ 3/2 — is the strongest evidence so far
+// that the brain operates near a critical point. This demo gives you the
+// visceral version: most of the time the lattice looks dead-quiet, then
+// a single extra grain triggers a cascade that lights up half the canvas.
 
 import type { Model, ModelState, ParamValues, Graph } from '../types.ts';
 import type { RNG } from '../rng.ts';
