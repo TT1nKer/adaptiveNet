@@ -1,24 +1,32 @@
 // Leaky Integrate-and-Fire (LIF) neurons on a 2D square lattice.
 //
-// The simplest spiking-neuron model used in computational neuroscience since
-// Lapicque's 1907 paper, predating Hodgkin-Huxley by 45 years. Each cell has
-// a membrane voltage V that integrates synaptic input and leaks toward rest:
+// PAPER-VERIFIED 2026-05-04:
+//   - Lapicque, L. "Recherches quantitatives sur l'excitation électrique
+//     des nerfs traitée comme une polarisation." J. Physiol. Pathol. Gén. 9,
+//     620 (1907). The original LIF paper. Universally textbook (Gerstner-
+//     Kistler-Naud-Paninski, "Neuronal Dynamics", https://neuronaldynamics.epfl.ch).
+//
+// The simplest spiking-neuron model in computational neuroscience.
+// Each cell has membrane voltage V evolving as:
 //
 //   dV/dt = -V / τ + Σ_neighbours (synaptic input) + I_drive
 //
-// When V crosses the firing threshold, the neuron emits a spike, V resets to
-// rest, and the cell enters a brief refractory period during which it cannot
-// fire again. Spikes from neighbours arrive as instantaneous voltage kicks
-// of size W_syn.
+// When V crosses the firing threshold, the neuron emits a spike, V resets
+// to rest, and the cell enters a brief refractory period during which it
+// cannot fire again. Spikes from neighbours arrive as instantaneous voltage
+// kicks of size W_syn.
 //
-// A small region of cells in the centre is driven by a constant input current
-// I_drive — these become the wave seed. With moderate W_syn each driver
-// spike is enough to push its neighbours past threshold, and a wavefront of
-// spikes propagates outward across the grid. Behind each wavefront is a
-// trailing refractory zone where neurons can't fire again for a few steps,
-// so colliding waves annihilate — the same excitable-medium phenomenology
-// you saw in Gray-Scott, but emerging from genuine neural dynamics rather
-// than chemistry.
+// A small region of cells in the centre is driven by a constant input
+// current I_drive — these become the wave seed. With moderate W_syn each
+// driver spike is enough to push its neighbours past threshold, and a
+// wavefront of spikes propagates outward across the grid. Behind each
+// wavefront is a trailing refractory zone where neurons can't fire again
+// for a few steps, so colliding waves annihilate — the same excitable-
+// medium phenomenology as Gray-Scott but from genuine neural dynamics.
+//
+// Acceptance test (tests/lif.test.ts): with default W_syn and I_drive,
+// firing rate ≈ 0 initially (most cells silent), but after some warmup
+// a non-zero population of cells fires per step (waves propagating).
 
 import type { Model, ModelState, ParamValues, Graph } from '../types.ts';
 import type { RNG } from '../rng.ts';
