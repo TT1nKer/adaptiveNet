@@ -536,6 +536,10 @@ langToggle.addEventListener('click', (ev) => {
   if (isZh) u.searchParams.delete('lang'); else u.searchParams.set('lang', 'zh');
   location.href = u.toString();
 });
+// Make the "← gallery" back link land on the matching landing page.
+const sandboxBack = document.querySelector<HTMLAnchorElement>('header .back');
+if (sandboxBack) sandboxBack.href = isZh ? 'index.zh.html' : 'index.html';
+document.documentElement.lang = isZh ? 'zh-CN' : 'en';
 
 // Type stub so this file compiles even without monaco's @types installed.
 declare global {

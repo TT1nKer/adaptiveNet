@@ -100,6 +100,9 @@ function applyI18n(): void {
     if (key) el.textContent = tr(key);
   });
   document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en';
+  // Make the "← gallery" back link land on the matching landing page.
+  const back = document.querySelector<HTMLAnchorElement>('header .back');
+  if (back) back.href = lang === 'zh' ? 'index.zh.html' : 'index.html';
 }
 
 function getModelShort(m: Model<any>): string {
