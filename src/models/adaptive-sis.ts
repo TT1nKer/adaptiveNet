@@ -22,6 +22,33 @@ const adaptiveSIS: Model = {
   short: 'Susceptible nodes can rewire away from infected neighbours. The network topology coevolves with the disease — bistability and hysteresis appear that don\'t exist in static SIS.',
   name_zh: '自适应 SIS 流行病 (Gross–D\'Lima–Blasius)',
   short_zh: '易感节点可以从感染邻居那里重连离开。拓扑与疾病共同演化——出现了在静态图上不存在的双稳态和滞回。看着网络在感染簇周围自我隔离。',
+  long_zh: `每个节点是**易感** (蓝) 或**感染** (红)。三个并发过程以下面的速率运行：
+
+— **感染**沿 SI 边发生：S 节点以速率 **p** 染上疾病。
+— **恢复**：I 节点自发以速率 **r** 变回 S。
+— **重连**沿 SI 边以速率 **w** 发生：S 端断开与 I 邻居的连接，重新连到某个随机选择的另一个 S 节点。
+
+当 **w = 0** 时这就是普通 SIS——p ≈ r 处一个相变，没有惊喜。**一旦 w > 0，网络与疾病共同演化**，*双稳态*区开启：同样的 (p, r, w) 允许两个稳态——健康和地方流行——你最终落到哪个取决于历史。慢慢把 p 拉上，再拉下：你画出滞回环。这是共演化结构产生静态图上不存在的动力学的最干净例子之一。
+
+试预设 *"strong adaptation"*，看着流行病燃烧时网络重新结构化——未感染节点把它们的连接从感染邻居那里拉开，比疾病传播更快，从而把它隔离。
+
+黄色次级时间序列是 **SI 边的比例**——自适应的签名。在静态图上它会与感染比例成比例追踪；这里它发散，因为网络在自我隔离。
+
+**教师向 — 五道 Δ 实验适合作为习题**
+
+**1. 普通 SIS 基线。** 设 w = 0。在 0.5 到 3.0 之间扫描 p / r。每个值下运行至感染比例稳定。定位相变点——应该在 p / r ≈ 1 (更精确地，平均场下 p × ⟨k⟩ / r = 1)。在 ER、BA、WS 拓扑上验证。无标度 (BA) 与同质 (ER) 之间阈值是否不同——Pastor-Satorras 2001 (无标度上流行病阈值 → 0) 是否帮助解释？
+
+**2. 寻找双稳态区域。** 在 w = 0.3 下慢慢扫描 p (跨多个仿真步)。然后把 p 扫回去。绘制感染比例 vs p 的两个方向。应该出现滞回环——这就是普通 SIS 中不存在的双稳态。
+
+**3. 网络重构速率。** 在强自适应 (w = 0.5) 下，测量系统平衡时 SI 边比例下降的速度。与感染比例稳定的速度比较。网络"学会"隔离感染簇——量化这种学习速率。
+
+**4. I 子图 vs S 子图的拓扑。** 在 w > 0 下平衡后，分别计算 I 节点和 S 节点在各自子总体内的平均度数。I 子图应该比 S 子图稀疏得多 (S 在巩固连接；I 在失去连接)。量化这种不对称性。
+
+**5. 从平均场到仿真。** Gross 2006 论文推出了一个矩闭合近似，解析地预测双稳态区。挑一个 (p, r, w) 点。计算稳态感染比例的平均场预测。用 20 个不同 seed 跑仿真。把仿真结果对平均场预测画图。闭合工作得多好？(这就是这类平台本应支持的*矩闭合验证*工作流。)
+
+参考文献：Gross, D'Lima & Blasius, *Phys. Rev. Lett.* **96**, 208701 (2006). 平均场批评：Pastor-Satorras 等, *Rev. Mod. Phys.* 87, 925 (2015).
+
+*[本中文版为初稿翻译。如有不妥之处，欢迎在 [issues](https://github.com/TT1nKer/adaptiveNet/issues) 中反馈或直接修改 src/models/adaptive-sis.ts 中的 long_zh 字段。]*`,
   long: `Each node is **Susceptible** (blue) or **Infected** (red). Three concurrent processes run at the rates shown:
 
 — **Infection** along an SI edge: the S node catches the disease at rate **p**.

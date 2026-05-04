@@ -15,6 +15,25 @@ const nakao: Model = {
   short: 'Reaction–diffusion on a graph; D_v ≫ D_u creates spontaneous high/low clusters.',
   name_zh: '网络 Turing 图样',
   short_zh: '图上的反应-扩散；D_v ≫ D_u 时自发出现高/低浓度簇。',
+  long_zh: `每个节点上跑一个 Mimura-Murray 活化-抑制反应。扩散通过图 Laplacian 实现——每个节点的浓度向其邻居靠近。当抑制剂的扩散速率远高于活化剂 (D_v ≫ D_u) 时，均匀态失稳，网络自发分裂成高 u / 低 u 两簇。
+
+切换拓扑到 Barabási-Albert 后，高度数 hub 节点变成图样的组织者。
+
+**教师向 — 五道 Δ 实验适合作为习题**
+
+**1. 寻找 Turing 阈值。** 固定所有反应参数和平均度。在 1 (无扩散对比) 到 50 之间扫描 D_v / D_u。每个比值下观察空间异质性是否涌现并稳定。定位阈值。经典 1D Mimura-Murray 分析预测一个特定临界值——网络版本给出相同阈值，还是有偏移？
+
+**2. 拓扑依赖性。** 在阈值上方一点处，分别用三种拓扑 (ER、BA、WS) 跑同样的平均度。空间图样定性上是否不同？BA 图上，高度数 hub 节点变成"高 u"还是"低 u" 节点？论证 hub 中心性为何决定它落在双稳态的哪一侧。
+
+**3. Hub 角色。** 在 BA 网络上，识别度数最高的前 10% 节点。图样稳定后，其中多大比例处于高 u 态 vs 低 u 态？与最低 10% 节点 (低度数) 同样比例做对比。这种不对称性量化了网络度异质性对图样的决定程度。
+
+**4. 从网络到格子。** 比较图上 Nakao 图样 (本 demo) 和 2D 格子上的经典 Brusselator/Turing 图样 (*经典 Turing* demo)，参数匹配。格子版给出条纹/斑点；图版给出 hub 主导的聚类。论证哪种拓扑特征决定了这个差异。
+
+**5. 序参量。** 哪个标量能干净地区分均匀态 (无图样) 与有图样态？试 (a) u 在节点间的方差，(b) max-u 与 min-u 之间的差距，(c) u 分布的双峰系数。哪个是最干净的序参量？哪个在有限 N 下最数值稳定？
+
+参考文献：Nakao & Mikhailov, *Nature Physics* 6, 544–550 (2010).
+
+*[本中文版为初稿翻译。如有不妥之处，欢迎在 [issues](https://github.com/TT1nKer/adaptiveNet/issues) 中反馈或直接修改 src/models/nakao.ts 中的 long_zh 字段。]*`,
   long: `On each node, a Mimura–Murray activator–inhibitor reaction. Diffusion happens through the graph Laplacian — each node's concentration moves toward its neighbors'. When the inhibitor diffuses much faster than the activator (D_v ≫ D_u), the homogeneous state is unstable and the network spontaneously splits into high-u / low-u clusters.
 
 Switch the topology to Barabási–Albert and the high-degree hubs act as pattern organizers.

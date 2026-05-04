@@ -58,6 +58,47 @@ const modernHopfield: Model<ModernState> = {
   short: 'Replace classical Hopfield\'s quadratic energy with log-sum-exp. Capacity jumps from 0.138·N to exponential, and the retrieval rule becomes Transformer attention.',
   name_zh: '现代 Hopfield (注意力等价)',
   short_zh: '把经典 Hopfield 的二次能量替换成 log-sum-exp。容量从 0.138·N 跳到 N 中指数级，且检索规则就是 Transformer 注意力（Ramsauer 等 2020）。从 1982 PNAS 到 ChatGPT 的桥梁。',
+  long_zh: `**经典 Hopfield** (检索和容量两个 demo) 通过 Hebb 外积存储图样、用 sign(W·X) 检索。容量上限是 α_c ≈ 0.138·N——多存就进入自旋玻璃相，记忆被洗掉。
+
+**现代 Hopfield** (Ramsauer 等 2020) 保留同样的底层但用
+
+E(X) = −1/β · log Σ_p exp(β · ξ_p · X)
+
+给出检索规则
+
+X_new = sign( Σ_p softmax(β · ξ_p · X) · ξ_p )
+
+用文字表述：先计算与每个存储图样的重叠度；用反温度 β 应用 softmax；按 softmax 值给每个图样加权；求和；取符号。两件事随之而来。
+
+**(1) 容量在 N 中指数级。** 当 β 大时，softmax 锐化到几乎 one-hot——检索挑选*单个最近*的图样。只要没有图样病态地聚在一起，这对指数多个图样都成立。经典的 α_c = 0.138 上限消失了。
+
+**(2) 这就是 Transformer 注意力。** 对应：
+
+  Ξ (存储图样矩阵) ↔ keys / values
+  X (当前状态)     ↔ query
+  β                ↔ 1/√d_k
+
+现代 Hopfield 的一步 = 注意力的一层。注意力的强检索容量**就是**这个 Hopfield 变体的强存储容量。
+
+**试预设**遍历经典 Hopfield 到不了的区域。P=200 已经超过经典 α_c=0.138——经典容量 demo 在那里崩溃；现代版仍清晰检索。P=1000 加 N=1024 是 α≈1.0，是经典上限的十倍，仍工作。
+
+**降低 β** 软化 softmax——检索变成图样的*加权混合*而非最近的那个。这就是低温度注意力做的事，也是经典 Hopfield 的伪混合态在这里以可控方式出现的方式。
+
+**教师向 — 五道 Δ 实验适合作为习题**
+
+**1. 容量对比：经典 vs 现代。** 在 N = 100 下，在经典 Hopfield (用 *Hopfield 容量* demo) 中尽可能多地存储图样——容量在 α_c × N ≈ 14 个图样附近见顶。在现代 Hopfield 中重复：检索崩溃前能存多少？论证为何"在 N 中指数级"和"在 N 中线性"对记忆容量来说是定性不同的。
+
+**2. 反温度 β。** 现代 Hopfield 的 softmax 有一个温度参数 β。β → 0 时能量均匀 (没有图样偏好)；β → ∞ 时动力学行为像经典 (尖锐图样边界)。扫描 β。找到混合图样检索 ("软注意力"态) 出现的区域。这个区域就是 transformer 运行的地方。
+
+**3. 验证注意力等价。** 现代 Hopfield 检索 (一步) 计算 z_new = X · softmax(β · X^T · z)。与 transformer 注意力按项比较：query = z, keys = values = X。确认两个公式相同。这就是"注意力**就是** Hopfield 检索"的精确含义。
+
+**4. 存储图样叠加。** 从两个存储图样的平均出发。在经典 Hopfield 中，网络通常落入伪混合态。在现代 Hopfield 中 (高 β)，会发生什么？挑一个还是停在混合？这与 Ramsauer 关于"现代 Hopfield 可以根据 β 表现为尖锐记忆或软注意力池"的观察相关。
+
+**5. Transformer 不"只是" Hopfield。** 现代 Hopfield 是一个用存储图样作为 keys/values 的注意力头。完整 transformer 有*学习的* keys 和 values，*多个*头，注意力间还有前馈层。列出完整 transformer 能做、单个现代 Hopfield 头不能做的三种具体能力。(这是为了给热度找地基：等价是真的，但不意味着现代 Hopfield = transformer。)
+
+参考文献：Ramsauer 等, *Hopfield Networks Is All You Need*, [arXiv:2008.02217](https://arxiv.org/abs/2008.02217) (2020).
+
+*[本中文版为初稿翻译。如有不妥之处，欢迎在 [issues](https://github.com/TT1nKer/adaptiveNet/issues) 中反馈或直接修改 src/models/hopfield-modern.ts 中的 long_zh 字段。]*`,
   long: `**Classical Hopfield** (the recall and capacity demos) stores patterns by Hebbian outer products and retrieves by sign(W·X). Capacity tops out at α_c ≈ 0.138·N — try to store more, the spin-glass phase wipes the memory.
 
 **Modern Hopfield** (Ramsauer et al. 2020) keeps the same substrate but uses

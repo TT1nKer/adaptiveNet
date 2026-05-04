@@ -82,6 +82,37 @@ const grayScott: Model = {
   short: 'Reaction–diffusion on a square lattice. Spots, mazes, mitosis — different (f, k) give wildly different patterns.',
   name_zh: 'Gray-Scott (2D 网格)',
   short_zh: '方格上的反应-扩散：斑点、迷宫、有丝分裂、虫——同一组方程在不同 (f, k) 下涌现出截然不同的图样。',
+  long_zh: `2D 方格的每个 cell 上都有两种化学物质 *u* 和 *v*。它们反应并扩散：
+
+— **u** 以速率 **f**(1 − u) 从外部输入。
+— **u** 与 **v** 反应被消耗：u + 2v → 3v。
+— **v** 以速率 (f + k) 衰减。
+
+这一个反应加两个参数，能产生惊人多样的自组织图样：
+
+— **f = 0.0367, k = 0.0649** → 像细胞**有丝分裂**那样**分裂**的斑点。
+— **f = 0.04, k = 0.06** → 游走的虫。
+— **f = 0.055, k = 0.062** → 稳定的条纹**迷宫**。
+— **f = 0.078, k = 0.061** → 斑点和虫的混沌混合。
+— **f = 0.098, k = 0.057** → 成核并生长的气泡。
+
+实时拖动 **f** 和 **k** 滑块，遍历 **Pearson 图谱**。重置则从网格中心一个小种子扰动重新开始。
+
+**教师向 — 五道 Δ 实验适合作为习题**
+
+**1. 走完 Pearson 图谱。** 使用六个预设 (mitosis、worms、maze、ξ-spirals、β-wavefield、α-chaos、U-skate)。对每个，记录 (F, k) 位置并定性描述渐进行为。从你的观察在纸上重建 Pearson 1993 相图。哪些区域边界尖锐，哪些渐变？
+
+**2. 找一个 glider。** U-skate 区域 (F ≈ 0.062, k ≈ 0.0609 附近)，小扰动可以产生局部自传播结构。找一个。测量它每个仿真步的传播速度。与 Munafo 报告的 U-skate world 数据比较。
+
+**3. 扩散比。** 在条纹生成区域 (例如 maze, F ≈ 0.029, k ≈ 0.057) 固定 F 和 k。在 0.1 到 1.0 之间变化 D_u / D_v 比值。哪个比值下图样消失？这分离出活化-抑制扩散对比为必要成分——这是 Turing 1952 的结果。
+
+**4. α 混沌的可重现性。** 在 α 区域 (F ≈ 0.01, k ≈ 0.045) 图样从不稳定。同 seed + 同参数跑两次——完全一致。不同 seed 跑两次——轨迹发散。估计发散率；这其实就是一个伪装的正 Lyapunov 指数。
+
+**5. 图样尺寸标度。** 在 mitosis (F ≈ 0.0367, k ≈ 0.0649) 下，把格子大小从 64×64 变到 256×256。典型斑点尺寸是否随格子大小标度 (说明尺寸由边界或有限尺寸效应决定)，还是保持物理单位下的常数 (说明尺寸由扩散长度决定)？与理论预测 λ ~ √(D_u / k_eff) 比较。
+
+参考文献：Pearson, *Science* 261, 189 (1993). 原始化学反应：Gray & Scott (1984).
+
+*[本中文版为初稿翻译。如有不妥之处，欢迎在 [issues](https://github.com/TT1nKer/adaptiveNet/issues) 中反馈或直接修改 src/models/gray-scott.ts 中的 long_zh 字段。]*`,
   long: `Two chemical species *u* and *v* live on every cell of a 2D square lattice. They react and diffuse:
 
 — **u** is fed in from the outside at rate **f** (1 − u).

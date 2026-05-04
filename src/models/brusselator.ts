@@ -82,6 +82,36 @@ const brusselator: Model = {
   short: 'Two species, two diffusion rates, a regular 2D lattice. The original 1952 Turing mechanism — stripes, spots, mazes from any small perturbation.',
   name_zh: '经典 Turing (Brusselator)',
   short_zh: '1952 年 Turing 原始机制在 2D 格子上的实现：均匀态失稳后从任意小的噪声涌现出条纹/斑点。和网络 Turing demo 化学反应相同，拓扑不同。',
+  long_zh: `每个 cell 上有两种化学浓度 *u* 和 *v*，遵循 Brusselator 动力学：
+
+— **u** 以恒定速率 *a* 产生，以速率 *b* + 1 衰减，并通过与 *v* 的反应自催化生成 (速率 u² v)。
+— **v** 由 *u* 以速率 *b u* 产生，在同一自催化反应中被消耗。
+
+均匀不动点 (u, v) = (a, b/a) 在充分混合的反应器中 (无扩散) 局部稳定。加入扩散可以让它**失稳**：当抑制剂 *v* 的扩散速率远高于活化剂 *u* 时，任何微小噪声都会增长成空间图样。这就是 **Turing 1952 机制**——化学反应单独打破空间对称性的原始理论。
+
+默认参数 (a = 4.5, b = 7.5, D_v / D_u = 8) 位于 Turing 失稳区内。看着均匀的灰色闪烁分解成清晰的**条纹**。
+
+— 降低 b (到 5 附近) → 更小幅度图样，有时是斑点。
+— 升高 b → 饱和前的瞬态更长。
+— 降低 D_v / D_u → 无图样 (亚临界区)。
+
+与**网络 Turing** demo 比较：同样的化学反应跑在随机图上而不是格子上。底层 (X + W + 同步更新) 完全相同；只有拓扑不同。
+
+**教师向 — 五道 Δ 实验适合作为习题**
+
+**1. 寻找 Turing 失稳边界。** 在已知支持图样的参数区固定 A 和 B (例如 A=2, B=5)。从 1 开始向上扫描 D_v / D_u。定位均匀态首次对空间扰动失稳的阈值比。与解析 Turing 条件比较：抑制剂必须足够快地扩散于活化剂之上。你的数值阈值与教科书预测距离多近？
+
+**2. 波长选择。** 在 Turing 阈值之上，系统选择一个特征斑点/条纹波长 λ。从生成的图样测量 λ。变化 D_u (保持 D_v/D_u 不变)。λ 是否如 Turing 分析预测的那样按 √D_u 标度？
+
+**3. 图样形态学。** 固定 A 和 B，渐进图样 (斑点、条纹、混合) 是确定的，还是依赖于随机初始条件？在同一 (A, B) 下用 10 个不同 seed 各跑一次。哪种形态出现的比例多大？这是*简并 Turing 失稳下的图样选择*——非线性动力学的活跃领域。
+
+**4. 从格子到图。** 比较这里 (Brusselator 在 2D 格子上——条纹/斑点) 与*网络 Turing 图样* demo (类 Brusselator 反应在随机图上——hub 主导聚类) 的渐进图样。什么相同？什么不同？化学反应完全相同，只有拓扑不同。论证空间维度在选择形态学上扮演什么角色。
+
+**5. Hopf vs Turing。** 在小 B 处，均匀态可能在时间上振荡而不形成空间图样 (Hopf 分岔)，与 Turing 失稳 (从稳定时间态出现空间图样) 不同。找出每种情况发生的 (A, B) 区域。论证为何时间振荡和空间图样失稳能在同一模型中并存。
+
+参考文献：Turing, *Phil. Trans. R. Soc. B* 237, 37 (1952). Brusselator: Prigogine & Lefever (1968).
+
+*[本中文版为初稿翻译。如有不妥之处，欢迎在 [issues](https://github.com/TT1nKer/adaptiveNet/issues) 中反馈或直接修改 src/models/brusselator.ts 中的 long_zh 字段。]*`,
   long: `Each cell holds two chemical concentrations *u* and *v*, governed by the Brusselator kinetics:
 
 — **u** is produced at constant rate *a*, decays at rate *b* + 1, and is autocatalytically promoted by reaction with *v* (rate u² v).

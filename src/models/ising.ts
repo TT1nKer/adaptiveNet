@@ -48,6 +48,43 @@ const ising: Model = {
   short: 'The classical statistical-mechanics model. Spins align with neighbours under ferromagnetic coupling; phase transition at T_c ≈ 2.269.',
   name_zh: 'Ising 模型 (2D 格子)',
   short_zh: '经典统计力学模型。2D 方格上的自旋在热噪声下与邻居对齐；二级相变在 T_c ≈ 2.269（Onsager 1944）。拖动温度滑块，实时穿越临界点。',
+  long_zh: `2D 方格的每个 cell 携带一个自旋 s ∈ {-1, +1}。自旋倾向于与四个最近邻对齐：能量为
+
+E(s) = − Σ_{⟨i, j⟩} s_i · s_j     (对边求和)
+
+系统在温度 **T** 下运行：每一步随机选一个 cell，看它的四个邻居，按局部 Boltzmann 因子给出的概率把它设为 ±1。等价地，P(s_i = +1) = sigmoid(2 · h_i / T)，其中 h_i 是邻居和。
+
+这个 2D 格子有著名的**二级相变**在
+
+T_c = 2 / ln(1 + √2) ≈ 2.269
+
+(Onsager, *Phys. Rev.* 65, 117 — 1944，相互作用多体模型的第一个精确解)。T_c 之下自旋**自发磁化**：热噪声跟不上对齐力，格子稳定到单个畴 (或两个，被畴壁分开)。T_c 之上热涨落赢，系统保持无序。
+
+**恰好在 T_c** 处系统**尺度不变**：畴簇出现在每个长度尺度上，格子看起来像分形，动力学临界缓慢——序参量永远不稳定。整个临界现象的现代理论 (重整化群、普适类) 都建立在这一观察之上。
+
+**试：**
+- T = 1.0 → 有序相，系统磁化 (几乎所有自旋对齐)。
+- T = 2.27 → 临界点。看分形簇结构永远持续。
+- T = 4.0 → 无序相，看起来像静电雪花。
+- T = 0.05 → 确定性。动力学常常冻结在条纹构型而不是全对齐基态——**Ising 粗化问题**，与冶金学中的晶粒生长相关。
+
+**与 Hopfield 的关联**：底层相同——节点上的二元态、能量 = − Σ W[i,j] s_i s_j、Glauber 更新。Hopfield 是这个模型加**稠密 Hebb 学习的 W**；经典 Ising 是同一模型加**稀疏均匀 J**。
+
+**教师向 — 五道 Δ 实验适合作为习题**
+
+**1. 定位 T_c。** 固定格子大小，在 1.5 到 3.0 之间以 0.05 步长扫描 T。对每个 T 运行至磁化稳定 (~5000 sweeps)。绘制 |⟨m⟩| vs T。把你的数值 T_c 与 Onsager 精确值 2/ln(1+√2) ≈ 2.269 比较。为何数值曲线在 T_c 处平滑而不是不连续？
+
+**2. 有限尺寸标度。** 固定 T = 2.269。在格子大小 32, 64, 128, 256 下跑。测量磁化涨落 σ(m)。它应该按 L^(−1/8) 标度 (Onsager)。绘制 log σ vs log L 并提取斜率。你得到多接近 −0.125？
+
+**3. 临界减速。** 在 T = 2.269 vs T = 1.0 vs T = 4.0 下，测量磁化与初始值去关联所需时间。临界区应该戏剧性地慢 (在 L → ∞ 极限下形式上无限慢)。量化差异。
+
+**4. 对称性破缺。** 从随机初始条件出发。在 T = 1.0 下跑。重复 10 次。系统多大比例最终正向磁化 vs 负向？这是 Ising 模型的 Z₂ 对称性——以及 Mermin-Wagner 风格论证为何这能在 2D 破缺却不能在 1D 破缺。
+
+**5. 粗化动力学。** 从 T_c 之下 (例如 T = 1.0) 的随机初始条件出发。看畴如何形成和增长。估计典型畴大小作为时间的函数。Lifshitz-Slyozov-Allen-Cahn 理论预测非守恒序参量 L(t) ~ t^(1/2) 幂律。你的数据支持这点吗？
+
+参考文献：Onsager, *Phys. Rev.* 65, 117 (1944).
+
+*[本中文版为初稿翻译。如有不妥之处，欢迎在 [issues](https://github.com/TT1nKer/adaptiveNet/issues) 中反馈或直接修改 src/models/ising.ts 中的 long_zh 字段。]*`,
   long: `Each cell of a 2D square lattice carries a spin s ∈ {-1, +1}. Spins prefer to align with their four nearest neighbours: the energy is
 
 E(s) = − Σ_{⟨i, j⟩} s_i · s_j     (sum over edges)

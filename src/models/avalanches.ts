@@ -54,6 +54,36 @@ const avalanches: Model<AvalancheState> = {
   short: 'Bak–Tang–Wiesenfeld sandpile dynamics on a 2D grid. Drive slowly — most events are tiny, occasional ones are enormous. Avalanche sizes follow a power law: same statistics Beggs & Plenz 2003 found in cortical slices.',
   name_zh: '神经雪崩 (自组织临界)',
   short_zh: '2D 网格上的 Bak-Tang-Wiesenfeld 沙堆。慢驱动下大多数事件很小，偶尔扫过整个网格。雪崩大小服从幂律——和 Beggs & Plenz 2003 在皮层切片中发现的 s^(−3/2) 统计相同。脑在临界点附近运行的最强证据。',
+  long_zh: `2D 网格的每个 cell 有一个活性 X。每个驱动事件，一个随机 cell 收到一个脉冲：X[i] += dose。如果活性超过阈值 (设为 1)，cell **发放**：活性归零并重新分配给四个邻居，每个增加阈值的 (1−ε) / 4 比例。在小耗散 ε > 0 下，部分活性离开系统；稳态有限。
+
+关键是：**一次发放可以把邻居推过阈值**——它们也发放。一次驱动事件触发的级联就是**雪崩**。大多数很小 (只有原始那次发放)。有些极大，扫过数千 cell 才让活动到处回到阈值之下。
+
+特征现象：雪崩大小服从幂律分布 P(s) ~ s^(−3/2)，胖上尾延伸到系统大小。这个指数是普适的——出现在：
+
+— **Bak-Tang-Wiesenfeld 1987**：原始沙堆。Bak、Tang、Wiesenfeld 创造了"自组织临界"这个词，因为系统不需要外部参数就自调到临界态。
+— **真实沙堆** (Held 等 1990)：慢慢撒沙，得到的雪崩遵循 s^(−3/2)。
+— **森林火灾、地震、太阳耀斑**：每个都遵循一个相关指数的幂律。
+— **Beggs & Plenz, *J. Neurosci.* 23, 11167 (2003)**：来自鼠脑的皮层切片培养展示出**相同**的 s^(−3/2) 指数神经雪崩。这是皮层在临界附近运行的第一份直接证据。
+
+本 demo 中，看 σ 时间序列——它在大致对数感的尺度上显示最近一次雪崩的大小。大多数时候是 1 附近的平线 (单 cell 事件)。然后一个尖峰：100、500、1000+ cell 在一次级联中发放。**宽广的范围本身就是 demo**。线性尺度直方图让重尾不那么可见；你看到极小雪崩与极大雪崩并存——这就是"幂律分布"在实践中的样子。
+
+**为什么这对脑很重要。** 脑的能量预算排除了过密或过疏的活动——过密代谢成本爆炸，过疏信息传输破裂。自组织临界是单位活动信息传输最大化的区域 (Beggs 2008)，皮层的 s^(−3/2) 统计表明脑被进化调到这个区域。**精神疾病可能就是稍微偏离临界**：太多活动 → 癫痫 (超临界，失控雪崩)，太少 → 功能丧失 (亚临界)。同样的物理，不同的偏向。
+
+**教师向 — 五道 Δ 实验适合作为习题**
+
+**1. 验证幂律指数。** 跑 ~10⁵ 个雪崩 (累计统计)。用 log-log 轴绘雪崩大小分布。拟合斜率。BTW 在 2D 的预测是 τ ≈ 1.0 (不是 −3/2——那 −3/2 是 Beggs-Plenz 神经值，BTW 只在特定维度下接近)。把你的斜率与两者比较。差异揭示了 demo 实际实现的是哪个模型？
+
+**2. 耗散 ε。** 在 0 到 0.1 之间变化耗散率 ε。ε = 0 时系统永不到达稳态 (期望意义上雪崩无界增长)。ε 太大临界被破坏。找出定性区域。SOC 中的*自组织*意味着系统在小 ε > 0 下自调到临界线。
+
+**3. 方法学旋钮：bin 大小。** Beggs-Plenz 2003 通过把脉冲时刻分到 4 ms 窗口里计算雪崩。Bin 大小戏剧性地影响表观幂律斜率 (Touboul-Destexhe 2017 的批评)。在 1-10 仿真步之间变化时间 bin 宽度。表观 τ 变化多大？这是 Plenz vs Touboul 方法学辩论的*核心*。
+
+**4. 子采样效应。** 仅观察一定比例的 cell (10%、50%、100%) 计算雪崩分布。Touboul-Destexhe 批评论证了仅子采样就能从非临界动力学中产生表观幂律。测试它：子采样是否人为引入幂律？(这个实验需要 cell 活性的自定义导出；进阶。)
+
+**5. 对比 Plenz 指数与 Clauset-Shalizi-Newman 2009 KS 检验。** 宣称"这是幂律"的标准做法是 CSN 2009 程序：通过最大似然拟合幂律，然后计算与对数正态和指数候选的 KS 距离。把这套用到你的数据上。幂律假设真的赢了，还是对数正态/指数拟合得相当好？这是脑临界文献至今没一致应用的金标准方法学。
+
+参考文献：Bak, Tang & Wiesenfeld, *Phys. Rev. Lett.* 59, 381 (1987). Beggs & Plenz, *J. Neurosci.* 23, 11167 (2003). Beggs, *Phil. Trans. R. Soc. A* 366, 329 (2008). Touboul & Destexhe, *PLOS ONE* 12, e0181104 (2017). Clauset, Shalizi & Newman, *SIAM Review* 51, 661 (2009).
+
+*[本中文版为初稿翻译。如有不妥之处，欢迎在 [issues](https://github.com/TT1nKer/adaptiveNet/issues) 中反馈或直接修改 src/models/avalanches.ts 中的 long_zh 字段。]*`,
   long: `Each cell of the 2D grid has an activity X. Once per drive event, a random cell receives a kick: X[i] += dose. If the activity exceeds threshold (set to 1), the cell **fires**: its activity dumps to zero and is redistributed to its 4 neighbours, each gaining a fraction (1−ε) / 4 of the threshold. With a small dissipation ε > 0, some activity leaves the system; the steady state is finite.
 
 Crucially, **a fire can push neighbours past threshold** — and they fire too. The cascade triggered by a single drive event is the **avalanche**. Most are tiny (just the original fire). Some are enormous, sweeping across thousands of cells before activity falls back below threshold everywhere.
