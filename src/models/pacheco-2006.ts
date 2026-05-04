@@ -55,12 +55,11 @@ import { generators } from '../graph.ts';
 import type { Model, ModelState, ParamValues } from '../types.ts';
 import type { RNG } from '../rng.ts';
 
-// Pacheco's standard setups use BA (preferential-attachment scale-free) or ER
-// (Erdős–Rényi random) as initial topology. K_N (complete graph) is a useful
-// "well-mixed" baseline conceptually but force-directed layouts collapse all
-// nodes into one pile because every pair pulls every other; left out of this
-// demo for that reason. Add via a separate model file if needed.
-const TOPO_OPTS = ['ba', 'er'] as const;
+// Initial topologies. Pacheco's paper uses BA or ER; K_N (complete graph) is
+// a useful well-mixed baseline. For complete graphs, the layout module skips
+// force-directed iterations (in 2D the spring constraints are unsatisfiable
+// for K_N) and leaves nodes on the initial circular arrangement.
+const TOPO_OPTS = ['ba', 'er', 'complete'] as const;
 
 const pacheco: Model = {
   id: 'pacheco-2006',
@@ -183,9 +182,28 @@ Reference: Pacheco, Traulsen & Nowak, *Coevolution of strategy and structure in 
     const topo = params.topo as string;
     const initC = params.init_C as number;
 
-    const generator = generators[topo];
-    if (!generator) throw new Error(`unknown topology: ${topo}`);
-    const graph = generator(N, k, rng);
+    let graph;
+    if (topo === 'complete') {
+      // Build complete graph K_N. Layout module detects density > 0.4 and
+      // skips force-directed iterations, so nodes stay on the initial
+      // circular arrangement — visible and not piled at the centroid.
+      const adj: number[][] = Array.from({ length: N }, () => []);
+      const edges: Array<[number, number]> = [];
+      for (let i = 0; i < N; i++) {
+        for (let j = i + 1; j < N; j++) {
+          adj[i]!.push(j);
+          adj[j]!.push(i);
+          edges.push([i, j]);
+        }
+      }
+      const deg = new Int32Array(N);
+      for (let i = 0; i < N; i++) deg[i] = adj[i]!.length;
+      graph = { N, adj, edges, deg };
+    } else {
+      const generator = generators[topo];
+      if (!generator) throw new Error(`unknown topology: ${topo}`);
+      graph = generator(N, k, rng);
+    }
 
     // 0 = D, 1 = C
     const X = new Float64Array(N);

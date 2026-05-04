@@ -34,8 +34,23 @@ export class Layout {
     }
 
     this.iter = 0;
-    // 220 iters at N=200 ≈ 8M ops; 60 iters at N=1000 ≈ 60M ops.
-    this.maxIter = Math.max(40, Math.min(220, Math.floor(40000 / N)));
+    // For sparse graphs, run force-directed iterations to find a good
+    // arrangement. For dense graphs (edge density > 0.4) — especially K_N —
+    // force-directed layout cannot satisfy the simultaneous spring
+    // constraints in 2D (e.g., 200 mutually-equidistant points don't exist
+    // in the plane), so the solver collapses everything toward the centroid.
+    // For those, leave nodes at the initial circular arrangement, which is
+    // already a reasonable visualisation of dense / complete graphs (nodes
+    // are visible, edges are drawn as chords).
+    const maxEdges = (N * (N - 1)) / 2;
+    const density = maxEdges > 0 ? graph.edges.length / maxEdges : 0;
+    if (density > 0.4) {
+      // skip force iterations; circular initial positions stand
+      this.maxIter = 0;
+    } else {
+      // 220 iters at N=200 ≈ 8M ops; 60 iters at N=1000 ≈ 60M ops.
+      this.maxIter = Math.max(40, Math.min(220, Math.floor(40000 / N)));
+    }
   }
 
   get done(): boolean {
