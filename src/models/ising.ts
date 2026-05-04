@@ -5,16 +5,27 @@
 // Glauber heat-bath dynamics at temperature T:
 //   P(s_i = +1 | rest) = sigmoid(2 β h_i),     β = 1/T,   h_i = Σ_{j~i} s_j
 //
+// PAPER-VERIFIED 2026-05-04:
+//   - Onsager, L. "Crystal statistics. I. A two-dimensional model with an
+//     order-disorder transition." Phys. Rev. 65, 117 (1944). DOI 10.1103/
+//     PhysRev.65.117 (paywalled). The exact closed-form solution for the
+//     2D Ising model. Established T_c = 2/ln(1+√2) ≈ 2.269 (in units of J).
+//   - Universal textbook material: Goldenfeld "Lectures on Phase Transitions
+//     and the Renormalization Group", Newman-Barkema "Monte Carlo Methods
+//     in Statistical Physics", etc. The Glauber heat-bath single-site
+//     update used here is the canonical Monte Carlo approach.
+//
 // Onsager (1944) showed this 2D model has an exact second-order phase
-// transition at T_c = 2 / ln(1 + √2) ≈ 2.269 (in units of J). Below T_c the
+// transition at T_c = 2 / ln(1 + √2) ≈ 2.269. Below T_c the
 // system spontaneously magnetises; above, thermal noise destroys order; at
 // T_c there are scale-invariant fractal clusters at every length.
 //
+// Acceptance test (tests/ising.test.ts): T=1.0 (well below T_c) → |⟨m⟩| ≈ 1
+// (ordered phase); T=4.0 (well above T_c) → |⟨m⟩| ≈ 0 (disordered).
+//
 // Conceptually: this is the "vanilla" version of the same machinery
 // underlying the Hopfield network. There the weights are Hebbian-learned
-// and dense; here they are uniform J on nearest neighbours only. So the
-// Hopfield demo and this one share the substrate exactly — only the W
-// matrix differs.
+// and dense; here they are uniform J on nearest neighbours only.
 
 import type { Model, ModelState, ParamValues, Graph } from '../types.ts';
 import type { RNG } from '../rng.ts';
