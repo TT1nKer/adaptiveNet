@@ -4,7 +4,7 @@
 # and gives you a permanent author ID that survives handle changes / institution moves.
 
 cff-version: 1.2.0
-message: "If you use adaptiveNet in academic, teaching, or published work, please cite it as below."
+message: "If you use adaptiveNet in academic, teaching, or published work, please cite it using the metadata below. The DOI under `doi:` always resolves to the latest version; pin to a specific version via the `identifiers:` block."
 title: adaptiveNet
 abstract: >-
   An interactive browser-based playground for node-edge dynamical systems
@@ -14,6 +14,16 @@ abstract: >-
 authors:
   - name: TT1nKer
 type: software
+version: "0.1.0"
+date-released: "2026-05-04"
+doi: "10.5281/zenodo.20018115"
+identifiers:
+  - description: "Concept DOI — always resolves to the latest version of adaptiveNet."
+    type: doi
+    value: "10.5281/zenodo.20018115"
+  - description: "Version DOI for v0.1.0 — pin here for reproducibility."
+    type: doi
+    value: "10.5281/zenodo.20018116"
 repository-code: "https://github.com/TT1nKer/adaptiveNet"
 url: "https://tt1nker.github.io/adaptiveNet/"
 license: MIT

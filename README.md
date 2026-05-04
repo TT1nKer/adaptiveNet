@@ -1,12 +1,18 @@
 # adaptiveNet
 
-An interactive playground for **node–edge dynamical systems** — networks where node states and connection strengths coevolve under simple rules. Spiking neurons, Hopfield memory, Ising spins, reaction–diffusion, voter dynamics, self-organised criticality: ten different specific systems, all instances of one abstract shape.
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20018115.svg)](https://doi.org/10.5281/zenodo.20018115)
+
+An interactive playground for **node–edge dynamical systems** — networks where node states and connection strengths coevolve under simple rules. Spiking neurons, Hopfield memory, Ising spins, reaction–diffusion, voter dynamics, self-organised criticality, adaptive epidemics: eleven different specific systems, all instances of one abstract shape.
 
 The shape — *units + co-evolving connections* — is what neuromorphic computing, classical statistical mechanics, and several theories of biological cognition all share. Whether intelligence requires neurons specifically, or a more general structure, is an open question. This is a place to play with candidates.
 
-10 demos, browser, zero install. Drag sliders, hit play, share by URL.
+11 demos, browser, zero install. Drag sliders, hit play, share by URL. **中文版：[index.zh.html](https://tt1nker.github.io/adaptiveNet/index.zh.html)**.
 
 **Live at https://tt1nker.github.io/adaptiveNet/** — open it, click any demo, drag the sliders.
+
+## Cite
+
+If you use adaptiveNet in published work, please cite via the DOI above (or use the [`CITATION.cff`](CITATION.cff) metadata, which GitHub renders into a "Cite this repository" widget on the sidebar).
 
 ---
 
