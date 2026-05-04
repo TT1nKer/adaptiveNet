@@ -4,6 +4,37 @@
 
 ---
 
+## 0. Bicameral architecture (added 2026-05-04)
+
+adaptiveNet is implemented as **one substrate spec, three runtimes**:
+
+| Runtime | Path | Purpose | N range |
+|---|---|---|---|
+| Web (TS / JS, browser) | `src/`, `sandbox.html`, `player.html` | Demo, teach, share, embed, interactive exploration | ≤ 10⁵ |
+| Native — Rust + WGPU | `native/rust-wgpu/` | Cross-platform GPU (NVIDIA/AMD/Intel/Apple); same WGSL runs anywhere; can re-target wasm + WebGPU for browser | 10⁵ – 10⁷ |
+| Native — C++ + CUDA | `native/cpp-cuda/` | Maximum NVIDIA performance, shortest path to bare-metal CUDA features | 10⁶ – 10⁹ |
+
+A model is "the same model" across the three runtimes if it produces statistically equivalent macroscopic trajectories for the same `(model_id, params, seed)`. For models using the spec's standard hash-based PRNG (Mulberry32 init + MurmurHash3 finaliser per-step), bit-for-bit identical state evolution is achievable across runtimes that compile to the same floating-point semantics. For models using stateful per-thread RNGs, only statistical equivalence is guaranteed.
+
+Cross-validation between runtimes is the primary correctness test for the substrate spec. Divergence ⇒ spec ambiguity ⇒ spec amendment.
+
+Why three rather than one (a) or two (b):
+
+- (a) Web-only would cap N at ~10⁵, ruling out the b-stream research the author actually wants to do (large-N adaptive network exploration on GPU). Already insufficient.
+- (b) Web + one native would force an ecosystem bet (NVIDIA-only via CUDA, or portable-but-slower via WGPU). Author chose to build both rather than make this bet now (10y commit + AI-coding bandwidth makes the maintenance cost manageable; cross-validation provides spec correctness in exchange).
+
+The three runtimes share:
+- Substrate types (graph, node state, edge state, RNG)
+- Model interface (params schema, init, step, render config, observables)
+- Hash-based PRNG for stateless GPU dynamics where bit-exact reproducibility matters
+
+The three runtimes diverge on:
+- Authoring language (JS / TS for web; Rust for WGPU; C++ for CUDA)
+- Authoring workflow (in-browser sandbox / git PR for web; cargo + crates for Rust; cmake + CUDA toolkit for C++)
+- UI affordances (web has interactive sliders + canvas + share-by-URL; native runtimes are CLI-first, parameter sweeps + CSV export are the natural UX)
+
+---
+
 ## 1. What this tool is
 
 A general-purpose, browser-runnable tool for defining and exploring **node–edge dynamical systems** — systems where N entities have state, and the pairwise weights between them also have state, and both coevolve in time under user-defined rules.
