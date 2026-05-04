@@ -38,6 +38,11 @@ let state: ModelState | null = null;
 let layout: Layout | GridLayout | null = null;
 let running = false;
 let editor: any = null;
+// Persistent RNG. Reset only on rebuild (Run / restart / new seed). Reusing the
+// same RNG instance across frames means changing `speed` (which changes events
+// per frame) does NOT alter the random-number sequence — only how those events
+// are batched into frames. Critical for trajectory reproducibility.
+let runtimeRng: RNG = new RNG(1);
 
 // Time-series buffer.
 const TS_LEN = 240;
@@ -272,12 +277,12 @@ function fitCanvas(): void {
 function rebuild(): void {
   if (!model) return;
   fitCanvas();
-  const rng = new RNG(seed);
-  state = model.init(params, rng) as ModelState;
+  runtimeRng = new RNG(seed);
+  state = model.init(params, runtimeRng) as ModelState;
   if (model.view === 'grid' && state.cols && state.rows) {
     layout = new GridLayout(state.cols, state.rows, netcv.width, netcv.height);
   } else {
-    layout = new Layout(state.graph, netcv.width / (window.devicePixelRatio || 1), netcv.height / (window.devicePixelRatio || 1), rng);
+    layout = new Layout(state.graph, netcv.width / (window.devicePixelRatio || 1), netcv.height / (window.devicePixelRatio || 1), runtimeRng);
   }
   tsBuf.fill(0);
   tsHead = 0;
@@ -377,7 +382,7 @@ function loop(): void {
       `N=${state.N} · |E|=${state.graph.edges.length} · ⟨k⟩=${(2 * state.graph.edges.length / state.N).toFixed(2)}`;
   } else if (running && state && model) {
     try {
-      model.step(state, params, new RNG(seed ^ state.step_count));
+      model.step(state, params, runtimeRng);
       const ts = model.observe?.timeSeries;
       if (ts) {
         tsBuf[tsHead] = ts.value(state);

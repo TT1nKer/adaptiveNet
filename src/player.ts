@@ -167,6 +167,11 @@ let seed = 1;
 let state: ModelState | null = null;
 let layout: AnyLayout | null = null;
 let running = true;
+// Persistent RNG. Created in rebuild() with a fresh seed; advances continuously
+// through init() and every subsequent step() call. Critically, NOT reset
+// per-frame — that would make `speed` (which changes events-per-frame) alter
+// the random-number sequence and therefore the trajectory.
+let runtimeRng: RNG = new RNG(1);
 
 // view transform (canvas-space → screen-space)
 let zoom = 1;
@@ -379,14 +384,18 @@ function selectPresetInUI(id: string, showNote = true): void {
 function rebuild(): void {
   if (!model) return;
   fitAll();
-  const rng = new RNG(seed);
-  state = model.init(params, rng) as ModelState;
+  // Reset the persistent RNG. init() advances it; step() picks up where init
+  // left off. Same RNG instance is reused for every step() call thereafter,
+  // so changing `speed` only re-batches events into different frame counts —
+  // it never changes the underlying random-number sequence or the trajectory.
+  runtimeRng = new RNG(seed);
+  state = model.init(params, runtimeRng) as ModelState;
   if (model.view === 'grid' && state.cols && state.rows) {
     layout = new GridLayout(state.cols, state.rows, netcv.width, netcv.height);
   } else {
     // Incremental force-directed layout for graph view: starts from a circle,
     // converges over a second or so before the dynamics begin.
-    layout = new Layout(state.graph, netcv.width, netcv.height, rng);
+    layout = new Layout(state.graph, netcv.width, netcv.height, runtimeRng);
   }
   tsBuf.fill(0);
   tsBuf2.fill(0);
@@ -705,7 +714,7 @@ function loop(): void {
         `N=${state.N} · |E|=${state.graph.edges.length} · ⟨k⟩=${(2 * state.graph.edges.length / state.N).toFixed(2)} · Δ=${maxDeg}`;
     }
   } else if (running && state && model) {
-    model.step(state, params, new RNG(seed ^ state.step_count));
+    model.step(state, params, runtimeRng);
     const ts = model.observe?.timeSeries;
     const ts2 = model.observe?.timeSeries2;
     if (ts) {
