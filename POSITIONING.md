@@ -173,6 +173,167 @@ Source: [Cardinot, Marcos, et al. "Evoplex: A platform for agent-based modeling 
 
 ---
 
+## Scientific-history positioning: pre-Boltzmann phenomenology
+
+The deepest framing of what kind of project adaptiveNet is — added 2026-05-03 after a long grilling session that started from "is this just another NetLogo" and ended here.
+
+### The structural analogue: 1870s thermodynamics
+
+Before Boltzmann, mechanics and thermodynamics were two languages with no bridge:
+- **Mechanics**: Newtonian, microscopic, reversible, deterministic — the trajectories of N particles.
+- **Thermodynamics**: temperature, entropy, pressure — macroscopic, irreversible, empirical (Carnot, Clausius).
+
+Both worked in their own domain. Nobody could explain why microscopic reversibility produces macroscopic irreversibility. Loschmidt and Zermelo objected; Mach denied atoms.
+
+Boltzmann's contribution (1872–1877) was not a proof. It was finding a mathematical object — **S = k log W** — that lives simultaneously at both scales. The H-theorem (1872) needed Stosszahlansatz, an unproven physical intuition. The Boltzmann equation gave intermediate-scale dynamics. **S = k log W (1877) was the actual bridge**: a formula whose left side is macroscopic thermodynamics and whose right side is microscopic state-counting.
+
+Lanford (*Comm. Math. Phys.* 1975) gave the first rigorous derivation of the Boltzmann equation — but only in the Boltzmann–Grad limit and only for ~0.4 mean-free-path times. **A full rigorous theory still does not exist**, 150 years on. That has not stopped statistical mechanics from being one of physics's most successful theories. *Bet on the right object first; rigour can wait a century* is the real historical pattern.
+
+### The mapping to current emergence theory
+
+| 1870s thermodynamics | Emergence / adaptive networks (today) |
+|---|---|
+| Mechanics (microscopic, reversible) | Agent rules, node updates, edge dynamics |
+| Thermodynamics (macroscopic, empirical) | Emergent observables — power-law avalanches, consensus, criticality, patterns |
+| Two languages, no bridge | Two languages, no bridge |
+| Missing: a meso-scale mathematical object | Missing: a meso-scale mathematical object |
+| Stosszahlansatz | Mean-field, moment closure, Markov assumptions |
+| W = state count | ??? |
+| Boltzmann 1872–1877 | Has not happened |
+
+The structural isomorphism is exact, not rhetorical. Emergence theory is in the Boyle–Charles–Avogadro phase: lots of empirical observations, lots of models, no unifying meso-scale object.
+
+### Why phase transition theory is the anchor — but not the answer
+
+Phase transition theory (Onsager 1944, Wilson 1971) is the **only fully successful micro-macro bridge in statistical mechanics**. Its substrate is the partition function `Z = Σ exp(-βH)`, of which `S = k log W` is the microcanonical special case. Wilson RG (1971) was the second paradigm jump — showing how universality emerges from coarse-graining flow.
+
+This is the closest thing to a worked template for what emergence theory needs. But it does not directly transplant, for four reasons:
+
+1. **Equilibrium assumption.** The partition function's legitimacy comes from ergodicity + detailed balance. LIF spiking, Hopfield-during-learning, voter dynamics, coevolving networks — none satisfy this. Non-equilibrium statistical mechanics (Jarzynski 1997, Crooks 1999) has progress but no "non-equilibrium Z" yet.
+2. **Thermodynamic limit.** Equilibrium phase transitions are mathematically rigorous only at N→∞. Finite-size scaling (Fisher 1971, Privman 1990) bridges this when the limit exists. Many emergence systems have *meaningful finite scales* (cortical regions ~10⁶, social communities ~10², ecosystems ~10¹) where the limit may not be the right reference at all.
+3. **Symmetry-driven universality.** Ising, XY, Heisenberg classes are organised by clear symmetries (Z₂, O(2), O(3)) plus dimension. Adaptive systems often lack such clean symmetries — Hopfield has multiple stored patterns, spiking systems break time-translation, coevolving graphs have changing structure. Without symmetry, no clean universality class boundaries.
+4. **Already tried, partial success.** This line has been pursued 30+ years: Bak–Tang–Wiesenfeld SOC (1987), neural criticality (Beggs–Plenz 2003, Mora–Bialek 2011, contested by Touboul–Destexhe 2017), Doi–Peliti field theory for stochastic processes (1976+), network ensembles (Park–Newman 2004, Bianconi). Real results in some cases, no unified emergent partition function.
+
+### Two RG entry routes, not one
+
+A subtle correction worth recording: it is *not* the case that emergence theory must first find an analogue of `Z` (Boltzmann-style static object) before it can do RG (Wilson-style dynamic process). Two routes exist:
+
+- **Route 1: Find the static object.** An emergence partition function whose logarithm gives macroscopic quantity. This is the "wait for our Boltzmann" path.
+- **Route 2: Build RG flow on a different substrate.** Doi–Peliti formalism does RG on path integrals from master equations *without* equilibrium Z. Information-theoretic RG (Apenko 2012, Koch-Janusz–Ringel 2018) uses mutual information as the flow object. Tensor network coarse-graining works without classical Z.
+
+Equilibrium statistical physics happened to find Route 1 first because ergodicity made it tractable. For non-equilibrium adaptive systems, Route 2 may be the more direct path. Both routes might converge, or might not. Either way, the search is open.
+
+### The Wien-displacement-law analogue
+
+Mora–Bialek's "biological systems live near criticality" (2011) is well-placed by analogy as **Wien's displacement law (1893)**: empirical regularity plus partial theoretical reasoning, but not yet the equivalent of Planck (1900) deriving the full spectrum. Useful as a localising signal, not a finished theory.
+
+### The historical warning
+
+Population dynamics has had 200 years and no Boltzmann moment. Logistic (Verhulst 1838), Lotka–Volterra (1920s), demographic transition theory — all phenomenological ODEs, none deriving macro from micro. The closest serious attempts are **Kingman coalescent (1982)** going from Wright–Fisher to genealogy, and **Metz–Geritz adaptive dynamics (1996)** going from individual-based to evolutionary attractors. Neither closed the bridge.
+
+This is a real warning: not all empirical-rich domains find their Boltzmann. There are three live possibilities:
+
+1. Emergence's Boltzmann is coming (optimistic).
+2. Emergence has no single Boltzmann — Wolfram's "irreducible computation" position.
+3. Emergence has multiple Boltzmanns, one per universality class. Statistical physics itself has many (Ising / XY / Heisenberg / percolation each have their own); no reason emergence collapses to a single one.
+
+The author's working bet is (3). adaptiveNet's positioning does not require any of (1)–(3) to be right.
+
+### adaptiveNet's actual position in this story
+
+**Pre-Boltzmann phenomenology platform.**
+
+Boltzmann 1872 was preceded by ~100 years of gas experiments (Boyle 1662, Charles 1787, Gay-Lussac 1808, Avogadro 1811, Joule 1840s). Without standardised, comparable phenomenology, Boltzmann could not have written the H-theorem. He needed to know which gas behaviours were similar, which limits were clean.
+
+Adaptive network / emergence research lacks this standardisation. Each group runs ad-hoc simulations, parameter conventions differ, topologies differ, observables differ. Cross-comparison is hard.
+
+This is what adaptiveNet is for, in scientific-history terms:
+
+> **Not to produce the Boltzmann. To produce the Boyle / Charles / Avogadro–level phenomenology — standardised, browsable, reproducible, citable.**
+
+The framing wins under all three possibilities above:
+- If (1) — the Boltzmann is coming — adaptiveNet is the soil it grows from.
+- If (2) — no Boltzmann exists — adaptiveNet is still the standardised platform for the irreducible-computation phenomenology school.
+- If (3) — multiple Boltzmanns — adaptiveNet is one of the substrates on which different universality classes get distinguished.
+
+Two-sided bet.
+
+### What phase transition theory actually gives the product
+
+Not "phase diagrams" (5-year research). The real gift is **vocabulary**: order parameter, susceptibility, correlation length, universality class. These concepts are mature, well-understood, and immediately useful as organising principles.
+
+One concrete, near-term implication for adaptiveNet's design (recorded here, not a v1 commitment):
+
+**Models should be able to declare *multiple candidate order parameters* as first-class observables**, not a single one. For familiar models the order parameter is obvious (Ising magnetization, Hopfield overlap-with-target). For genuinely novel emergent systems, *finding the order parameter is itself the research question* — so the platform must support exploration of multiple candidates rather than locking in one declaration. Hopfield should expose ≥3 candidates (overlap-with-target, max-overlap-with-any-stored, mean-activity); Ising should expose magnetization, susceptibility, Binder cumulant; adaptive SIS should expose infected fraction, SI-edge fraction, mean degree of the I-subgraph.
+
+This honours both "order parameter is the right vocabulary" and "the platform should not pre-decide what the order parameter is for new systems."
+
+### What does NOT belong in the product, despite being attractive
+
+- **Cross-model comparison views** (same topology, run Hopfield/Ising/voter/LIF, look for shared universality). Operationally this is a multi-year research programme — observables differ across models, "avalanche" is defined differently, etc. Boyle's first principle was *vary one variable at a time*. Same-model-across-topologies is the right v1 version of this idea; cross-model is later.
+- **"NetLogo for adaptive networks"** as elevator pitch. Recorded in earlier feedback as a narrowing-for-marketability anti-pattern.
+- **Any claim that adaptiveNet itself will produce the Boltzmann.** It produces the soil, not the seed.
+
+---
+
+## What adaptiveNet is for, concretely (operational priorities)
+
+The pre-Boltzmann framing above describes the *shape* of the project. This section names the specific groups of people it serves and the order in which their needs should be attended to. Worked out 2026-05-03 by walking five concrete research / education frontlines and asking "what is the unmet need each one currently has."
+
+The project is **open-source and free**. There is no monetization plan now or in the future. Priorities below are framed in academic-commons / FOSS terms — contribution to the field over decades, not user-growth metrics.
+
+### The six communities, in priority order
+
+| # | Community | Unmet need | Current status |
+|---|---|---|---|
+| 0 | **The author themselves** (b-stream personal-research use) | Does adaptiveNet earn a place as the author's own daily playground for graph-and-dynamics sketches? If no, this is the *Cardinot pattern* — the platform survives only as long as the original maintainer's interest, and lacks the natural grounding that comes from the maintainer being a daily user. | Open question |
+| 1 | **Course instructors** (complex systems / network science / statistical physics) | Assignable interactive demos with no install barrier; ready-made experiment prompts; explicit alignment with existing textbooks (Sayama 2015, Newman *Networks*, Wilensky-Rand 2015). | **Highest priority for sustained contribution.** Demos exist; instructor-facing materials do not yet exist. |
+| 2 | **Brain-criticality researchers** (Plenz / Touboul / Chialvo lines, ~33 papers in 2024) | Building methodological intuition about avalanche definition, time-window binning, subsampling, and exponent estimation under finite-size. The Touboul-Destexhe 2017 critique is methodological, not ontological. | Avalanches demo exists but does not yet expose the methodological knobs the controversy actually turns on. |
+| 3 | **Adaptive-network theorists** (Berner-Kuehn moment-closure line) | Validating analytic predictions (mean-field / moment-closure / continuum-limit) against ensemble simulation. Currently each claim is a 1–2 week DIY pipeline. | Adaptive-SIS and Adaptive-Voter exist but lack ensemble runs, seed-list control, and CSV export — without these adaptiveNet cannot serve this community. |
+| 4 | **ML researchers + science writers** (Hopfield-attention equivalence interest, post-2024-Nobel) | Visual and interactive material for blogs, threads, popular writing. People in this group mostly engage through writers, not directly with the platform. | Modern Hopfield demo exists; needs screenshot-friendliness, embed-friendliness, stable short URLs. |
+| 5 | **Network RG researchers** (~50–100 PI globally) | Visualization of coarse-graining schemes. No existing tool serves this. | No demo yet. *"No existing tool"* may also mean *"no binding need"* — wait for a specific collaborator before building. |
+
+### Why teaching is priority #1 despite small per-cohort numbers
+
+A first-pass ranking on the same day put teaching at priority #4 because each individual cohort is small and the materials take years to mature. **That ranking imported a project-evaluation lens that does not apply to this project** (see `feedback_no_commercial_vocabulary_for_commons_project.md`). Reasoning for the corrected ranking:
+
+- Teaching is the only need with a built-in *reproduction cycle*: instructor → ~30 students/semester → a fraction of those students become researchers → a fraction of those become instructors. The platform passes itself on through generations of users without further effort by the maintainer.
+- NetLogo's 25-year longevity came overwhelmingly from this cycle (Wilensky-Rand 2015 textbook → courses → student projects → graduate adoption), not from researcher-to-researcher transmission.
+- Research-community needs (#2, #3, #5) require active outreach for each new user; teaching needs work once at the textbook / instructor-materials level and then propagates.
+- The 10-year commitment timescale removes the "5-year maturation period" objection that the first-pass ranking treated as a cost.
+
+The current obstacle is *not* "more demos." adaptiveNet has 11 demos covering stat-mech / brain / pattern formation / adaptive-network axes — enough for a substantial course. The obstacle is that **instructor-facing materials are currently zero**.
+
+### Three layers of teaching investment
+
+1. **Per-demo "For instructors" sections** (~half a day per demo, all 11 doable in ~1 week of part-time work). Each demo's `long` description gets a section with 3-5 *Δ-style experiments*: prompts of the form "vary X from a to b, observe Y, compare to literature value Z, explain the deviation in 200 words." Students submit a demo URL + 200 words of reasoning, instead of writing a Python notebook from scratch. Saves ~20× student time relative to DIY simulation.
+2. **Cross-demo curated reading paths** (~1 week). 3-4 paths threading multiple demos into a coherent week of class material. Examples: *"Phase transitions"* (Ising → Hopfield-Capacity → Avalanches), *"Network ≠ grid"* (Brusselator → Nakao → Adaptive-SIS), *"Memory & computation"* (Hopfield → Capacity → Modern Hopfield).
+3. **Companion mapping to existing textbooks** (~1 month, ongoing). Explicit *"this demo corresponds to Chapter X of Sayama 2015 / Newman *Networks* / Wilensky-Rand 2015"* mappings. Reduces adoption friction by letting instructors keep their existing textbook and use adaptiveNet as the lab platform.
+
+### How the six communities relate to each other
+
+The six communities are not in competition; they engage with the project in different ways and on different timescales.
+
+- **Wide entry points** — #4 (ML interest, science writers): the largest number of people will first encounter adaptiveNet through a blog post or thread. They mostly do not return repeatedly, but they bring presence in the field.
+- **Sustained-use community** — #1 (teaching): the longevity cycle. Each instructor adoption produces years of student exposure that compounds via the reproduction mechanism above.
+- **Deep-collaboration communities** — #2 (brain criticality), #3 (adaptive-network theory), #5 (RG): smaller in number, longer in depth. These are the people who will cite adaptiveNet in published work and contribute back as collaborators.
+
+Attending to any one in isolation under-serves the others. The right ordering is: **teaching investment now** (because it propagates through generations); **brain-criticality methodological knobs soon** (because the controversy is live and the demo is already half-built); **ensemble export** when adaptive-network theorists actually appear with concrete asks; **screenshot/embed friendliness** as low-cost polish for science writers; **RG only when a specific collaborator is in the conversation**.
+
+### What this section commits to and what it does not
+
+**Commits to:**
+- Teaching investment as the primary mechanism for the project's long-term presence in the field
+- Per-demo instructor notes (Layer 1) as the immediate next batch of work
+- Brain-criticality demo upgrade — expose binning Δt, subsampling, and the Clauset-Shalizi-Newman 2009 KS-test comparison — as the next methodological build after Layer 1
+
+**Does NOT commit to:**
+- Building #5 (Network RG) without a real collaborator
+- Sacrificing depth in #2 / #3 to chase wider visibility through #4
+- Treating #0 (the author's own use of the platform) as solved — that question stays open and gets revisited periodically
+
+---
+
 ## Other tools that overlap with parts of the niche
 
 Verified by search 2026-05-03 (sources at end). For each: what it is, where it differs from adaptiveNet.
