@@ -38,6 +38,12 @@
 //   - New partner is chosen uniformly at random from non-neighbours. The
 //     paper explores variants where new partners are selected preferentially
 //     toward C; we keep the simplest version.
+//   - Payoff is degree-normalised (average payoff per game, not accumulated).
+//     With unnormalised payoffs, BA hubs dominate Fermi imitation purely on
+//     degree — the network collapses to the hub's initial strategy in the
+//     first ~50 events, before linking dynamics can act. Normalisation
+//     keeps β·Δπ at O(c) regardless of degree heterogeneity, which is the
+//     regime where active-linking actually shapes the outcome.
 
 import { generators } from '../graph.ts';
 import type { Model, ModelState, ParamValues } from '../types.ts';
@@ -62,7 +68,7 @@ const pacheco: Model = {
 
 Per simulation tick, **one of two events** happens with the chosen probability ratio:
 
-— **Strategy event** (probability 1 − q): a random player i compares accumulated payoff with a random neighbour j; i adopts j's strategy with probability 1 / (1 + exp(β · (π_i − π_j))). β controls selection strength: β → 0 is random drift, β → ∞ is deterministic copy-better.
+— **Strategy event** (probability 1 − q): a random player i compares average payoff per game with a random neighbour j; i adopts j's strategy with probability 1 / (1 + exp(β · (π_i − π_j))). β controls selection strength: β → 0 is random drift, β → ∞ is deterministic copy-better. (Payoffs are *degree-normalised* — average per game, not accumulated — to keep dynamics consistent across the heterogeneous degree distributions of BA / ER. Without this, BA hubs trivially dominate Fermi imitation on raw payoff scale.)
 
 — **Linking event** (probability q): a random edge is examined. Edges break with probabilities that depend on the endpoint strategies:
   - **α_CC** (low): CC edges are mutually beneficial → stable
@@ -90,7 +96,7 @@ Reference: Pacheco, Traulsen & Nowak, *Coevolution of strategy and structure in 
 
 每一仿真 tick，**两个事件之一**按选定概率发生：
 
-— **策略事件** (概率 1 − q)：随机选一个玩家 i，与随机邻居 j 比较累积收益；i 以概率 1 / (1 + exp(β · (π_i − π_j))) 采纳 j 的策略。β 控制选择强度：β → 0 时是随机漂移，β → ∞ 时是确定性的"复制更好者"。
+— **策略事件** (概率 1 − q)：随机选一个玩家 i，与随机邻居 j 比较**每场博弈平均收益**；i 以概率 1 / (1 + exp(β · (π_i − π_j))) 采纳 j 的策略。β 控制选择强度：β → 0 时是随机漂移，β → ∞ 时是确定性的"复制更好者"。(收益按*度数归一化*——每场博弈平均，不是累积——这样 BA / ER 异质度数分布下动力学保持一致；不归一化的话 BA hub 会在度数尺度上直接碾压 Fermi imitation。)
 
 — **重连事件** (概率 q)：随机选一条边考察。边以下面取决于端点策略的概率断开：
   - **α_CC** (低)：CC 边互惠 → 稳定
@@ -277,18 +283,32 @@ Reference: Pacheco, Traulsen & Nowak, *Coevolution of strategy and structure in 
           continue;
         }
 
-        // Compute payoffs (one game per neighbour)
-        // π_C = (#C neighbours) · (b − c) + (#D neighbours) · (−c)
-        //     = (#C neighbours) · b − deg · c
-        // π_D = (#C neighbours) · b + 0 · (#D neighbours) = (#C neighbours) · b
+        // Compute average payoff per game (degree-normalised).
+        // Without normalisation, BA hubs accumulate payoff ~ deg, which makes
+        // β·(π_i − π_j) ≫ 1 even for moderate β. Fermi imitation becomes
+        // near-deterministic and finishes propagating the hub's initial
+        // strategy across the whole network in the first ~50 events — long
+        // before linking dynamics can act. Normalising by degree keeps β·Δπ
+        // at O(c) regardless of where in the degree distribution the players
+        // sit, which is the regime where the active-linking effects Pacheco
+        // 2006 describes are actually visible.
+        //
+        //   π_C(per game) = (#C neighbours · b − deg · c) / deg = (#C/deg)·b − c
+        //   π_D(per game) = #C neighbours · b / deg            = (#C/deg)·b
+        //
+        // Equivalent to the donation-game payoff with neighbours sampled
+        // uniformly: cooperators pay c per game, defectors pay nothing,
+        // both gain b per C-neighbour interaction.
         let cN_i = 0;
         for (let p = 0; p < ai.length; p++) if (X[ai[p]!] === 1) cN_i++;
         const aj = adj[jj]!;
         let cN_j = 0;
         for (let p = 0; p < aj.length; p++) if (X[aj[p]!] === 1) cN_j++;
 
-        const pi_i = X[ii] === 1 ? cN_i * b - deg[ii]! * c : cN_i * b;
-        const pi_j = X[jj] === 1 ? cN_j * b - deg[jj]! * c : cN_j * b;
+        const di = ai.length;
+        const dj = aj.length;
+        const pi_i = di === 0 ? 0 : (X[ii] === 1 ? (cN_i * b) / di - c : (cN_i * b) / di);
+        const pi_j = dj === 0 ? 0 : (X[jj] === 1 ? (cN_j * b) / dj - c : (cN_j * b) / dj);
 
         // Fermi imitation: i adopts j's strategy with probability
         //   1 / (1 + exp(β · (π_i − π_j)))
