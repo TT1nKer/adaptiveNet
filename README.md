@@ -1,3 +1,13 @@
+<p align="center">
+  <img src="docs/readme-cover.svg" alt="adaptiveNet — complex-systems browser lab" width="100%">
+</p>
+
+<p align="center">
+  <a href="https://ttinker.net">ttinker.net</a> ·
+  <a href="https://tt1nker.github.io/adaptiveNet/">open the lab</a> ·
+  <a href="https://tt1nker.github.io/adaptiveNet/index.zh.html">中文版</a>
+</p>
+
 # adaptiveNet
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20018115.svg)](https://doi.org/10.5281/zenodo.20018115)
@@ -9,6 +19,10 @@ The shape — *units + co-evolving connections* — is what neuromorphic computi
 11 demos, browser, zero install. Drag sliders, hit play, share by URL. **中文版：[index.zh.html](https://tt1nker.github.io/adaptiveNet/index.zh.html)**.
 
 **Live at https://tt1nker.github.io/adaptiveNet/** — open it, click any demo, drag the sliders.
+
+| State | Evidence | Current boundary |
+| --- | --- | --- |
+| Browser lab · 11 demos | Type-checking, production build, live GitHub Pages deployment | Published models presented through a new interface; this repository does not claim new physics |
 
 ## Cite
 
